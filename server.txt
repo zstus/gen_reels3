@@ -1,0 +1,233 @@
+# 릴스 영상 생성 서비스 서버 설정 가이드
+
+## 1. 시스템 패키지 설치
+
+```bash
+# 기본 도구
+sudo apt update
+sudo apt install -y curl wget git build-essential
+
+# Node.js 18 LTS 설치
+curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
+sudo apt install -y nodejs
+
+# Nginx 설치
+sudo apt install -y nginx
+
+# Python 환경 (이미 설치되어 있지만 확인)
+sudo apt install -y python3 python3-pip python3-venv
+
+# 미디어 처리 (이미 설치되어 있지만 확인)
+sudo apt install -y ffmpeg libjpeg-dev libpng-dev libtiff-dev libwebp-dev
+```
+
+## 2. React 프론트엔드 생성
+
+```bash
+cd /zstus
+npx create-react-app frontend --template typescript
+cd frontend
+
+# 필요한 패키지 설치
+npm install @google-cloud/storage axios react-router-dom
+npm install @types/react-router-dom
+npm install @emotion/react @emotion/styled @mui/material @mui/icons-material
+npm install react-dropzone
+npm install @google-oauth/client
+```
+
+## 3. FastAPI 포트 변경 (8080으로 변경)
+
+backend/main.py 마지막 라인 수정:
+```python
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8080)  # 80 → 8080 변경
+```
+
+## 4. Nginx 설정
+
+/etc/nginx/sites-available/reels-service 파일 생성:
+```nginx
+server {
+    listen 8097;
+    server_name zstus.synology.me;
+
+    # React 프론트엔드 (루트)
+    location / {
+        proxy_pass http://localhost:3000;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_cache_bypass $http_upgrade;
+    }
+
+    # FastAPI 백엔드 (API 경로)
+    location /api/ {
+        proxy_pass http://localhost:8080/;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        
+        # CORS 헤더
+        add_header 'Access-Control-Allow-Origin' '*';
+        add_header 'Access-Control-Allow-Methods' 'GET, POST, OPTIONS, PUT, DELETE';
+        add_header 'Access-Control-Allow-Headers' 'DNT,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,Authorization';
+        
+        # OPTIONS 요청 처리
+        if ($request_method = 'OPTIONS') {
+            add_header 'Access-Control-Allow-Origin' '*';
+            add_header 'Access-Control-Allow-Methods' 'GET, POST, OPTIONS, PUT, DELETE';
+            add_header 'Access-Control-Allow-Headers' 'DNT,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,Authorization';
+            add_header 'Access-Control-Max-Age' 1728000;
+            add_header 'Content-Type' 'text/plain; charset=utf-8';
+            add_header 'Content-Length' 0;
+            return 204;
+        }
+
+        # 파일 업로드 크기 제한 (100MB)
+        client_max_body_size 100M;
+    }
+
+    # 정적 파일 직접 서빙 (영상 다운로드용)
+    location /videos/ {
+        alias /zstus/backend/output_videos/;
+        add_header Content-Disposition 'attachment';
+    }
+
+    # BGM 파일 서빙 (미리듣기용)
+    location /bgm/ {
+        alias /zstus/backend/bgm/;
+        add_header 'Access-Control-Allow-Origin' '*';
+    }
+}
+```
+
+## 5. Nginx 설정 활성화
+
+```bash
+# 사이트 활성화
+sudo ln -sf /etc/nginx/sites-available/reels-service /etc/nginx/sites-enabled/
+
+# 기본 사이트 비활성화 (포트 충돌 방지)
+sudo rm -f /etc/nginx/sites-enabled/default
+
+# 설정 테스트
+sudo nginx -t
+
+# Nginx 재시작
+sudo systemctl restart nginx
+```
+
+## 6. 서비스 시작
+
+```bash
+# React 개발 서버 시작 (포트 3000)
+cd /zstus/frontend
+npm start
+
+# FastAPI 서버 시작 (포트 8080)
+cd /zstus/backend
+source venv/bin/activate
+python main.py
+
+# 또는 백그라운드 실행
+nohup python main.py > api.log 2>&1 &
+```
+
+## 7. 방화벽 설정 (필요시)
+
+```bash
+sudo ufw allow 8097
+sudo ufw allow 3000
+sudo ufw allow 8080
+```
+
+## 8. systemd 서비스 설정 (선택사항)
+
+FastAPI 서비스 자동 시작을 위한 설정:
+
+/etc/systemd/system/reels-api.service:
+```ini
+[Unit]
+Description=Reels Video Generator API
+After=network.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/zstus/backend
+Environment=PATH=/zstus/backend/venv/bin
+ExecStart=/zstus/backend/venv/bin/python main.py
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target
+```
+
+React 서비스:
+
+/etc/systemd/system/reels-frontend.service:
+```ini
+[Unit]
+Description=Reels React Frontend
+After=network.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/zstus/frontend
+Environment=NODE_ENV=production
+ExecStart=/usr/bin/npm start
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target
+```
+
+서비스 활성화:
+```bash
+sudo systemctl enable reels-api
+sudo systemctl enable reels-frontend
+sudo systemctl start reels-api
+sudo systemctl start reels-frontend
+```
+
+## 9. 서비스 접근 URL
+
+- **프론트엔드**: http://zstus.synology.me:8097/
+- **API 엔드포인트**: http://zstus.synology.me:8097/api/
+- **영상 다운로드**: http://zstus.synology.me:8097/videos/{filename}
+- **BGM 파일**: http://zstus.synology.me:8097/bgm/{mood}/{filename}
+
+## 10. 테스트
+
+```bash
+# 프론트엔드 접근 테스트
+curl http://zstus.synology.me:8097/
+
+# API 테스트
+curl http://zstus.synology.me:8097/api/
+
+# BGM 목록 테스트 (스크립트로 확인 가능)
+ls /zstus/backend/bgm/bright/
+```
+
+## 주의사항
+
+1. React 개발 서버는 기본적으로 localhost에서만 접근 가능하므로, 외부 접근을 위해 package.json의 scripts 수정이 필요할 수 있습니다.
+2. 프로덕션 환경에서는 React 빌드 후 정적 파일로 서빙하는 것이 좋습니다.
+3. SSL 인증서가 있다면 HTTPS 설정을 추가하세요.
+4. 파일 업로드 크기 제한을 환경에 맞게 조정하세요.
+
+이 가이드대로 설정하시면 http://zstus.synology.me:8097/로 React 프론트엔드에 접근하고, /api/ 경로로 FastAPI와 통신할 수 있습니다.

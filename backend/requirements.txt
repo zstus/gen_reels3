@@ -1,0 +1,13 @@
+fastapi==0.104.1
+uvicorn==0.24.0
+python-multipart==0.0.6
+pillow==9.5.0
+moviepy==1.0.3
+requests==2.31.0
+pydantic==2.5.0
+gtts==2.5.1
+naver-clova-tts==0.1.0
+beautifulsoup4==4.12.2
+lxml==4.9.3
+openai>=1.50.0
+python-dotenv==1.0.0

@@ -1,0 +1,157 @@
+#!/bin/bash
+# Git 설정 및 GitHub 동기화 가이드
+# Ubuntu 서버에서 실행할 명령어들
+
+echo "=== Git 및 GitHub 설정 가이드 ==="
+
+# 1. Git 설치 (Ubuntu)
+echo "1. Git 설치..."
+sudo apt update
+sudo apt install git -y
+
+# 2. Git 사용자 정보 설정 (개인 정보로 변경 필요)
+echo "2. Git 사용자 정보 설정..."
+git config --global user.name "Your Name"
+git config --global user.email "your.email@example.com"
+
+# 3. 프로젝트 디렉토리로 이동
+echo "3. 프로젝트 디렉토리 확인..."
+cd /zstus/backend
+pwd
+
+# 4. Git 저장소 초기화
+echo "4. Git 저장소 초기화..."
+git init
+
+# 5. .gitignore 파일 생성 (Python 프로젝트용)
+echo "5. .gitignore 파일 생성..."
+cat > .gitignore << 'EOF'
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual Environment
+venv/
+env/
+ENV/
+
+# Environment variables
+.env
+.env.local
+.env.production
+
+# Output files
+output_videos/
+uploads/
+temp/
+
+# System files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Logs
+*.log
+logs/
+EOF
+
+# 6. 파일 추가
+echo "6. 파일들을 Git에 추가..."
+git add .
+git status
+
+# 7. 첫 번째 커밋
+echo "7. 첫 번째 커밋 생성..."
+git commit -m "Initial commit: Korean Reels Video Generator API
+
+- FastAPI server with video generation capability
+- MoviePy integration for video processing
+- Korean TTS support with gTTS
+- Local image support with Ken Burns effect
+- Background music integration
+- 414x896 smartphone resolution optimization"
+
+# 8. GitHub 저장소 생성 (GitHub CLI 필요)
+echo "8. GitHub CLI 설치 및 저장소 생성..."
+# GitHub CLI 설치 (Ubuntu)
+curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | sudo dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg
+echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | sudo tee /etc/apt/sources.list.d/github-cli.list > /dev/null
+sudo apt update
+sudo apt install gh -y
+
+# GitHub 로그인
+echo "GitHub에 로그인하세요..."
+gh auth login
+
+# GitHub 저장소 생성
+echo "GitHub 저장소 생성..."
+gh repo create ubt_genReels --public --description "Korean Reels Video Generator - FastAPI server that converts JSON content to vertical video reels with Korean TTS and music"
+
+# 9. 원격 저장소 연결
+echo "9. 원격 저장소 연결..."
+git remote add origin https://github.com/zstus/gen_reels.git
+
+# 10. 첫 번째 푸시
+echo "10. GitHub에 첫 번째 푸시..."
+git branch -M main
+git push -u origin main
+
+# 11. 향후 작업을 위한 브랜치 생성
+echo "11. 개발 브랜치 생성..."
+git checkout -b develop
+git push -u origin develop
+
+echo ""
+echo "=== Git 설정 완료! ==="
+echo "✅ Git 저장소 초기화됨"
+echo "✅ GitHub 저장소 생성됨"
+echo "✅ 원격 저장소 연결됨"
+echo "✅ 첫 번째 커밋 및 푸시 완료"
+echo "✅ 개발 브랜치(develop) 준비됨"
+echo ""
+echo "📝 앞으로 작업 방법:"
+echo "   git add ."
+echo "   git commit -m '작업 내용'"" 
+echo "   git push"
+echo ""
+echo "📝 새로운 기능 작업시:"
+echo "   git checkout -b feature/기능명"
+echo "   git push -u origin feature/기능명"
+echo ""
+echo "📝 메인 브랜치 업데이트시:"
+echo "   git checkout main"
+echo "   git merge develop"
+echo "   git push"
+
+# === 개인 정보 변경 가이드 ===
+echo ""
+echo "⚠️  중요: 다음 정보를 개인 정보로 변경하세요:"
+echo "   - user.name: 'Your Name' → 실제 이름"
+echo "   - user.email: 'your.email@example.com' → 실제 이메일"
+echo ""
+echo "💡 변경 방법:"
+echo "   git config --global user.name '실제이름'"
+echo "   git config --global user.email 'email@domain.com'"

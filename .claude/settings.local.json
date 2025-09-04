@@ -1,0 +1,27 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(///**)",
+      "Bash(pip3:*)",
+      "Bash(python3:*)",
+      "WebSearch",
+      "Bash(chmod:*)",
+      "Bash(./test_local_auto.sh:*)",
+      "Bash(curl:*)",
+      "Bash(./test_local_files.sh:*)",
+      "Bash(find:*)",
+      "Bash(./test_simple.sh:*)",
+      "Bash(./test_offline_simple.sh:*)",
+      "Bash(./test_offline_simple.sh:*)",
+      "mcp__sequential-thinking__sequentialthinking",
+      "Bash(python:*)",
+      "Bash(npm start)",
+      "Bash(npm run build:*)",
+      "Bash(npx tsc:*)",
+      "mcp__context7__resolve-library-id",
+      "mcp__context7__get-library-docs"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

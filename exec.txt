@@ -1,0 +1,226 @@
+=== 릴스 영상 생성 서비스 설치 매뉴얼 ===
+
+이 매뉴얼은 Ubuntu 서버에서 릴스 영상 생성 서비스를 설치하는 단계별 가이드입니다.
+
+=== 1. 시스템 업데이트 및 기본 패키지 설치 ===
+
+# 패키지 목록 업데이트
+sudo apt update
+
+# 시스템 업그레이드
+sudo apt upgrade -y
+
+# 필수 개발 도구 및 라이브러리 설치
+sudo apt install -y build-essential curl wget git
+
+# Python3 및 pip 설치
+sudo apt install -y python3 python3-pip python3-venv
+
+# 멀티미디어 처리를 위한 FFmpeg 설치
+sudo apt install -y ffmpeg
+
+# 이미지 처리를 위한 라이브러리 설치
+sudo apt install -y libjpeg-dev libpng-dev libtiff-dev libwebp-dev
+
+# 폰트 관련 패키지 설치 (이모지 폰트 포함)
+sudo apt install -y fonts-dejavu-core fonts-dejavu-extra fonts-noto-color-emoji
+
+# 시스템 라이브러리 설치
+sudo apt install -y libffi-dev libssl-dev
+
+=== 2. 프로젝트 디렉토리로 이동 ===
+
+cd /zstus
+
+=== 3. Python 가상환경 설정 ===
+
+# backend 폴더로 이동
+cd backend
+
+# 중요: 맥에서 생성된 venv 폴더가 있다면 반드시 삭제
+rm -rf venv
+
+# 가상환경 생성
+python3 -m venv venv
+
+# 가상환경 활성화
+source venv/bin/activate
+
+# pip 업그레이드
+pip install --upgrade pip
+
+# 프로젝트 의존성 설치
+pip install -r requirements.txt
+
+=== 4. 필요한 폴더 생성 ===
+
+# 영상 출력 폴더 생성
+mkdir -p output_videos
+
+# 업로드 파일 임시 저장 폴더 생성
+mkdir -p uploads
+
+=== 5. TTS API 설정 (권장: Azure 무료) ===
+
+# 옵션 1: Microsoft Azure Speech Services (권장 - 월 50만 글자 무료)
+# 1. https://portal.azure.com 에서 Azure 계정 생성
+# 2. 리소스 만들기 > AI + Machine Learning > Speech Services
+# 3. 리소스 생성 후 키와 지역 정보 복사
+
+# 옵션 2: 네이버 Clova Voice API (유료)
+# 1. https://www.ncloud.com 회원가입
+# 2. AI Service > Clova Voice 신청
+# 3. API 키 발급 받기
+
+# 환경변수 설정
+cd /zstus/backend
+cp .env.example .env
+# .env 파일 편집하여 실제 API 키 입력
+nano .env
+
+# Azure 설정 예시:
+# AZURE_SPEECH_KEY=abc123def456...
+# AZURE_SPEECH_REGION=koreacentral
+
+# 환경변수 로드
+source .env
+
+=== 6. 서비스 실행 테스트 ===
+
+# 환경변수 로드 후 서버 실행
+source .env
+python main.py
+
+# 또는 uvicorn으로 실행 (80포트 사용)
+source .env && uvicorn main:app --host 0.0.0.0 --port 80
+
+# 브라우저나 curl로 테스트
+# http://서버IP 접속하여 {"message": "Reels Video Generator API"} 메시지 확인
+
+=== 7. 백그라운드 서비스 설정 (선택사항) ===
+
+# screen 설치 (백그라운드 실행용)
+sudo apt install -y screen
+
+# screen 세션 시작
+screen -S reels-api
+
+# 가상환경 활성화
+cd /zstus/backend
+source venv/bin/activate
+
+# 서비스 실행 (80포트)
+uvicorn main:app --host 0.0.0.0 --port 80
+
+# Ctrl+A, D로 screen 세션에서 detach
+
+# screen 세션 목록 확인
+screen -ls
+
+# screen 세션에 다시 attach
+screen -r reels-api
+
+=== 8. systemd 서비스 설정 (영구 서비스용) ===
+
+# 서비스 파일 생성
+sudo nano /etc/systemd/system/reels-api.service
+
+# 아래 내용을 파일에 입력:
+[Unit]
+Description=Reels Video Generator API
+After=network.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/zstus/backend
+Environment=PATH=/zstus/backend/venv/bin
+EnvironmentFile=-/zstus/backend/.env
+ExecStart=/zstus/backend/venv/bin/uvicorn main:app --host 0.0.0.0 --port 80
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+
+# 서비스 활성화
+sudo systemctl daemon-reload
+sudo systemctl enable reels-api.service
+sudo systemctl start reels-api.service
+
+# 서비스 상태 확인
+sudo systemctl status reels-api.service
+
+=== 8. 방화벽 설정 ===
+
+# ufw 설치 및 활성화
+sudo apt install -y ufw
+sudo ufw enable
+
+# 80번 포트 열기
+sudo ufw allow 80
+
+# 방화벽 상태 확인
+sudo ufw status
+
+=== 9. API 사용 예시 ===
+
+# curl을 이용한 테스트 요청 예시:
+curl -X POST "http://localhost/generate-video" \
+-F "content_data='{\"title\": \"테스트 제목\", \"body1\": \"첫 번째 내용\", \"body2\": \"두 번째 내용\"}'" \
+-F "background_music=@/path/to/music.mp3" \
+-F "image_url=https://example.com/image.jpg"
+
+=== 10. 로그 확인 ===
+
+# systemd 서비스 로그 확인
+sudo journalctl -u reels-api.service -f
+
+# 일반 로그 파일 확인 (screen 사용시)
+tail -f /var/log/syslog
+
+=== 문제 해결 ===
+
+1. 가상환경 충돌 문제:
+   - 에러: "Unable to symlink '/usr/bin/python3'"
+   - 원인: 맥에서 생성된 venv와의 아키텍처 충돌 (ARM64/Intel vs Linux x86_64)
+   - 해결: rm -rf venv && python3 -m venv venv
+   - 중요: 반드시 기존 venv 폴더를 완전히 삭제 후 재생성
+
+2. 가상환경 일반 문제:
+   - venv 폴더가 제대로 생성되지 않은 경우: python3 -m venv venv --clear
+
+3. 패키지 설치 문제:
+   - pip install 실패시: pip install --upgrade pip 후 재시도
+   - 권한 문제시: pip install --user 옵션 사용
+
+4. FFmpeg 문제:
+   - moviepy에서 FFmpeg을 찾지 못하는 경우: which ffmpeg 확인 후 PATH 설정
+   - FFmpeg 재설치: sudo apt remove ffmpeg && sudo apt install ffmpeg
+
+5. 폰트 문제:
+   - 폰트를 찾지 못하는 경우: fc-list 명령으로 설치된 폰트 확인
+   - 추가 폰트 설치: sudo apt install fonts-noto-cjk
+   - 이모지 표시 안됨: sudo apt install fonts-noto-color-emoji
+
+6. 권한 문제:
+   - 파일 생성/읽기 오류시: chmod 755 /zstus -R
+   - Docker 볼륨 마운트 문제시: chown -R root:root /zstus
+
+7. Docker 특정 문제:
+   - 컨테이너 내부에서 systemd 서비스가 작동하지 않을 수 있음
+   - 이 경우 screen이나 직접 실행 방식 사용 권장
+
+=== 주의사항 ===
+
+- 서버 재부팅시 systemd 서비스는 자동으로 시작되지만, screen 세션은 수동으로 재시작해야 합니다.
+- output_videos 폴더의 용량을 정기적으로 확인하여 디스크 공간을 관리하세요.
+- 보안을 위해 실제 운영환경에서는 nginx나 apache와 함께 reverse proxy 설정을 권장합니다.
+
+=== 완료 확인 ===
+
+설치가 완료되면:
+1. http://서버IP 접속하여 API 응답 확인
+2. http://서버IP/docs 접속하여 Swagger UI 확인
+3. 테스트 API 호출로 영상 생성 기능 확인
+
+문제가 발생하면 로그를 확인하고 위의 문제 해결 섹션을 참고하세요.
