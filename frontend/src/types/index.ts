@@ -25,6 +25,9 @@ export type ImageUploadMode = 'per-script' | 'per-two-scripts';
 // 텍스트 위치 타입
 export type TextPosition = 'top' | 'middle' | 'bottom';
 
+// 텍스트 스타일 타입
+export type TextStyle = 'outline' | 'background';
+
 // 음악 성격 타입
 export type MusicMood = 'bright' | 'calm' | 'romantic' | 'sad' | 'suspense';
 
@@ -49,6 +52,7 @@ export interface ProjectData {
   images: File[]; // 이미지 및 비디오 파일들 (이름은 호환성을 위해 유지)
   imageUploadMode: ImageUploadMode;
   textPosition: TextPosition;
+  textStyle: TextStyle;
   selectedMusic: MusicFile | null;
   musicMood: MusicMood;
 }
@@ -71,6 +75,7 @@ export interface GenerateVideoRequest {
   selected_bgm_path?: string;
   image_allocation_mode: ImageUploadMode;
   text_position: TextPosition;
+  text_style: TextStyle;
 }
 
 // 영상 생성 상태 타입

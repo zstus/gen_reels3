@@ -298,7 +298,7 @@ class VideoGenerator:
         current_time = 0.0
         
         for body_key, body_text, tts_path, clip_duration in group_segments:
-            text_image_path = self.create_text_image(body_text, self.video_width, self.video_height - 180, text_position)
+            text_image_path = self.create_text_image(body_text, self.video_width, self.video_height - 180, text_position, text_style)
             text_clip = ImageClip(text_image_path).set_start(current_time).set_duration(clip_duration).set_position((0, 180))
             text_clips.append(text_clip)
             current_time += clip_duration
@@ -332,7 +332,7 @@ class VideoGenerator:
         current_time = 0.0
         
         for body_key, body_text, tts_path, clip_duration in group_segments:
-            text_image_path = self.create_text_image(body_text, self.video_width, self.video_height - 180, text_position)
+            text_image_path = self.create_text_image(body_text, self.video_width, self.video_height - 180, text_position, text_style)
             text_clip = ImageClip(text_image_path).set_start(current_time).set_duration(clip_duration).set_position((0, 180))
             text_clips.append(text_clip)
             current_time += clip_duration
@@ -346,7 +346,7 @@ class VideoGenerator:
         
         return group_final
     
-    def create_text_image(self, text, width, height, text_position="bottom"):
+    def create_text_image(self, text, width, height, text_position="bottom", text_style="outline"):
         """텍스트 이미지 생성 (배경 박스 포함)"""
         # 투명 배경 이미지 생성
         img = Image.new('RGBA', (width, height), color=(0, 0, 0, 0))
@@ -385,17 +385,29 @@ class VideoGenerator:
         total_height = len(lines) * line_height
         padding = 20  # 패딩 조정
         
-        # 텍스트 위치 계산 (박스 없이)
+        # 텍스트 위치 계산 (body 자막 영역 4등분 방식)
+        # 전체 높이: 896px, 타이틀 영역: 180px, body 자막 영역: 716px
+        # body 영역을 4등분: 179px씩 4개 영역, 위에서 3개만 사용
+        
+        title_height = 180  # 타이틀 영역 높이 (고정)
+        body_area_height = height - title_height  # 716px (body 자막 사용 가능 영역)
+        zone_height = body_area_height // 4  # 179px (각 영역 높이)
+        
         if text_position == "top":
-            # 상: 타이틀 아래 (10픽셀 간격)
-            title_height = 120  # 타이틀 영역 높이
-            start_y = title_height + 10 + padding
+            # 상: 1번째 영역의 가운데 (180 + 179/2 = 180 + 89.5 ≈ 269px)
+            zone_center_y = title_height + (zone_height // 2)
+            start_y = zone_center_y - (total_height // 2)
         elif text_position == "middle":
-            # 중: 화면 중앙
-            start_y = (height - total_height) // 2
+            # 중: 2번째 영역의 가운데 (180 + 179 + 179/2 = 180 + 268.5 ≈ 448px)
+            zone_center_y = title_height + zone_height + (zone_height // 2)
+            start_y = zone_center_y - (total_height // 2)
         else:  # bottom (기본값)
-            # 하: 화면 하단 (기존 위치보다 더 아래)
-            start_y = height - total_height - 70  # 하단에서 70픽셀 위
+            # 하: 3번째 영역의 가운데 (180 + 179*2 + 179/2 = 180 + 447.5 ≈ 627px)
+            zone_center_y = title_height + (zone_height * 2) + (zone_height // 2)
+            start_y = zone_center_y - (total_height // 2)
+        
+        # 최소값 보장 (타이틀 영역 침범 방지)
+        start_y = max(start_y, title_height + padding)
         
         # 이모지 폰트 준비 (본문 폰트 크기에 맞춤)
         emoji_font_path = self.get_emoji_font()
@@ -406,7 +418,23 @@ class VideoGenerator:
             except:
                 emoji_font = None
         
-        # 텍스트 그리기 (외곽선 효과로 가독성 확보)
+        # text_style에 따른 텍스트 렌더링
+        if text_style == "background":
+            # 반투명 배경 스타일
+            self._render_text_with_background(draw, lines, font, emoji_font, width, start_y, line_height)
+        else:
+            # 외곽선 스타일 (기본값)
+            self._render_text_with_outline(draw, lines, font, emoji_font, width, start_y, line_height)
+        
+        # 임시 파일로 저장
+        temp_file = tempfile.NamedTemporaryFile(delete=False, suffix='.png')
+        img.save(temp_file.name, "PNG")
+        temp_file.close()
+        
+        return temp_file.name
+    
+    def _render_text_with_outline(self, draw, lines, font, emoji_font, width, start_y, line_height):
+        """외곽선 스타일로 텍스트 렌더링 (기존 방식)"""
         for i, line in enumerate(lines):
             bbox = draw.textbbox((0, 0), line, font=font)
             text_width = bbox[2] - bbox[0]
@@ -439,13 +467,41 @@ class VideoGenerator:
                         if dx != 0 or dy != 0:
                             draw.text((x + dx, y + dy), line, font=font, fill='black')
                 draw.text((x, y), line, font=font, fill='white')
+    
+    def _render_text_with_background(self, draw, lines, font, emoji_font, width, start_y, line_height):
+        """반투명 배경 스타일로 텍스트 렌더링"""
+        # 전체 텍스트 영역 크기 계산
+        max_text_width = 0
+        for line in lines:
+            bbox = draw.textbbox((0, 0), line, font=font)
+            text_width = bbox[2] - bbox[0]
+            if text_width > max_text_width:
+                max_text_width = text_width
         
-        # 임시 파일로 저장
-        temp_file = tempfile.NamedTemporaryFile(delete=False, suffix='.png')
-        img.save(temp_file.name, "PNG")
-        temp_file.close()
+        # 배경 박스 크기와 위치 계산
+        padding_x = 20  # 좌우 패딩
+        padding_y = 10  # 상하 패딩
+        background_width = max_text_width + padding_x * 2
+        background_height = len(lines) * line_height + padding_y * 2
         
-        return temp_file.name
+        background_x = (width - background_width) // 2
+        background_y = start_y - padding_y
+        
+        # 반투명 검은 배경 직접 그리기
+        draw.rectangle(
+            [background_x, background_y, background_x + background_width, background_y + background_height],
+            fill=(0, 0, 0, 178)  # 검은색 70% 투명도
+        )
+        
+        # 텍스트 렌더링 (배경 위에 흰색 텍스트)
+        for i, line in enumerate(lines):
+            bbox = draw.textbbox((0, 0), line, font=font)
+            text_width = bbox[2] - bbox[0]
+            x = (width - text_width) // 2
+            y = start_y + i * line_height
+            
+            # 흰색 텍스트 (배경이 있으므로 외곽선 불필요)
+            draw.text((x, y), line, font=font, fill='white')
     
     def crop_to_square(self, image_path):
         """이미지를 중앙 기준 정사각형으로 크롭하여 716x716으로 리사이즈"""
@@ -515,6 +571,10 @@ class VideoGenerator:
             return 4 * p * p * p
         else:
             return 1 - pow(-2 * p + 2, 3) / 2
+    
+    def linear_easing_function(self, p):
+        """일정한 속도의 선형 이징 함수 (패닝 전용)"""
+        return p
 
     def create_background_clip(self, image_path, duration):
         """3가지 Ken Burns 효과 중 랜덤 선택 - 정사각형 크롭 + 패턴 적용"""
@@ -533,48 +593,28 @@ class VideoGenerator:
             # 2가지 패닝 패턴 중 랜덤 선택 (확대 패턴 제거)
             pattern = random.randint(1, 2)
             
-            if duration > 3:
-                if pattern == 1:
-                    # 패턴 1: 좌 → 우 패닝
-                    def left_to_right(t):
-                        progress = self.easing_function(t / duration)  # 부드러운 이징 적용
-                        # 302px 여유공간에서 30px 이동 (3초에 중앙 통과)
-                        mid_point = 3.0 / duration  # 3초 지점
-                        if t / duration <= mid_point:
-                            # 0 → 0.5
-                            q = 0.5 * progress / mid_point
-                        else:
-                            # 0.5 → 1
-                            q = 0.5 + 0.5 * (progress - mid_point) / (1 - mid_point)
-                        x_offset = -(151 - 30 * q)  # 왼쪽에서 오른쪽으로
-                        return (x_offset, title_height)
-                    
-                    bg_clip = bg_clip.set_position(left_to_right)
-                    print(f"🎬 패턴 1: 좌 → 우 패닝 (duration: {duration:.1f}s)")
-                    
-                else:
-                    # 패턴 2: 우 → 좌 패닝
-                    def right_to_left(t):
-                        progress = self.easing_function(t / duration)  # 부드러운 이징 적용
-                        # 302px 여유공간에서 30px 이동 (3초에 중앙 통과)
-                        mid_point = 3.0 / duration  # 3초 지점
-                        if t / duration <= mid_point:
-                            # 1 → 0.5
-                            q = 1 - 0.5 * progress / mid_point
-                        else:
-                            # 0.5 → 0
-                            q = 0.5 - 0.5 * (progress - mid_point) / (1 - mid_point)
-                        x_offset = -(151 - 30 * q)  # 오른쪽에서 왼쪽으로
-                        return (x_offset, title_height)
-                    
-                    bg_clip = bg_clip.set_position(right_to_left)
-                    print(f"🎬 패턴 2: 우 → 좌 패닝 (duration: {duration:.1f}s)")
+            # 모든 클립에 패닝 적용 (3초 미만 포함)
+            if pattern == 1:
+                # 패턴 1: 좌 → 우 패닝 (Linear 이징 + 60px 이동 범위)
+                def left_to_right(t):
+                    progress = self.linear_easing_function(t / duration)  # 일정한 속도
+                    # 302px 여유공간에서 60px 이동 (더 명확한 패닝 효과)
+                    x_offset = -(151 - 60 * progress)  # 왼쪽에서 오른쪽으로 60px 이동
+                    return (x_offset, title_height)
+                
+                bg_clip = bg_clip.set_position(left_to_right)
+                print(f"🎬 패턴 1: 좌 → 우 패닝 (duration: {duration:.1f}s)")
                 
             else:
-                # 짧은 클립은 중앙 고정 (패턴에 관계없이)
-                x_center = (716 - 414) // 2  # 중앙 위치 = 151px
-                bg_clip = bg_clip.set_position((x_center, title_height))
-                print(f"🎬 짧은 클립: 중앙 고정 ({x_center}px)")
+                # 패턴 2: 우 → 좌 패닝 (Linear 이징 + 60px 이동 범위)
+                def right_to_left(t):
+                    progress = self.linear_easing_function(t / duration)  # 일정한 속도
+                    # 302px 여유공간에서 60px 이동 (더 명확한 패닝 효과)
+                    x_offset = -(151 - 60 * (1 - progress))  # 오른쪽에서 왼쪽으로 60px 이동
+                    return (x_offset, title_height)
+                
+                bg_clip = bg_clip.set_position(right_to_left)
+                print(f"🎬 패턴 2: 우 → 좌 패닝 (duration: {duration:.1f}s)")
             
             return bg_clip
                 
@@ -613,39 +653,30 @@ class VideoGenerator:
             # 2가지 패닝 패턴 중 랜덤 선택 (확대 패턴 제거)
             pattern = random.randint(1, 2)
             
-            # 연속성을 고려한 효과 적용
-            if total_duration > 3:
-                if pattern == 1:
-                    # 패턴 1: 연속 좌 → 우 패닝
-                    def continuous_left_to_right(t):
-                        # 시작 오프셋을 고려한 전체 진행도
-                        total_progress = (t + start_offset) / (total_duration + start_offset + 3)
-                        progress = self.easing_function(total_progress)
-                        # 30px 이동 범위에서 연속성 유지
-                        x_offset = -(151 - 30 * progress)
-                        return (x_offset, title_height)
-                    
-                    bg_clip = bg_clip.set_position(continuous_left_to_right)
-                    print(f"🎬 연속 패턴 1: 좌 → 우 패닝")
-                    
-                else:
-                    # 패턴 2: 연속 우 → 좌 패닝
-                    def continuous_right_to_left(t):
-                        # 시작 오프셋을 고려한 전체 진행도
-                        total_progress = (t + start_offset) / (total_duration + start_offset + 3)
-                        progress = self.easing_function(total_progress)
-                        # 30px 이동 범위에서 연속성 유지 (반대 방향)
-                        x_offset = -(151 - 30 * (1 - progress))
-                        return (x_offset, title_height)
-                    
-                    bg_clip = bg_clip.set_position(continuous_right_to_left)
-                    print(f"🎬 연속 패턴 2: 우 → 좌 패닝")
-                    
+            # 모든 연속 클립에 패닝 적용 (3초 미만 포함)
+            if pattern == 1:
+                # 패턴 1: 연속 좌 → 우 패닝 (Linear 이징 + 60px 이동)
+                def continuous_left_to_right(t):
+                    # 전체 지속 시간에 대한 진행도
+                    progress = self.linear_easing_function(t / total_duration)  # 일정한 속도
+                    # 60px 이동 범위로 확대
+                    x_offset = -(151 - 60 * progress)
+                    return (x_offset, title_height)
+                
+                bg_clip = bg_clip.set_position(continuous_left_to_right)
+                print(f"🎬 연속 패턴 1: 좌 → 우 패닝 (duration: {total_duration:.1f}s)")
+                
             else:
-                # 짧은 클립은 중앙 고정
-                x_center = (716 - 414) // 2
-                bg_clip = bg_clip.set_position((x_center, title_height))
-                print(f"🎬 연속 짧은 클립: 중앙 고정 ({x_center}px)")
+                # 패턴 2: 연속 우 → 좌 패닝 (Linear 이징 + 60px 이동)
+                def continuous_right_to_left(t):
+                    # 전체 지속 시간에 대한 진행도
+                    progress = self.linear_easing_function(t / total_duration)  # 일정한 속도
+                    # 60px 이동 범위로 확대 (반대 방향)
+                    x_offset = -(151 - 60 * (1 - progress))
+                    return (x_offset, title_height)
+                
+                bg_clip = bg_clip.set_position(continuous_right_to_left)
+                print(f"🎬 연속 패턴 2: 우 → 좌 패닝 (duration: {total_duration:.1f}s)")
             
             return bg_clip
                 
@@ -830,7 +861,7 @@ class VideoGenerator:
             return None
     
     def create_tts_audio(self, text, lang='ko'):
-        """Google TTS로 최적화된 한국어 음성 생성"""
+        """Google TTS로 최적화된 한국어 음성 생성 - 30% 빠른 속도 적용"""
         try:
             print(f"Google TTS 생성 중: {text[:50]}...")
             
@@ -844,15 +875,232 @@ class VideoGenerator:
                 slow=False,
                 tld='com'   # 구글 도메인 최적화
             )
-            temp_file = tempfile.NamedTemporaryFile(delete=False, suffix='.mp3')
-            tts.save(temp_file.name)
-            temp_file.close()
-            print(f"Google TTS 생성 완료 (최적화): {temp_file.name}")
-            return temp_file.name
+            
+            # 임시 파일에 저장 (원본 속도)
+            original_temp_file = tempfile.NamedTemporaryFile(delete=False, suffix='.mp3')
+            tts.save(original_temp_file.name)
+            original_temp_file.close()
+            print(f"Google TTS 원본 생성 완료: {original_temp_file.name}")
+            
+            # 40% 빠르게 속도 조정
+            speed_adjusted_file = self.speed_up_audio(original_temp_file.name, speed_factor=1.4)
+            
+            # 속도 조정이 실패하면 원본 파일 사용, 성공하면 원본 파일만 정리
+            if speed_adjusted_file != original_temp_file.name and os.path.exists(speed_adjusted_file):
+                # 속도 조정 성공: 새로운 파일이 생성됨, 원본 파일만 정리
+                if os.path.exists(original_temp_file.name):
+                    os.unlink(original_temp_file.name)
+                    print(f"🗑️ 원본 TTS 파일 정리: {original_temp_file.name}")
+                print(f"Google TTS 생성 완료 (40% 고속화): {speed_adjusted_file}")
+            else:
+                # 속도 조정 실패: 원본 파일 그대로 사용 (삭제하지 않음)
+                print(f"Google TTS 생성 완료 (원본 속도): {speed_adjusted_file}")
+            
+            return speed_adjusted_file
             
         except Exception as e:
             print(f"TTS 생성 실패: {e}")
             return None
+    
+    def speed_up_audio(self, audio_path, speed_factor=1.4):
+        """고급 오디오 속도 조정 (다중 알고리즘 지원)"""
+        try:
+            print(f"🎵 고급 오디오 속도 조정 시작: {speed_factor}x 속도")
+            
+            # 방법 1: FFmpeg 직접 사용 (가장 안정적)
+            try:
+                return self._speed_up_with_ffmpeg(audio_path, speed_factor)
+            except Exception as e:
+                print(f"⚠️ FFmpeg 방법 실패: {e}")
+            
+            # 방법 2: MoviePy 다중 방식
+            try:
+                return self._speed_up_with_moviepy(audio_path, speed_factor)
+            except Exception as e:
+                print(f"⚠️ MoviePy 방법 실패: {e}")
+            
+            # 방법 3: Pydub 사용
+            try:
+                return self._speed_up_with_pydub(audio_path, speed_factor)
+            except Exception as e:
+                print(f"⚠️ Pydub 방법 실패: {e}")
+            
+            # 방법 4: 샘플링 기반 간단한 속도 조정
+            try:
+                return self._speed_up_with_sampling(audio_path, speed_factor)
+            except Exception as e:
+                print(f"⚠️ 샘플링 방법 실패: {e}")
+            
+            print(f"❌ 모든 속도 조정 방법 실패, 원본 파일 사용: {audio_path}")
+            return audio_path
+            
+        except Exception as e:
+            print(f"❌ 오디오 속도 조정 전체 실패: {e}")
+            return audio_path
+
+    def _speed_up_with_ffmpeg(self, audio_path, speed_factor):
+        """방법 1: FFmpeg를 직접 사용한 고품질 속도 조정"""
+        print(f"🔧 FFmpeg 방식 속도 조정 시도...")
+        
+        import subprocess
+        import shutil
+        
+        # FFmpeg 설치 확인
+        if not shutil.which('ffmpeg'):
+            raise Exception("FFmpeg가 설치되지 않았습니다")
+        
+        # 출력 파일 생성
+        speed_adjusted_file = tempfile.NamedTemporaryFile(delete=False, suffix='.mp3')
+        speed_adjusted_file.close()
+        
+        # FFmpeg 명령어로 속도 조정 (atempo 필터 사용)
+        # atempo는 피치 변경 없이 속도만 조정 (최대 2.0배까지)
+        if speed_factor <= 2.0:
+            atempo_filter = f"atempo={speed_factor}"
+        else:
+            # 2.0배 초과시 여러 단계로 나눔
+            atempo_filter = "atempo=2.0,atempo=" + str(speed_factor / 2.0)
+        
+        cmd = [
+            'ffmpeg', '-y',  # 덮어쓰기 허용
+            '-i', audio_path,
+            '-filter:a', atempo_filter,
+            '-loglevel', 'error',  # 에러만 출력
+            speed_adjusted_file.name
+        ]
+        
+        result = subprocess.run(cmd, capture_output=True, text=True)
+        
+        if result.returncode == 0:
+            print(f"✅ FFmpeg 속도 조정 성공: {speed_factor}x")
+            return speed_adjusted_file.name
+        else:
+            raise Exception(f"FFmpeg 실행 실패: {result.stderr}")
+    
+    def _speed_up_with_moviepy(self, audio_path, speed_factor):
+        """방법 2: MoviePy 다중 방식 시도"""
+        print(f"🎬 MoviePy 방식 속도 조정 시도...")
+        
+        from moviepy.editor import AudioFileClip
+        
+        audio_clip = AudioFileClip(audio_path)
+        original_duration = audio_clip.duration
+        
+        # 시도 1: speedx import
+        try:
+            from moviepy.audio.fx import speedx
+            speed_adjusted_clip = audio_clip.fx(speedx.speedx, speed_factor)
+        except ImportError:
+            try:
+                from moviepy.audio.fx.speedx import speedx
+                speed_adjusted_clip = audio_clip.fx(speedx, speed_factor)
+            except ImportError:
+                # 시도 2: 직접 시간 매핑
+                print("📐 직접 시간 매핑으로 속도 조정...")
+                def speed_function(get_frame, t):
+                    return get_frame(t * speed_factor)
+                
+                speed_adjusted_clip = audio_clip.fl(speed_function, apply_to=['mask'])
+                speed_adjusted_clip = speed_adjusted_clip.set_duration(audio_clip.duration / speed_factor)
+        
+        new_duration = speed_adjusted_clip.duration
+        
+        # 파일 저장
+        speed_adjusted_file = tempfile.NamedTemporaryFile(delete=False, suffix='.mp3')
+        speed_adjusted_clip.write_audiofile(
+            speed_adjusted_file.name, 
+            verbose=False, 
+            logger=None,
+            temp_audiofile=None  # 임시 파일 경로 문제 방지
+        )
+        speed_adjusted_file.close()
+        
+        # 리소스 해제
+        audio_clip.close()
+        speed_adjusted_clip.close()
+        
+        print(f"✅ MoviePy 속도 조정 완료: {original_duration:.1f}초 → {new_duration:.1f}초")
+        return speed_adjusted_file.name
+    
+    def _speed_up_with_pydub(self, audio_path, speed_factor):
+        """방법 3: Pydub를 사용한 속도 조정"""
+        print(f"🎵 Pydub 방식 속도 조정 시도...")
+        
+        try:
+            from pydub import AudioSegment
+            from pydub.playback import play
+        except ImportError:
+            raise Exception("pydub 라이브러리가 설치되지 않았습니다")
+        
+        # 오디오 로드
+        audio = AudioSegment.from_mp3(audio_path)
+        
+        # 속도 조정 (재생 속도 변경)
+        # frame_rate를 증가시켜 속도를 빠르게 함
+        new_sample_rate = int(audio.frame_rate * speed_factor)
+        speed_adjusted_audio = audio._spawn(audio.raw_data, overrides={"frame_rate": new_sample_rate})
+        speed_adjusted_audio = speed_adjusted_audio.set_frame_rate(audio.frame_rate)
+        
+        # 파일 저장
+        speed_adjusted_file = tempfile.NamedTemporaryFile(delete=False, suffix='.mp3')
+        speed_adjusted_audio.export(speed_adjusted_file.name, format="mp3")
+        speed_adjusted_file.close()
+        
+        print(f"✅ Pydub 속도 조정 완료: {len(audio)}ms → {len(speed_adjusted_audio)}ms")
+        return speed_adjusted_file.name
+    
+    def _speed_up_with_sampling(self, audio_path, speed_factor):
+        """방법 4: 간단한 샘플링 기반 속도 조정"""
+        print(f"📊 샘플링 방식 속도 조정 시도...")
+        
+        try:
+            import numpy as np
+            import wave
+        except ImportError:
+            raise Exception("numpy 라이브러리가 필요합니다")
+        
+        # WAV로 먼저 변환 (필요한 경우)
+        from moviepy.editor import AudioFileClip
+        temp_wav = tempfile.NamedTemporaryFile(delete=False, suffix='.wav')
+        temp_wav.close()
+        
+        audio_clip = AudioFileClip(audio_path)
+        audio_clip.write_audiofile(temp_wav.name, verbose=False, logger=None)
+        audio_clip.close()
+        
+        # WAV 파일 읽기
+        with wave.open(temp_wav.name, 'rb') as wav_file:
+            frames = wav_file.readframes(-1)
+            sound_info = wav_file.getparams()
+            audio_data = np.frombuffer(frames, dtype=np.int16)
+        
+        # 샘플링으로 속도 조정 (간단한 방법)
+        step = int(1 / speed_factor * len(audio_data))
+        if step > 0:
+            speed_adjusted_data = audio_data[::int(1/speed_factor)]
+        else:
+            speed_adjusted_data = audio_data
+        
+        # 새로운 WAV 파일 생성
+        speed_adjusted_wav = tempfile.NamedTemporaryFile(delete=False, suffix='.wav')
+        with wave.open(speed_adjusted_wav.name, 'wb') as new_wav:
+            new_wav.setparams(sound_info)
+            new_wav.writeframes(speed_adjusted_data.tobytes())
+        speed_adjusted_wav.close()
+        
+        # MP3로 변환
+        speed_adjusted_file = tempfile.NamedTemporaryFile(delete=False, suffix='.mp3')
+        converted_clip = AudioFileClip(speed_adjusted_wav.name)
+        converted_clip.write_audiofile(speed_adjusted_file.name, verbose=False, logger=None)
+        converted_clip.close()
+        speed_adjusted_file.close()
+        
+        # 임시 파일 정리
+        os.unlink(temp_wav.name)
+        os.unlink(speed_adjusted_wav.name)
+        
+        print(f"✅ 샘플링 속도 조정 완료")
+        return speed_adjusted_file.name
     
     def preprocess_korean_text(self, text):
         """한국어 TTS 품질 향상을 위한 텍스트 전처리 (간단 버전)"""
@@ -934,7 +1182,7 @@ class VideoGenerator:
         
         return image_files
     
-    def create_video_with_local_images(self, content, music_path, output_folder, image_allocation_mode="2_per_image", text_position="bottom"):
+    def create_video_with_local_images(self, content, music_path, output_folder, image_allocation_mode="2_per_image", text_position="bottom", text_style="outline"):
         """로컬 이미지 파일들을 사용한 릴스 영상 생성"""
         try:
             # 로컬 이미지 파일들 가져오기
@@ -1006,7 +1254,7 @@ class VideoGenerator:
                     title_clip = ImageClip(title_image_path).set_duration(body_duration).set_position((0, 0))
                     
                     # 텍스트 클립
-                    text_image_path = self.create_text_image(content[body_key], self.video_width, self.video_height - 180, text_position)
+                    text_image_path = self.create_text_image(content[body_key], self.video_width, self.video_height - 180, text_position, text_style)
                     text_clip = ImageClip(text_image_path).set_duration(body_duration).set_position((0, 180))
                     
                     # 개별 클립 합성
@@ -1062,7 +1310,7 @@ class VideoGenerator:
                     text_clips = []
                     current_time = 0.0
                     for body_key, body_text, tts_path, duration in group_tts_info:
-                        text_image_path = self.create_text_image(body_text, self.video_width, self.video_height - 180, text_position)
+                        text_image_path = self.create_text_image(body_text, self.video_width, self.video_height - 180, text_position, text_style)
                         text_clip = ImageClip(text_image_path).set_start(current_time).set_duration(duration).set_position((0, 180))
                         text_clips.append(text_clip)
                         print(f"      {body_key}: {current_time:.1f}~{current_time + duration:.1f}초")
@@ -1123,7 +1371,7 @@ class VideoGenerator:
         except Exception as e:
             raise Exception(f"로컬 이미지 영상 생성 실패: {str(e)}")
     
-    def create_video(self, content, image_urls, music_path, output_folder, image_allocation_mode="2_per_image"):
+    def create_video(self, content, image_urls, music_path, output_folder, image_allocation_mode="2_per_image", text_position="bottom", text_style="outline"):
         """릴스 영상 생성 (414x896 해상도, 여러 이미지 지원)"""
         try:
             # 여러 이미지 다운로드
@@ -1196,7 +1444,7 @@ class VideoGenerator:
                     black_top = ColorClip(size=(self.video_width, 180), color=(0,0,0)).set_duration(clip_duration).set_position((0, 0))
                     title_clip = ImageClip(title_image_path).set_duration(clip_duration).set_position((0, 0))
                     
-                    text_image_path = self.create_text_image(content[body_key], self.video_width, self.video_height - 180, text_position)
+                    text_image_path = self.create_text_image(content[body_key], self.video_width, self.video_height - 180, text_position, text_style)
                     text_clip = ImageClip(text_image_path).set_duration(clip_duration).set_position((0, 180))
                     
                     # 개별 클립 합성
@@ -1239,7 +1487,7 @@ class VideoGenerator:
                     black_top = ColorClip(size=(self.video_width, 180), color=(0,0,0)).set_duration(clip_duration).set_position((0, 0))
                     title_clip = ImageClip(title_image_path).set_duration(clip_duration).set_position((0, 0))
                     
-                    text_image_path = self.create_text_image(content[body_key], self.video_width, self.video_height - 180, text_position)
+                    text_image_path = self.create_text_image(content[body_key], self.video_width, self.video_height - 180, text_position, text_style)
                     text_clip = ImageClip(text_image_path).set_duration(clip_duration).set_position((0, 180))
                     
                     # 클립 합성
@@ -1385,7 +1633,7 @@ class VideoGenerator:
         
         return scan_result
     
-    def create_video_from_uploads(self, output_folder, bgm_file_path=None, image_allocation_mode="2_per_image", text_position="bottom", uploads_folder="uploads"):
+    def create_video_from_uploads(self, output_folder, bgm_file_path=None, image_allocation_mode="2_per_image", text_position="bottom", text_style="outline", uploads_folder="uploads"):
         """uploads 폴더의 파일들을 사용하여 영상 생성 (기존 메서드 재사용)"""
         try:
             print("🚀 uploads 폴더 기반 영상 생성 시작")
@@ -1417,8 +1665,8 @@ class VideoGenerator:
             # 스캔된 이미지 파일들로 로컬 이미지 리스트 대체
             self._temp_local_images = scan_result['image_files']
             
-            # 기존 메서드 호출 (이미지 할당 모드, 텍스트 위치 전달)
-            return self.create_video_with_local_images(content, music_path, output_folder, image_allocation_mode, text_position)
+            # 기존 메서드 호출 (이미지 할당 모드, 텍스트 위치, 텍스트 스타일 전달)
+            return self.create_video_with_local_images(content, music_path, output_folder, image_allocation_mode, text_position, text_style)
             
         except Exception as e:
             raise Exception(f"uploads 폴더 기반 영상 생성 실패: {str(e)}")

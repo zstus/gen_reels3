@@ -20,7 +20,7 @@ import ContentStep from '../components/ContentStep';
 import ImageStep from '../components/ImageStep';
 import MusicStep from '../components/MusicStep';
 import GenerateStep from '../components/GenerateStep';
-import { ProjectData, ReelsContent, MusicMood, ImageUploadMode, MusicFile, TextPosition } from '../types';
+import { ProjectData, ReelsContent, MusicMood, ImageUploadMode, MusicFile, TextPosition, TextStyle } from '../types';
 
 const steps = [
   '릴스 대본 작성',
@@ -50,6 +50,7 @@ const MainApp: React.FC = () => {
     images: [],
     imageUploadMode: 'per-two-scripts',
     textPosition: 'bottom',
+    textStyle: 'outline',
     selectedMusic: null,
     musicMood: 'bright',
   });
@@ -79,6 +80,7 @@ const MainApp: React.FC = () => {
       images: [],
       imageUploadMode: 'per-two-scripts',
       textPosition: 'bottom',
+      textStyle: 'outline',
       selectedMusic: null,
       musicMood: 'bright',
     });
@@ -108,6 +110,10 @@ const MainApp: React.FC = () => {
     setProjectData(prev => ({ ...prev, textPosition }));
   };
 
+  const handleTextStyleChange = (textStyle: TextStyle) => {
+    setProjectData(prev => ({ ...prev, textStyle }));
+  };
+
   const handleMenuClick = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);
   };
@@ -128,8 +134,10 @@ const MainApp: React.FC = () => {
           <ContentStep
             content={projectData.content}
             textPosition={projectData.textPosition}
+            textStyle={projectData.textStyle}
             onChange={handleContentChange}
             onTextPositionChange={handleTextPositionChange}
+            onTextStyleChange={handleTextStyleChange}
             onNext={handleNext}
           />
         );

@@ -16,8 +16,9 @@ import {
   IconButton,
   Chip,
   LinearProgress,
+  CircularProgress,
 } from '@mui/material';
-import { CloudUpload, Delete, Image as ImageIcon } from '@mui/icons-material';
+import { CloudUpload, Delete, Image as ImageIcon, AutoFixHigh } from '@mui/icons-material';
 import { useDropzone } from 'react-dropzone';
 import { ReelsContent, ImageUploadMode } from '../types';
 
@@ -40,6 +41,8 @@ const ImageStep: React.FC<ImageStepProps> = ({
 }) => {
   const [uploadProgress, setUploadProgress] = useState<{ [key: string]: number }>({});
   const [errors, setErrors] = useState<string[]>([]);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [generationProgress, setGenerationProgress] = useState('');
 
   // 필요한 이미지 개수 계산
   const getRequiredImageCount = () => {
@@ -152,6 +155,85 @@ const ImageStep: React.FC<ImageStepProps> = ({
 
   const canProceed = images.length === requiredImageCount;
 
+  // 자동 이미지 생성 함수
+  const handleAutoGenerate = async (mode: 'per_script' | 'per_two_scripts') => {
+    setIsGenerating(true);
+    setErrors([]);
+    
+    try {
+      // content에서 body 텍스트들 추출
+      const bodyTexts = Object.entries(content)
+        .filter(([key, value]) => key.startsWith('body') && value?.trim())
+        .map(([key, value]) => value.trim());
+      
+      if (bodyTexts.length === 0) {
+        setErrors(['대본 내용이 없습니다. 먼저 대본을 작성해주세요.']);
+        setIsGenerating(false);
+        return;
+      }
+
+      setGenerationProgress('이미지 생성 중...');
+      
+      const response = await fetch('/generate-images', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          texts: bodyTexts,
+          mode: mode
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.detail || ' 이미지 생성에 실패했습니다');
+      }
+
+      const data = await response.json();
+      const imageUrls = data.image_urls;
+
+      setGenerationProgress('이미지 다운로드 중...');
+      
+      // 백엔드에서 저장된 이미지를 다운로드하고 File 객체로 변환
+      const imageFiles = await Promise.all(
+        imageUrls.filter((url: string) => url.trim() !== '').map(async (url: string, index: number) => {
+          // 백엔드와 같은 서버를 사용하므로 상대 경로로 접근
+          const fullUrl = url.startsWith('http') ? url : url;
+          const imageResponse = await fetch(fullUrl);
+          if (!imageResponse.ok) {
+            throw new Error(`이미지 다운로드 실패: ${index + 1}`);
+          }
+          
+          const blob = await imageResponse.blob();
+          const fileName = `generated_image_${index + 1}.png`;
+          return new File([blob], fileName, { type: 'image/png' });
+        })
+      );
+
+      // 기존 이미지에 새로 생성된 이미지들 추가
+      const newImages = [...images, ...imageFiles].slice(0, requiredImageCount);
+      onChange(newImages, imageUploadMode);
+      
+      const successCount = imageFiles.length;
+      const totalRequested = imageUrls.length;
+      
+      if (successCount === totalRequested) {
+        setGenerationProgress('이미지 생성 완료!');
+      } else {
+        setGenerationProgress(`이미지 생성 완료! (${successCount}/${totalRequested}개 성공)`);
+      }
+      
+      setTimeout(() => setGenerationProgress(''), 3000);
+      
+    } catch (error) {
+      console.error('이미지 생성 중 오류:', error);
+      setErrors([error instanceof Error ? error.message : '이미지 생성 중 오류가 발생했습니다']);
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
   return (
     <Box>
       <Typography variant="h4" component="h1" gutterBottom>
@@ -174,36 +256,76 @@ const ImageStep: React.FC<ImageStepProps> = ({
                 value={imageUploadMode}
                 onChange={handleModeChange}
               >
-                <FormControlLabel
-                  value="per-two-scripts"
-                  control={<Radio />}
-                  label={
-                    <Box>
-                      <Typography variant="body1">
-                        대사 2개마다 미디어 1개
-                      </Typography>
-                      <Typography variant="caption" color="text.secondary">
-                        필요 미디어: {Math.ceil(Object.values(content).slice(1).filter(script => script?.trim()).length / 2)}개
-                      </Typography>
-                    </Box>
-                  }
-                />
-                <FormControlLabel
-                  value="per-script"
-                  control={<Radio />}
-                  label={
-                    <Box>
-                      <Typography variant="body1">
-                        대사마다 미디어 1개
-                      </Typography>
-                      <Typography variant="caption" color="text.secondary">
-                        필요 미디어: {Object.values(content).slice(1).filter(script => script?.trim()).length}개
-                      </Typography>
-                    </Box>
-                  }
-                />
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+                  <FormControlLabel
+                    value="per-two-scripts"
+                    control={<Radio />}
+                    label={
+                      <Box>
+                        <Typography variant="body1">
+                          대사 2개마다 미디어 1개
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary">
+                          필요 미디어: {Math.ceil(Object.values(content).slice(1).filter(script => script?.trim()).length / 2)}개
+                        </Typography>
+                      </Box>
+                    }
+                  />
+                  <Button
+                    variant="outlined"
+                    size="small"
+                    startIcon={<AutoFixHigh />}
+                    onClick={() => handleAutoGenerate('per_two_scripts')}
+                    disabled={isGenerating || Object.values(content).slice(1).filter(script => script?.trim()).length === 0}
+                    sx={{ ml: 2, minWidth: 100 }}
+                  >
+                    자동생성
+                  </Button>
+                </Box>
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+                  <FormControlLabel
+                    value="per-script"
+                    control={<Radio />}
+                    label={
+                      <Box>
+                        <Typography variant="body1">
+                          대사마다 미디어 1개
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary">
+                          필요 미디어: {Object.values(content).slice(1).filter(script => script?.trim()).length}개
+                        </Typography>
+                      </Box>
+                    }
+                  />
+                  <Button
+                    variant="outlined"
+                    size="small"
+                    startIcon={<AutoFixHigh />}
+                    onClick={() => handleAutoGenerate('per_script')}
+                    disabled={isGenerating || Object.values(content).slice(1).filter(script => script?.trim()).length === 0}
+                    sx={{ ml: 2, minWidth: 100 }}
+                  >
+                    자동생성
+                  </Button>
+                </Box>
               </RadioGroup>
             </FormControl>
+            
+            {/* 생성 진행 상황 표시 */}
+            {isGenerating && (
+              <Box sx={{ mt: 2, display: 'flex', alignItems: 'center' }}>
+                <CircularProgress size={20} sx={{ mr: 1 }} />
+                <Typography variant="body2" color="primary">
+                  {generationProgress}
+                </Typography>
+              </Box>
+            )}
+            
+            {generationProgress && !isGenerating && (
+              <Alert severity="success" sx={{ mt: 2 }}>
+                {generationProgress}
+              </Alert>
+            )}
           </Paper>
 
           {/* 드래그 앤 드롭 영역 */}

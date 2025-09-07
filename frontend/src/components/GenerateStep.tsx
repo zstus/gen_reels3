@@ -97,6 +97,7 @@ const GenerateStep: React.FC<GenerateStepProps> = ({
         images: projectData.images,
         imageUploadMode: projectData.imageUploadMode,
         textPosition: projectData.textPosition,
+        textStyle: projectData.textStyle,
         musicFile: projectData.selectedMusic || undefined,
         musicMood: projectData.musicMood,
       });
@@ -162,6 +163,9 @@ const GenerateStep: React.FC<GenerateStepProps> = ({
       estimatedDuration,
       imageCount: projectData.images.length,
       imageMode: projectData.imageUploadMode === 'per-script' ? '대사마다 이미지' : '2대사마다 이미지',
+      textPosition: projectData.textPosition === 'top' ? '상단 (타이틀 아래)' : 
+                   projectData.textPosition === 'middle' ? '중앙' : '하단',
+      textStyle: projectData.textStyle === 'outline' ? '외곽선 (배경 투명)' : '반투명 검은 배경',
       musicName: projectData.selectedMusic?.displayName || '기본 음악',
       musicMood: projectData.musicMood,
     };
@@ -205,18 +209,24 @@ const GenerateStep: React.FC<GenerateStepProps> = ({
               </CardContent>
             </Card>
 
-            {/* 이미지 정보 */}
+            {/* 이미지 및 텍스트 정보 */}
             <Card sx={{ mb: 2 }}>
               <CardContent>
                 <Box display="flex" alignItems="center" sx={{ mb: 1 }}>
                   <ImageIcon color="primary" sx={{ mr: 1 }} />
-                  <Typography variant="subtitle2">이미지</Typography>
+                  <Typography variant="subtitle2">미디어 & 텍스트 설정</Typography>
                 </Box>
                 <Typography variant="body2" color="text.secondary">
-                  업로드된 이미지: {summary.imageCount}개
+                  업로드된 미디어: {summary.imageCount}개
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
                   모드: {summary.imageMode}
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  텍스트 위치: {summary.textPosition}
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  자막 스타일: {summary.textStyle}
                 </Typography>
               </CardContent>
             </Card>

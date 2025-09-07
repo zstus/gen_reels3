@@ -26,17 +26,19 @@ import {
   CircularProgress,
 } from '@mui/material';
 import { ExpandMore, Add, Remove, Upload, ContentCopy, Help, Link, AutoAwesome } from '@mui/icons-material';
-import { ReelsContent, TextPosition } from '../types';
+import { ReelsContent, TextPosition, TextStyle } from '../types';
 
 interface ContentStepProps {
   content: ReelsContent;
   textPosition: TextPosition;
+  textStyle: TextStyle;
   onChange: (content: ReelsContent) => void;
   onTextPositionChange: (position: TextPosition) => void;
+  onTextStyleChange: (style: TextStyle) => void;
   onNext: () => void;
 }
 
-const ContentStep: React.FC<ContentStepProps> = ({ content, textPosition, onChange, onTextPositionChange, onNext }) => {
+const ContentStep: React.FC<ContentStepProps> = ({ content, textPosition, textStyle, onChange, onTextPositionChange, onTextStyleChange, onNext }) => {
   const [scriptCount, setScriptCount] = useState(2); // 기본 2개 대사
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [jsonInput, setJsonInput] = useState('');
@@ -397,6 +399,27 @@ const ContentStep: React.FC<ContentStepProps> = ({ content, textPosition, onChan
                   value="bottom"
                   control={<Radio />}
                   label="하 (화면 하단)"
+                />
+              </RadioGroup>
+            </FormControl>
+
+            {/* 텍스트 스타일 선택 */}
+            <FormControl sx={{ mb: 3 }}>
+              <FormLabel component="legend">자막 배경 스타일</FormLabel>
+              <RadioGroup
+                row
+                value={textStyle}
+                onChange={(e) => onTextStyleChange(e.target.value as TextStyle)}
+              >
+                <FormControlLabel
+                  value="outline"
+                  control={<Radio />}
+                  label="외곽선 (배경 투명)"
+                />
+                <FormControlLabel
+                  value="background"
+                  control={<Radio />}
+                  label="반투명 검은 배경"
                 />
               </RadioGroup>
             </FormControl>

@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { ApiResponse, GenerateVideoRequest, MusicFolder, MusicFile, MusicMood, ImageUploadMode, TextPosition } from '../types';
+import { ApiResponse, GenerateVideoRequest, MusicFolder, MusicFile, MusicMood, ImageUploadMode, TextPosition, TextStyle } from '../types';
 
 // API 베이스 URL 설정
 const API_BASE_URL = '/api';
@@ -85,6 +85,7 @@ export const apiService = {
     images: File[];
     imageUploadMode: ImageUploadMode;
     textPosition: TextPosition;
+    textStyle: TextStyle;
     musicFile?: MusicFile;
     musicMood: MusicMood;
     useTestFiles?: boolean;
@@ -102,6 +103,9 @@ export const apiService = {
 
     // 텍스트 위치 추가
     formData.append('text_position', data.textPosition);
+
+    // 텍스트 스타일 추가
+    formData.append('text_style', data.textStyle);
 
     // 선택된 음악 파일 경로 추가
     if (data.musicFile) {
