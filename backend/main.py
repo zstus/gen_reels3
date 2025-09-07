@@ -34,6 +34,15 @@ except ImportError as e:
     print("pip install youtube-transcript-api==0.6.1 로 라이브러리를 설치해주세요.")
     YouTubeTranscriptApi = None
     YOUTUBE_TRANSCRIPT_AVAILABLE = False
+
+try:
+    import aiohttp
+    AIOHTTP_AVAILABLE = True
+except ImportError as e:
+    print(f"aiohttp import 오류: {e}")
+    print("pip install aiohttp==3.9.1 로 라이브러리를 설치해주세요.")
+    aiohttp = None
+    AIOHTTP_AVAILABLE = False
 # Updated with create_simple_group_clip method
 
 # .env 파일 로드
@@ -72,6 +81,12 @@ if OPENAI_AVAILABLE:
     logger.info("OpenAI 라이브러리 import 성공")
 else:
     logger.error("OpenAI 라이브러리 import 실패")
+
+# aiohttp import 상태 로깅
+if AIOHTTP_AVAILABLE:
+    logger.info("aiohttp 라이브러리 import 성공 - 병렬 이미지 처리 가능")
+else:
+    logger.warning("aiohttp 라이브러리 import 실패 - 순차 이미지 처리로 대체됩니다")
 
 # OpenAI API 키 설정 (환경변수에서 로드)
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
@@ -315,15 +330,21 @@ async def get_status():
         "status": "running",
         "features": {
             "openai": OPENAI_AVAILABLE,
-            "youtube_transcript": YOUTUBE_TRANSCRIPT_AVAILABLE
+            "youtube_transcript": YOUTUBE_TRANSCRIPT_AVAILABLE,
+            "aiohttp": AIOHTTP_AVAILABLE
         },
         "message": "Reels Video Generator API is running"
     }
     
+    warnings = []
     if not YOUTUBE_TRANSCRIPT_AVAILABLE:
-        status["warnings"] = [
-            "YouTube transcript API가 사용할 수 없습니다. pip install youtube-transcript-api==0.6.1 로 설치해주세요."
-        ]
+        warnings.append("YouTube transcript API가 사용할 수 없습니다. pip install youtube-transcript-api==0.6.1 로 설치해주세요.")
+    
+    if not AIOHTTP_AVAILABLE:
+        warnings.append("aiohttp 라이브러리가 사용할 수 없습니다. pip install aiohttp==3.9.1 로 설치해주세요. 병렬 이미지 생성이 순차 처리로 대체됩니다.")
+    
+    if warnings:
+        status["warnings"] = warnings
     
     return status
 
@@ -910,8 +931,13 @@ async def generate_images_with_dalle(texts: List[str]) -> List[str]:
     import os
     import uuid
     import asyncio
-    import aiohttp
     from urllib.parse import urlparse
+    
+    # aiohttp 사용 가능 여부 확인
+    if not AIOHTTP_AVAILABLE:
+        logger.warning("aiohttp가 설치되지 않아 순차 처리로 대체합니다.")
+        # 순차 처리 fallback 사용
+        return await generate_images_with_dalle_sequential(texts)
     
     try:
         if not OPENAI_API_KEY:
@@ -1049,6 +1075,90 @@ No text in the image
     except Exception as e:
         logger.error(f"DALL-E API 오류: {e}")
         raise ValueError(f"이미지 생성에 실패했습니다: {str(e)}")
+
+async def generate_images_with_dalle_sequential(texts: List[str]) -> List[str]:
+    """DALL-E를 사용하여 이미지 생성하고 로컬에 저장 (순차 처리 fallback)"""
+    import requests
+    import os
+    import uuid
+    from urllib.parse import urlparse
+    
+    try:
+        if not OPENAI_API_KEY:
+            raise ValueError("OpenAI API 키가 설정되지 않았습니다.")
+        
+        logger.info(f"🔄 순차 DALL-E 이미지 생성 시작: {len(texts)}개 (fallback 모드)")
+        
+        # OpenAI 클라이언트 초기화
+        client = OpenAI(api_key=OPENAI_API_KEY, timeout=60.0)
+        
+        # uploads 디렉토리 확인
+        uploads_dir = os.path.join(os.path.dirname(__file__), "uploads")
+        os.makedirs(uploads_dir, exist_ok=True)
+        
+        generated_image_paths = []
+        
+        for i, text in enumerate(texts):
+            try:
+                logger.info(f"📸 이미지 {i+1}/{len(texts)} 생성 시작: {text[:30]}...")
+                
+                # DALL-E 프롬프트 생성
+                prompt = f"""
+Create square illustration representing this sentence: "{text}"
+Style: modern and professional illustration
+Format: Square (714x714)
+Background: Simple, clean background
+No text in the image. don't forget not to use text in the image.
+Focus on positive visual metaphors
+"""
+                
+                logger.info(f"🎯 이미지 {i+1} DALL-E 프롬프트: {prompt.strip()}")
+                
+                # DALL-E API 호출
+                response = client.images.generate(
+                    model="dall-e-3",
+                    prompt=prompt,
+                    size="1024x1024",
+                    quality="standard",
+                    n=1
+                )
+                
+                # 이미지 URL 추출
+                image_url = response.data[0].url
+                logger.info(f"✅ 이미지 {i+1} 생성 완료, 다운로드 중...")
+                
+                # 순차 이미지 다운로드 (requests 사용)
+                img_response = requests.get(image_url, timeout=30)
+                if img_response.status_code == 200:
+                    # 고유한 파일명 생성
+                    filename = f"generated_{uuid.uuid4().hex[:8]}_{i+1}.png"
+                    file_path = os.path.join(uploads_dir, filename)
+                    
+                    # 이미지 파일 저장
+                    with open(file_path, 'wb') as f:
+                        f.write(img_response.content)
+                    
+                    # 백엔드 이미지 서빙 엔드포인트 사용
+                    image_url_path = f"/get-image/{filename}"
+                    logger.info(f"💾 이미지 {i+1} 저장 완료: {filename}")
+                    generated_image_paths.append(image_url_path)
+                else:
+                    logger.error(f"❌ 이미지 {i+1} 다운로드 실패: HTTP {img_response.status_code}")
+                    generated_image_paths.append("")
+                
+            except Exception as e:
+                logger.error(f"💥 이미지 {i+1} 처리 실패: {e}")
+                generated_image_paths.append("")
+        
+        # 결과 요약
+        success_count = sum(1 for path in generated_image_paths if path)
+        logger.info(f"🎉 순차 DALL-E 이미지 생성 완료: {success_count}/{len(texts)}개 성공 (fallback 모드)")
+        
+        return generated_image_paths
+        
+    except Exception as e:
+        logger.error(f"순차 DALL-E API 오류: {e}")
+        raise ValueError(f"순차 이미지 생성에 실패했습니다: {str(e)}")
 
 @app.post("/generate-images")
 async def generate_images(request: ImageGenerateRequest):
