@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useMemo, memo, useEffect, useRef } from 'react';
 import {
   Box,
   Paper,
@@ -11,25 +11,24 @@ import {
   Chip,
   Alert,
   CircularProgress,
+  TextField,
+  FormControlLabel,
+  Switch,
+  Collapse,
 } from '@mui/material';
-import { 
-  CloudUpload, 
-  Delete, 
-  AutoFixHigh, 
+import {
+  CloudUpload,
+  Delete,
+  AutoFixHigh,
   Refresh,
   Image as ImageIcon,
-  Download
+  Download,
+  Edit as EditIcon,
+  ExpandMore,
+  ExpandLess
 } from '@mui/icons-material';
 import { useDropzone } from 'react-dropzone';
-import { ReelsContent, ImageUploadMode } from '../types';
-
-interface TextImagePair {
-  textIndex: number;
-  textKey: string;
-  textContent: string;
-  image: File | null;
-  isGenerating: boolean;
-}
+import { ReelsContent, ImageUploadMode, TextImagePair, CustomPrompt } from '../types';
 
 interface TextImagePairManagerProps {
   content: ReelsContent;
@@ -46,9 +45,40 @@ const TextImagePairManager: React.FC<TextImagePairManagerProps> = ({
 }) => {
   const [generationStatus, setGenerationStatus] = useState<{ [key: string]: string }>({});
   const [uploadErrors, setUploadErrors] = useState<{ [key: number]: string }>({});
+  const [customPrompts, setCustomPrompts] = useState<{ [key: number]: CustomPrompt }>({});
+  const [promptsExpanded, setPromptsExpanded] = useState<{ [key: number]: boolean }>({});
 
-  // 텍스트-이미지 쌍 데이터 생성
-  const createTextImagePairs = (): (TextImagePair & { imageIndex: number })[] => {
+  // 커스텀 프롬프트 관리 함수들 (useCallback으로 최적화)
+  const updateCustomPrompt = useCallback((imageIndex: number, prompt: string, enabled: boolean) => {
+    setCustomPrompts(prev => {
+      const currentPrompt = prev[imageIndex];
+      // 값이 같으면 업데이트하지 않음 (불필요한 리렌더링 방지)
+      if (currentPrompt &&
+          currentPrompt.prompt === prompt &&
+          currentPrompt.enabled === enabled) {
+        return prev;
+      }
+
+      return {
+        ...prev,
+        [imageIndex]: {
+          imageIndex,
+          prompt,
+          enabled
+        }
+      };
+    });
+  }, []);
+
+  const togglePromptExpanded = useCallback((imageIndex: number) => {
+    setPromptsExpanded(prev => ({
+      ...prev,
+      [imageIndex]: !prev[imageIndex]
+    }));
+  }, []);
+
+  // 텍스트-이미지 쌍 데이터 생성 (useMemo로 최적화)
+  const textImagePairs = useMemo((): (TextImagePair & { imageIndex: number })[] => {
     const bodyTexts = Object.entries(content)
       .filter(([key, value]) => key.startsWith('body') && value?.trim())
       .map(([key, value], index) => ({ key, value: value.trim(), index }));
@@ -72,6 +102,7 @@ const TextImagePairManager: React.FC<TextImagePairManagerProps> = ({
       // 텍스트 1개당 이미지 1개
       bodyTexts.forEach(({ key, value, index }) => {
         const foundImage = imageMap.get(index);
+        const customPrompt = customPrompts[index];
         console.log(`📋 per-script: textIndex=${index}, imageIndex=${index}, foundImage=${foundImage?.name || 'null'}`);
         pairs.push({
           textIndex: index,
@@ -80,6 +111,8 @@ const TextImagePairManager: React.FC<TextImagePairManagerProps> = ({
           image: foundImage || null,
           imageIndex: index, // 실제 이미지 인덱스 저장
           isGenerating: false,
+          customPrompt: customPrompt?.prompt || '',
+          useCustomPrompt: customPrompt?.enabled || false,
         });
       });
     } else {
@@ -88,9 +121,10 @@ const TextImagePairManager: React.FC<TextImagePairManagerProps> = ({
         const imageIndex = Math.floor(i / 2);
         const text1 = bodyTexts[i];
         const text2 = bodyTexts[i + 1];
-        
+
         if (text1) {
           const foundImage = imageMap.get(imageIndex);
+          const customPrompt = customPrompts[imageIndex];
           console.log(`📋 per-two-scripts: textIndex=${i}, imageIndex=${imageIndex}, foundImage=${foundImage?.name || 'null'}`);
           pairs.push({
             textIndex: i,
@@ -99,6 +133,8 @@ const TextImagePairManager: React.FC<TextImagePairManagerProps> = ({
             image: foundImage || null,
             imageIndex: imageIndex, // 실제 이미지 인덱스 저장
             isGenerating: false,
+            customPrompt: customPrompt?.prompt || '',
+            useCustomPrompt: customPrompt?.enabled || false,
           });
         }
       }
@@ -106,9 +142,7 @@ const TextImagePairManager: React.FC<TextImagePairManagerProps> = ({
 
     console.log('🎯 최종 pairs 개수:', pairs.length);
     return pairs;
-  };
-
-  const textImagePairs = createTextImagePairs();
+  }, [content, images, imageUploadMode, customPrompts]);
   
   // 현재 images 배열 상태 로깅
   console.log('📦 현재 images 배열 길이:', images.length);
@@ -165,23 +199,34 @@ const TextImagePairManager: React.FC<TextImagePairManagerProps> = ({
   }, [images, imageUploadMode, content, onChange]);
 
   // 개별 이미지 자동 생성
-  const handleIndividualGenerate = async (imageIndex: number, textContent: string) => {
-    console.log('🤖 handleIndividualGenerate 시작 - imageIndex:', imageIndex, 'textContent:', textContent);
+  const handleIndividualGenerate = async (imageIndex: number, textContent: string, customPrompt?: string, useCustomPrompt?: boolean) => {
+    console.log('🤖 handleIndividualGenerate 시작 - imageIndex:', imageIndex, 'textContent:', textContent, 'customPrompt:', customPrompt, 'useCustomPrompt:', useCustomPrompt);
     setGenerationStatus(prev => ({ ...prev, [imageIndex]: 'generating' }));
 
     try {
-      // 텍스트를 분리 (2개 텍스트가 합쳐진 경우)
-      const texts = textContent.split(' / ');
-      
+      // 요청 바디 구성
+      let requestBody: any = {};
+
+      if (useCustomPrompt && customPrompt?.trim()) {
+        // 커스텀 프롬프트 사용
+        requestBody.custom_prompt = customPrompt.trim();
+        console.log('📝 커스텀 프롬프트 사용:', customPrompt.trim());
+      } else {
+        // 기존 텍스트 사용
+        const texts = textContent.split(' / ');
+        requestBody.text = texts[0]; // 첫 번째 텍스트 사용
+        if (texts.length > 1) {
+          requestBody.additional_context = texts[1];
+        }
+        console.log('📝 기본 텍스트 사용:', texts[0]);
+      }
+
       const response = await fetch('/generate-single-image', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          text: texts[0], // 첫 번째 텍스트 사용
-          additional_context: texts.length > 1 ? texts[1] : null
-        }),
+        body: JSON.stringify(requestBody),
       });
 
       if (!response.ok) {
@@ -285,11 +330,11 @@ const TextImagePairManager: React.FC<TextImagePairManagerProps> = ({
     }
   };
 
-  // 개별 드래그앤드롭 컴포넌트
+  // 개별 드래그앤드롭 컴포넌트 (React.memo로 최적화)
   const IndividualDropZone: React.FC<{
     imageIndex: number;
     pair: TextImagePair & { imageIndex: number };
-  }> = ({ imageIndex, pair }) => {
+  }> = memo(({ imageIndex, pair }) => {
     const onDrop = useCallback((acceptedFiles: File[]) => {
       handleIndividualImageUpload(imageIndex, acceptedFiles);
     }, [imageIndex]);
@@ -308,6 +353,52 @@ const TextImagePairManager: React.FC<TextImagePairManagerProps> = ({
     const generationError = generationStatus[imageIndex] === 'error';
     const generationSuccess = generationStatus[imageIndex] === 'success';
     const uploadError = uploadErrors[imageIndex];
+    const isPromptExpanded = promptsExpanded[imageIndex] || false;
+    const currentCustomPrompt = customPrompts[imageIndex];
+
+    // ref를 통한 포커스 유지
+    const textFieldRef = useRef<HTMLInputElement>(null);
+
+    // 로컬 상태로 입력값 관리 (포커스 유지를 위해)
+    const [localPromptValue, setLocalPromptValue] = useState(currentCustomPrompt?.prompt || '');
+    const [isInitialized, setIsInitialized] = useState(false);
+    const [lastUpdateTime, setLastUpdateTime] = useState(0);
+
+    // 초기화 시에만 외부 상태를 로컬 상태에 동기화
+    useEffect(() => {
+      if (!isInitialized) {
+        setLocalPromptValue(currentCustomPrompt?.prompt || '');
+        setIsInitialized(true);
+      }
+    }, [currentCustomPrompt?.prompt, isInitialized]);
+
+    // 디바운스를 위한 useEffect - 외부 상태 업데이트 방지
+    useEffect(() => {
+      if (!localPromptValue.trim() && !currentCustomPrompt?.prompt) {
+        return; // 빈 값인 경우 업데이트 하지 않음
+      }
+
+      const timeoutId = setTimeout(() => {
+        const currentExternalValue = customPrompts[imageIndex]?.prompt || '';
+        if (localPromptValue !== currentExternalValue) {
+          // 클로저를 사용하여 함수 호출 시점의 값을 캡처
+          const enabled = customPrompts[imageIndex]?.enabled || false;
+          updateCustomPrompt(imageIndex, localPromptValue, enabled);
+        }
+      }, 1000); // 1초로 늘려서 더 안정적으로
+
+      return () => clearTimeout(timeoutId);
+    }, [localPromptValue, imageIndex]);
+
+    // 커스텀 프롬프트 변경 핸들러 (로컬 상태만 업데이트)
+    const handleCustomPromptChange = useCallback((prompt: string) => {
+      setLocalPromptValue(prompt);
+    }, []);
+
+    // 커스텀 프롬프트 활성화/비활성화 핸들러
+    const handleCustomPromptToggle = useCallback((enabled: boolean) => {
+      updateCustomPrompt(imageIndex, localPromptValue, enabled);
+    }, [imageIndex, localPromptValue, updateCustomPrompt]);
 
     return (
       <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
@@ -322,7 +413,7 @@ const TextImagePairManager: React.FC<TextImagePairManagerProps> = ({
             {pair.textKey.replace('body', '대사 ').replace('+body', ' + 대사 ')}
           </Typography>
           
-          <Typography variant="body2" sx={{ 
+          <Typography variant="body2" sx={{
             mb: 2,
             p: 1.5,
             bgcolor: 'grey.50',
@@ -334,6 +425,72 @@ const TextImagePairManager: React.FC<TextImagePairManagerProps> = ({
           }}>
             {pair.textContent}
           </Typography>
+
+          {/* 커스텀 프롬프트 섹션 */}
+          <Box sx={{ mb: 2 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
+              <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>
+                AI 생성 옵션
+              </Typography>
+              <IconButton
+                size="small"
+                onClick={() => togglePromptExpanded(imageIndex)}
+                sx={{ p: 0.5 }}
+              >
+                {isPromptExpanded ? <ExpandLess fontSize="small" /> : <ExpandMore fontSize="small" />}
+              </IconButton>
+            </Box>
+
+            <Collapse in={isPromptExpanded}>
+              <Box sx={{ bgcolor: 'rgba(25, 118, 210, 0.04)', p: 1.5, borderRadius: 1, border: '1px solid rgba(25, 118, 210, 0.12)' }}>
+                <FormControlLabel
+                  control={
+                    <Switch
+                      checked={currentCustomPrompt?.enabled || false}
+                      onChange={(e) => handleCustomPromptToggle(e.target.checked)}
+                      size="small"
+                    />
+                  }
+                  label={
+                    <Typography variant="caption" sx={{ fontWeight: 500 }}>
+                      커스텀 프롬프트 사용
+                    </Typography>
+                  }
+                  sx={{ mb: 1, ml: 0 }}
+                />
+
+                {currentCustomPrompt?.enabled && (
+                  <TextField
+                    inputRef={textFieldRef}
+                    key={`prompt-input-${imageIndex}-stable`}
+                    fullWidth
+                    multiline
+                    rows={2}
+                    size="small"
+                    placeholder="이미지 생성을 위한 커스텀 프롬프트를 입력하세요..."
+                    value={localPromptValue}
+                    onChange={(e) => handleCustomPromptChange(e.target.value)}
+                    variant="outlined"
+                    sx={{
+                      '& .MuiOutlinedInput-root': {
+                        fontSize: '0.75rem',
+                        bgcolor: 'white'
+                      }
+                    }}
+                    helperText="실제 영상에서는 기존 대사가 사용되며, 이 프롬프트는 이미지 생성에만 사용됩니다."
+                    autoComplete="off"
+                    spellCheck="false"
+                  />
+                )}
+
+                {!currentCustomPrompt?.enabled && (
+                  <Typography variant="caption" color="text.secondary" sx={{ fontStyle: 'italic' }}>
+                    기본 모드: 위의 대사 내용을 기반으로 이미지를 생성합니다.
+                  </Typography>
+                )}
+              </Box>
+            </Collapse>
+          </Box>
 
           {/* 이미지/비디오 표시 또는 드래그앤드롭 영역 */}
           {pair.image ? (
@@ -398,7 +555,12 @@ const TextImagePairManager: React.FC<TextImagePairManagerProps> = ({
                   size="small"
                   onClick={() => {
                     console.log('🔄 새로고침 버튼 클릭됨 - imageIndex:', imageIndex, 'textContent:', pair.textContent);
-                    handleIndividualGenerate(imageIndex, pair.textContent);
+                    handleIndividualGenerate(
+                      imageIndex,
+                      pair.textContent,
+                      currentCustomPrompt?.prompt,
+                      currentCustomPrompt?.enabled
+                    );
                   }}
                   disabled={isGenerating}
                   sx={{
@@ -497,16 +659,29 @@ const TextImagePairManager: React.FC<TextImagePairManagerProps> = ({
             startIcon={<AutoFixHigh />}
             onClick={() => {
               console.log('🖱️ 자동생성 버튼 클릭됨 - imageIndex:', imageIndex, 'textContent:', pair.textContent);
-              handleIndividualGenerate(imageIndex, pair.textContent);
+              handleIndividualGenerate(
+                imageIndex,
+                pair.textContent,
+                currentCustomPrompt?.prompt,
+                currentCustomPrompt?.enabled
+              );
             }}
             disabled={isGenerating}
+            sx={{
+              bgcolor: currentCustomPrompt?.enabled ? 'rgba(25, 118, 210, 0.08)' : 'transparent',
+              borderColor: currentCustomPrompt?.enabled ? 'primary.main' : 'grey.300',
+              color: currentCustomPrompt?.enabled ? 'primary.main' : 'text.primary',
+              '&:hover': {
+                bgcolor: currentCustomPrompt?.enabled ? 'rgba(25, 118, 210, 0.12)' : 'action.hover',
+              }
+            }}
           >
-            {isGenerating ? '생성중...' : 'AI 자동생성'}
+            {isGenerating ? '생성중...' : (currentCustomPrompt?.enabled ? '커스텀 프롬프트로 생성' : 'AI 자동생성')}
           </Button>
         </Box>
       </Card>
     );
-  };
+  });
 
   return (
     <Box>
@@ -521,7 +696,7 @@ const TextImagePairManager: React.FC<TextImagePairManagerProps> = ({
 
       <Grid container spacing={2}>
         {textImagePairs.map((pair, index) => (
-          <Grid item xs={12} sm={6} md={4} key={pair.textKey}>
+          <Grid item xs={12} sm={6} md={4} key={`dropzone-${pair.imageIndex}-${pair.textKey}`}>
             <IndividualDropZone imageIndex={pair.imageIndex} pair={pair} />
           </Grid>
         ))}

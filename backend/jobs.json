@@ -188,5 +188,33 @@
     "error_message": null,
     "retry_count": 0,
     "max_retries": 2
+  },
+  "f34ffdb9-d203-4c05-a791-8ce94b322562": {
+    "job_id": "f34ffdb9-d203-4c05-a791-8ce94b322562",
+    "user_email": "xystus@gmail.com",
+    "status": "completed",
+    "created_at": "2025-09-17T16:02:35.097580",
+    "updated_at": "2025-09-17T16:02:44.729977",
+    "video_params": {
+      "content_data": "{\"title\":\"이런\",\"body1\":\"이빨\",\"body2\":\"아파\",\"body3\":\"\",\"body4\":\"\",\"body5\":\"\",\"body6\":\"\",\"body7\":\"\",\"body8\":\"\"}",
+      "music_mood": "bright",
+      "image_allocation_mode": "1_per_image",
+      "text_position": "bottom",
+      "text_style": "outline",
+      "selected_bgm_path": "Dark Elves - Jimena Contreras.mp3",
+      "use_test_files": false,
+      "uploaded_files": [
+        "1.png",
+        "2.png"
+      ]
+    },
+    "result": {
+      "video_path": "/zstus/backend/output_videos/reels_fd7b35a5.mp4",
+      "duration": "약 10-30초",
+      "completed_at": "2025-09-17T16:02:44.729659"
+    },
+    "error_message": null,
+    "retry_count": 0,
+    "max_retries": 2
   }
 }

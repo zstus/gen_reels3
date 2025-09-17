@@ -47,6 +47,19 @@ FastAPI와 MoviePy를 사용한 자동 릴스 영상 생성 서비스입니다. 
 - **220px 타이틀 영역** + **504x670 작업 영역** 구조
 - **TTS 음성 1.5배속** 처리로 시청 시간 단축 (50% 빠름)
 - 텍스트 길이에 따른 자동 시간 조절
+- **📧 배치 작업 시스템**: 백그라운드 영상 생성 + 완료 시 이메일 알림
+  - **비동기 영상 생성**: 영상 생성 요청 후 즉시 작업 ID 반환
+  - **백그라운드 워커**: 독립적인 워커 프로세스에서 영상 생성 처리
+  - **이메일 알림**: Gmail SMTP를 통한 완료/실패 이메일 자동 발송
+  - **보안 다운로드**: JWT 토큰 기반 48시간 유효 다운로드 링크
+- **🎨 AI 이미지 자동생성 (고급)**: DALL-E 3 기반 지능형 이미지 생성
+  - **기본 모드**: 대사 내용을 바탕으로 자동 이미지 생성
+  - **커스텀 프롬프트 모드**: 사용자 정의 프롬프트로 맞춤형 이미지 생성
+  - **개별 텍스트-이미지 매칭**: 각 대사별로 독립적인 이미지 생성 및 관리
+  - **실시간 전환**: 기본 모드와 커스텀 모드 실시간 전환 가능
+  - **안전성 보장**: OpenAI 안전 정책 준수 및 자동 안전화 처리
+  - **작업 상태 추적**: 실시간 작업 진행률 및 상태 모니터링
+  - **AI 통합**: OpenAI DALL-E 또는 Stable Diffusion 연동 지원
 
 ### 기술 스택
 - **Frontend**: React 18 + TypeScript + Material-UI + react-dropzone
@@ -56,9 +69,12 @@ FastAPI와 MoviePy를 사용한 자동 릴스 영상 생성 서비스입니다. 
 - **TTS**: Google Text-to-Speech (gTTS)
 - **웹 스크래핑**: BeautifulSoup4 + lxml + requests
 - **AI 대본 생성**: OpenAI GPT-3.5-turbo API (>=1.50.0)
+- **AI 이미지 생성**: OpenAI DALL-E 3 / Stable Diffusion XL
+- **배치 작업**: 파일 기반 작업 큐 시스템 (SQLite 대안)
+- **이메일 서비스**: Gmail SMTP + JWT 토큰 인증
 - **환경 변수**: python-dotenv
 - **폰트**: 사용자 한글 폰트 + Noto Color Emoji
-- **서버**: Ubuntu + uvicorn
+- **서버**: Ubuntu + uvicorn + nginx
 
 ## 🏗️ 프로젝트 구조
 
@@ -83,7 +99,11 @@ ubt_genReels/
 ├── backend/                     # FastAPI 백엔드 서버
 │   ├── main.py                  # FastAPI 메인 서버 애플리케이션 (URL 추출 기능 포함)
 │   ├── video_generator.py       # 릴스 영상 생성 핵심 로직
-│   ├── .env                     # 환경변수 설정 (OpenAI API 키 등)
+│   ├── worker.py                # 백그라운드 영상 생성 워커
+│   ├── job_queue.py             # 파일 기반 작업 큐 시스템
+│   ├── email_service.py         # Gmail SMTP 이메일 발송 서비스
+│   ├── ai_image_generator.py    # AI 이미지 생성 서비스 (DALL-E/Stable Diffusion)
+│   ├── .env                     # 환경변수 설정 (OpenAI, Gmail, JWT 키 등)
 │   ├── .env.example             # 환경변수 템플릿
 │   ├── bgm/                     # 성격별 배경음악 시스템
 │   │   ├── bright/              # 밝은 음악들 (*.mp3, *.wav, *.m4a)
@@ -106,7 +126,12 @@ ubt_genReels/
 │   ├── test_videogen.py         # VideoGenerator 직접 테스트
 │   ├── test_url_extract.py      # URL 추출 기능 테스트
 │   ├── uploads/                 # 임시 파일 처리 폴더
-│   └── output_videos/           # 생성된 영상 저장 폴더
+│   ├── output_videos/           # 생성된 영상 저장 폴더
+│   ├── queue/                   # 작업 큐 상태 파일들 (.json)
+│   ├── worker.log               # 워커 프로세스 로그
+│   ├── fastapi.log              # FastAPI 서버 로그
+│   ├── ai_generated/            # AI 생성 이미지 저장 폴더
+│   └── restart_services.sh      # 서비스 재시작 스크립트
 ├── claude.md                    # 이 파일 (상세 프로젝트 문서)
 └── README.md                    # 프로젝트 기본 문서
 ```
@@ -227,6 +252,49 @@ accept: {
 }
 ```
 
+#### `src/components/TextImagePairManager.tsx` - 텍스트-이미지 매칭 관리 (커스텀 프롬프트 지원)
+**주요 기능:**
+- **🎨 AI 이미지 자동생성**: 각 대사별 개별 이미지 생성 및 관리
+  - **기본 모드**: 대사 내용을 기반으로 한 자동 이미지 생성
+  - **커스텀 프롬프트 모드**: 사용자 정의 프롬프트로 맞춤형 이미지 생성
+- **실시간 모드 전환**: 토글 스위치로 기본/커스텀 모드 즉시 전환
+- **개별 미디어 관리**: 각 텍스트별 독립적인 이미지/비디오 업로드 및 삭제
+- **드래그앤드롭 지원**: 개별 영역별 직관적인 파일 업로드
+- **실시간 상태 표시**: 생성 진행률, 성공/실패 상태, 에러 메시지
+
+**커스텀 프롬프트 UI 구조:**
+```typescript
+// 커스텀 프롬프트 상태 관리
+const [customPrompts, setCustomPrompts] = useState<{ [key: number]: CustomPrompt }>({});
+const [promptsExpanded, setPromptsExpanded] = useState<{ [key: number]: boolean }>({});
+
+// 커스텀 프롬프트 업데이트
+const updateCustomPrompt = (imageIndex: number, prompt: string, enabled: boolean) => {
+  setCustomPrompts(prev => ({
+    ...prev,
+    [imageIndex]: { imageIndex, prompt, enabled }
+  }));
+};
+```
+
+**API 요청 로직 (커스텀 프롬프트 지원):**
+```typescript
+// 요청 바디 구성
+let requestBody: any = {};
+
+if (useCustomPrompt && customPrompt?.trim()) {
+  // 커스텀 프롬프트 사용
+  requestBody.custom_prompt = customPrompt.trim();
+} else {
+  // 기존 텍스트 사용
+  const texts = textContent.split(' / ');
+  requestBody.text = texts[0];
+  if (texts.length > 1) {
+    requestBody.additional_context = texts[1];
+  }
+}
+```
+
 #### `src/components/MusicStep.tsx` - 음악 선택 단계
 **주요 기능:**
 - **성격별 음악 분류**: 5가지 감정 카테고리별 음악 라이브러리
@@ -237,10 +305,90 @@ accept: {
 
 #### `src/components/GenerateStep.tsx` - 영상 생성 단계
 **주요 기능:**
-- **실시간 영상 생성 진행률**: WebSocket 또는 polling을 통한 실시간 상태 업데이트
+- **📧 비동기 영상 생성**: 배치 작업으로 영상 생성 후 이메일 알림
+- **실시간 작업 상태 추적**: 작업 ID 기반 진행률 모니터링
+- **이메일 주소 관리**: 구글 로그인 이메일 기본 사용 + 수동 변경 가능
 - **미리보기 요약**: 선택된 모든 설정 사항 최종 검토
 - **에러 처리**: 생성 실패 시 상세 에러 메시지 및 재시도 옵션
-- **다운로드 링크 제공**: 생성 완료 시 즉시 다운로드 가능한 링크 생성
+
+**배치 작업 처리 로직:**
+```typescript
+const handleAsyncGenerate = async () => {
+  try {
+    // 비동기 영상 생성 요청
+    const response = await apiService.generateVideoAsync({
+      userEmail: userEmail,
+      content: JSON.stringify(content),
+      images: images,
+      imageUploadMode: imageUploadMode,
+      textPosition: textPosition,
+      textStyle: textStyle,
+      musicFile: selectedMusic,
+      musicMood: musicMood,
+      useTestFiles: false
+    });
+
+    if (response.status === 'success') {
+      const jobId = response.job_id;
+
+      // 작업 상태 모니터링 시작
+      const statusCheck = setInterval(async () => {
+        const jobStatus = await apiService.getJobStatus(jobId);
+
+        if (jobStatus.status === 'completed') {
+          clearInterval(statusCheck);
+          setGenerationStatus('completed');
+          // 이메일 발송됨 안내
+        } else if (jobStatus.status === 'failed') {
+          clearInterval(statusCheck);
+          setGenerationStatus('failed');
+          setError(jobStatus.error_message);
+        }
+      }, 5000); // 5초마다 상태 확인
+
+      setJobId(jobId);
+      setGenerationStatus('processing');
+    }
+  } catch (error) {
+    setError(`영상 생성 요청 실패: ${error.message}`);
+  }
+};
+```
+
+#### `src/components/ImageGenerationStep.tsx` - AI 이미지 생성 단계 (신규)
+**주요 기능:**
+- **🎨 대사별 이미지 생성**: 각 body 텍스트에 대응하는 이미지 자동 생성
+- **커스텀 프롬프트**: 기존 대사 대신 새로운 프롬프트로 이미지 생성
+- **AI 모델 선택**: DALL-E 3, Stable Diffusion XL 중 선택
+- **실시간 생성 진행률**: 이미지별 생성 상태 표시
+- **미리보기 및 재생성**: 생성된 이미지 확인 후 재생성 가능
+
+**커스텀 프롬프트 처리 로직:**
+```typescript
+const handleCustomImageGeneration = async (bodyIndex: number, customPrompt: string) => {
+  try {
+    setImageGenerating(bodyIndex, true);
+
+    const response = await apiService.generateCustomImage({
+      bodyIndex: bodyIndex,
+      originalText: content[`body${bodyIndex}`],
+      customPrompt: customPrompt,
+      aiModel: selectedAiModel, // 'dalle3' | 'sdxl'
+      style: imageStyle, // 'realistic' | 'anime' | 'artistic'
+      aspectRatio: '9:16' // 세로형 릴스용
+    });
+
+    if (response.status === 'success') {
+      const generatedImage = response.image_url;
+      updateGeneratedImage(bodyIndex, generatedImage);
+      setImageGenerating(bodyIndex, false);
+    }
+  } catch (error) {
+    setImageGenerating(bodyIndex, false);
+    setError(`이미지 생성 실패: ${error.message}`);
+  }
+};
+```
 
 ### TypeScript 타입 시스템
 
@@ -497,6 +645,175 @@ async def generate_video(
     )
 ```
 
+### 📧 배치 작업 시스템
+
+#### `worker.py` - 백그라운드 영상 생성 워커
+**주요 기능:**
+- **독립적인 백그라운드 프로세스**: main.py와 분리된 워커 프로세스
+- **작업 큐 폴링**: 5초 간격으로 새로운 작업 확인 및 처리
+- **영상 생성 처리**: VideoGenerator를 사용한 실제 영상 생성
+- **이메일 알림**: 완료/실패 시 자동 이메일 발송
+- **에러 핸들링**: 실패 시 재시도 큐 추가 및 상세 로그
+
+**워커 실행 로직:**
+```python
+class VideoWorker:
+    def __init__(self, worker_id: str = "worker-1"):
+        self.worker_id = worker_id
+        self.is_running = False
+        self.current_job = None
+        self.video_generator = VideoGenerator()
+
+    def process_job(self, job_data: Dict[str, Any]) -> bool:
+        """개별 작업 처리"""
+        job_id = job_data['job_id']
+        user_email = job_data['user_email']
+        video_params = job_data['video_params']
+
+        # 작업을 처리 중 상태로 변경
+        if not job_queue.claim_job(job_id):
+            return False
+
+        try:
+            # 영상 생성 실행
+            result = self.video_generator.create_video_from_uploads(
+                output_folder=output_folder,
+                bgm_file_path=bgm_file_path,
+                image_allocation_mode=image_allocation_mode,
+                text_position=text_position,
+                uploads_folder=uploads_folder
+            )
+
+            if result and isinstance(result, str):
+                # 성공 시 완료 이메일 발송
+                email_service.send_completion_email(
+                    user_email=user_email,
+                    video_path=result,
+                    video_title=video_title
+                )
+                return True
+        except Exception as e:
+            # 실패 시 에러 이메일 발송
+            email_service.send_error_email(
+                user_email=user_email,
+                job_id=job_id,
+                error_message=str(e)
+            )
+            return False
+```
+
+#### `job_queue.py` - 파일 기반 작업 큐 시스템
+**주요 기능:**
+- **SQLite 대안**: 파일 기반 JSON 작업 큐 시스템
+- **작업 상태 관리**: pending, processing, completed, failed 상태 추적
+- **동시성 처리**: 파일 잠금을 통한 안전한 동시 접근
+- **재시도 메커니즘**: 실패한 작업의 자동 재시도 지원
+- **작업 통계**: 큐 상태 및 처리 통계 제공
+
+**작업 큐 구조:**
+```python
+class JobQueue:
+    def __init__(self, queue_dir: str = "queue"):
+        self.queue_dir = queue_dir
+        self.jobs_file = os.path.join(queue_dir, "jobs.json")
+
+    def add_job(self, user_email: str, video_params: dict) -> str:
+        """새 작업 추가"""
+        job_id = str(uuid.uuid4())
+        job_data = {
+            'job_id': job_id,
+            'user_email': user_email,
+            'video_params': video_params,
+            'status': JobStatus.PENDING,
+            'created_at': datetime.now().isoformat(),
+            'retry_count': 0
+        }
+
+        with self._lock():
+            jobs = self._load_jobs()
+            jobs[job_id] = job_data
+            self._save_jobs(jobs)
+
+        return job_id
+```
+
+#### `email_service.py` - Gmail SMTP 이메일 발송 서비스
+**주요 기능:**
+- **Gmail SMTP 연동**: 무료 Gmail 계정을 통한 이메일 발송
+- **JWT 토큰 생성**: 보안 다운로드 링크용 48시간 유효 토큰
+- **HTML 이메일 템플릿**: 반응형 HTML 이메일 디자인
+- **완료/실패 알림**: 영상 생성 완료 및 실패 시 자동 알림
+- **다운로드 링크**: 보안이 적용된 일회성 다운로드 링크 제공
+
+**JWT 토큰 시스템:**
+```python
+def generate_download_token(self, video_path: str, user_email: str, expire_hours: int = 48) -> str:
+    """다운로드 링크용 JWT 토큰 생성"""
+    payload = {
+        'video_path': video_path,
+        'user_email': user_email,
+        'exp': datetime.utcnow() + timedelta(hours=expire_hours),
+        'iat': datetime.utcnow()
+    }
+    return jwt.encode(payload, self.jwt_secret, algorithm='HS256')
+
+def send_completion_email(self, user_email: str, video_path: str, video_title: str = "릴스 영상") -> bool:
+    """영상 생성 완료 이메일 발송"""
+    download_token = self.generate_download_token(video_path, user_email)
+    download_link = f"{base_url}/api/download-video?token={download_token}"
+
+    # HTML 템플릿 렌더링 및 발송
+    return self._send_email(user_email, "영상 생성 완료", html_content)
+```
+
+#### `ai_image_generator.py` - AI 이미지 생성 서비스 (신규)
+**주요 기능:**
+- **다중 AI 모델 지원**: OpenAI DALL-E 3, Stable Diffusion XL
+- **커스텀 프롬프트**: 사용자 정의 프롬프트로 이미지 생성
+- **릴스 최적화**: 9:16 세로형 비율 자동 적용
+- **스타일 변환**: realistic, anime, artistic 스타일 지원
+- **배치 생성**: 여러 대사에 대한 이미지 일괄 생성
+
+**AI 이미지 생성 로직:**
+```python
+class AIImageGenerator:
+    def __init__(self):
+        self.dalle_client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+        self.sdxl_client = None  # Stable Diffusion 클라이언트
+
+    async def generate_custom_image(self,
+                                  body_index: int,
+                                  original_text: str,
+                                  custom_prompt: str,
+                                  ai_model: str = "dalle3",
+                                  style: str = "realistic") -> str:
+        """커스텀 프롬프트로 이미지 생성"""
+
+        # 릴스용 프롬프트 최적화
+        optimized_prompt = f"""
+        {custom_prompt}
+
+        Style: {style}
+        Aspect ratio: 9:16 (vertical)
+        High quality, detailed, professional
+        Suitable for social media reels
+        """
+
+        if ai_model == "dalle3":
+            response = self.dalle_client.images.generate(
+                model="dall-e-3",
+                prompt=optimized_prompt,
+                size="1024x1792",  # 9:16 비율
+                quality="standard",
+                n=1
+            )
+            image_url = response.data[0].url
+
+        # 이미지 다운로드 및 저장
+        image_path = await self._download_image(image_url, body_index)
+        return image_path
+```
+
 ### 비디오 생성 엔진
 
 #### `video_generator.py` - VideoGenerator 클래스
@@ -631,6 +948,116 @@ def create_video_with_local_images(self, content, music_path, output_folder,
 ## 🔧 API 사용법 (확장됨)
 
 ### 엔드포인트 1: `POST /extract-reels-from-url` (NEW!)
+
+### 🆕 배치 작업 API
+
+#### 엔드포인트 2: `POST /generate-video-async` (배치 작업)
+
+**요청 파라미터:**
+```
+Content-Type: multipart/form-data
+
+- user_email (form-data): 사용자 이메일 주소 (필수)
+- content_data (form-data): JSON 형태의 텍스트 데이터
+- music_mood (form-data): 음악 성격 (bright/calm/romantic/sad/suspense)
+- image_allocation_mode (form-data): "1_per_image" 또는 "2_per_image"
+- text_position (form-data): "top", "bottom" 중 선택
+- text_style (form-data): "outline" 또는 "background"
+- image_1 ~ image_8 (file, optional): 이미지/비디오 파일들 (최대 8개)
+- selected_bgm_path (form-data): 선택된 BGM 파일명 (선택사항)
+- use_test_files (form-data): test 폴더 사용 여부 (boolean)
+```
+
+**응답 형식:**
+```json
+{
+  "status": "success",
+  "message": "영상 생성 작업이 큐에 추가되었습니다",
+  "job_id": "cbe2216a-f540-40e3-9762-2a2d12804e4c",
+  "estimated_time": "약 5-10분",
+  "email_notification": "완료 시 이메일로 다운로드 링크가 발송됩니다"
+}
+```
+
+#### 엔드포인트 3: `GET /job-status/{job_id}` (작업 상태 조회)
+
+**요청 예시:**
+```
+GET /api/job-status/cbe2216a-f540-40e3-9762-2a2d12804e4c
+```
+
+**응답 형식:**
+```json
+{
+  "job_id": "cbe2216a-f540-40e3-9762-2a2d12804e4c",
+  "status": "completed",
+  "created_at": "2024-09-18T10:30:00Z",
+  "updated_at": "2024-09-18T10:35:00Z",
+  "result": {
+    "video_path": "/zstus/backend/output_videos/reels_371c71cb.mp4",
+    "duration": "약 15초",
+    "completed_at": "2024-09-18T10:35:00Z"
+  }
+}
+```
+
+**작업 상태 값:**
+- `pending`: 대기 중
+- `processing`: 처리 중
+- `completed`: 완료 (이메일 발송됨)
+- `failed`: 실패 (에러 이메일 발송됨)
+
+#### 엔드포인트 4: `GET /api/download-video` (보안 다운로드)
+
+**요청 예시:**
+```
+GET /api/download-video?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+```
+
+**특징:**
+- JWT 토큰 기반 인증 (48시간 유효)
+- 일회성 다운로드 링크
+- 이메일을 통해서만 제공
+- 토큰에 사용자 이메일 및 파일 경로 포함
+
+#### 🎨 AI 이미지 생성 API (신규)
+
+#### 엔드포인트 5: `POST /generate-single-image` (개별 이미지 생성 - 커스텀 프롬프트 지원)
+
+**요청 파라미터:**
+```json
+// 기본 모드 (텍스트 기반)
+{
+  "text": "오늘은 좋은 날씨입니다",
+  "additional_context": "행복한 하루를 보내세요"
+}
+
+// 커스텀 프롬프트 모드
+{
+  "custom_prompt": "A beautiful sunset over a mountain landscape, cinematic photography style"
+}
+```
+
+**응답 형식:**
+```json
+{
+  "status": "success",
+  "message": "이미지 생성 완료",
+  "image_url": "/ai_generated/generated_image_20240918_103000.png",
+  "generation_time": "12.5초",
+  "ai_model_used": "dall-e-3",
+  "prompt_used": "Enhanced prompt based on text or custom prompt",
+  "safety_filtered": false
+}
+```
+
+**주요 특징:**
+- **유연한 입력**: 기본 텍스트 또는 커스텀 프롬프트 중 선택
+- **안전성 보장**: OpenAI 안전 정책 위반 시 자동 안전화 처리
+- **실시간 처리**: 즉시 이미지 생성 및 URL 반환
+- **에러 핸들링**: 상세한 에러 메시지 및 복구 방안 제공
+
+### 엔드포인트 6: `POST /extract-reels-from-url` (URL 추출)
 
 **요청 파라미터:**
 ```

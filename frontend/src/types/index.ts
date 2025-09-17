@@ -141,3 +141,29 @@ export interface GoogleJWTPayload {
   picture?: string;
   email_verified: boolean;
 }
+
+// 커스텀 프롬프트 타입
+export interface CustomPrompt {
+  imageIndex: number;
+  prompt: string;
+  enabled: boolean;
+}
+
+// 단일 이미지 생성 요청 타입 (커스텀 프롬프트 지원)
+export interface SingleImageGenerateRequest {
+  text?: string;
+  custom_prompt?: string;
+  additional_context?: string;
+}
+
+// 텍스트-이미지 쌍 타입 (커스텀 프롬프트 지원)
+export interface TextImagePair {
+  textIndex: number;
+  textKey: string;
+  textContent: string;
+  image: File | null;
+  imageIndex: number;
+  isGenerating: boolean;
+  customPrompt?: string;
+  useCustomPrompt?: boolean;
+}

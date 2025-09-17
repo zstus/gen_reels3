@@ -526,32 +526,45 @@ async def generate_video(
         )
 
 class SingleImageRequest(BaseModel):
-    text: str
+    text: Optional[str] = None
+    custom_prompt: Optional[str] = None
     additional_context: Optional[str] = None
 
 @app.post("/generate-single-image")
 async def generate_single_image(request: SingleImageRequest):
-    """개별 텍스트에 대한 이미지 자동 생성"""
+    """개별 텍스트에 대한 이미지 자동 생성 (커스텀 프롬프트 지원)"""
     try:
         logger.info(f"🔥 개별 이미지 생성 요청 시작")
         logger.info(f"📝 요청 텍스트: {request.text}")
+        logger.info(f"🎨 커스텀 프롬프트: {request.custom_prompt}")
         logger.info(f"📝 추가 컨텍스트: {request.additional_context}")
-        
+
+        # 입력 유효성 검증
+        if not request.text and not request.custom_prompt:
+            logger.error("❌ 텍스트 또는 커스텀 프롬프트 중 하나는 필수입니다")
+            raise HTTPException(status_code=400, detail="텍스트 또는 커스텀 프롬프트 중 하나는 필수입니다")
+
         if not OPENAI_AVAILABLE:
             logger.error("❌ OpenAI 라이브러리가 설치되지 않음")
             raise HTTPException(status_code=500, detail="OpenAI 라이브러리가 설치되지 않았습니다")
-        
+
         # OpenAI API 키 확인
         OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
         if not OPENAI_API_KEY:
             logger.error("❌ OpenAI API 키가 설정되지 않음")
             raise HTTPException(status_code=500, detail="OpenAI API 키가 설정되지 않았습니다")
-        
+
         logger.info("🔑 OpenAI API 키 확인 완료")
-        
-        # 이미지 생성용 프롬프트 생성
-        image_prompt = create_image_generation_prompt(request.text, request.additional_context)
-        logger.info(f"🎯 생성된 DALL-E 프롬프트: {image_prompt[:200]}...")
+
+        # 이미지 생성용 프롬프트 선택
+        if request.custom_prompt and request.custom_prompt.strip():
+            # 커스텀 프롬프트 사용
+            image_prompt = request.custom_prompt.strip()
+            logger.info(f"🎨 커스텀 프롬프트 사용: {image_prompt[:200]}...")
+        else:
+            # 기존 텍스트 기반 프롬프트 생성
+            image_prompt = create_image_generation_prompt(request.text, request.additional_context)
+            logger.info(f"🎯 기본 텍스트 기반 프롬프트: {image_prompt[:200]}...")
         
         # OpenAI DALL-E를 통한 이미지 생성
         client = OpenAI(api_key=OPENAI_API_KEY, timeout=30.0)
@@ -571,8 +584,15 @@ async def generate_single_image(request: SingleImageRequest):
             # 프롬프트 안전화 시도
             if "safety system" in str(dalle_error) or "content_policy_violation" in str(dalle_error):
                 logger.info("🛡️ 안전 정책 위반 감지 - 프롬프트 안전화 시도")
-                safe_prompt = create_safe_image_prompt(request.text, request.additional_context)
-                logger.info(f"🔒 안전화된 프롬프트: {safe_prompt[:200]}...")
+
+                if request.custom_prompt and request.custom_prompt.strip():
+                    # 커스텀 프롬프트의 경우 기본 안전한 프롬프트로 대체
+                    safe_prompt = "A peaceful and beautiful landscape with soft colors, professional photography style"
+                    logger.info(f"🔒 커스텀 프롬프트 안전화: {safe_prompt}")
+                else:
+                    # 기존 텍스트 기반 안전화
+                    safe_prompt = create_safe_image_prompt(request.text, request.additional_context)
+                    logger.info(f"🔒 텍스트 기반 안전화: {safe_prompt[:200]}...")
                 
                 response = client.images.generate(
                     model="dall-e-3",
