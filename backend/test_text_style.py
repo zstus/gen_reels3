@@ -40,7 +40,7 @@ def test_text_styles():
     try:
         outline_image = video_gen.create_text_image(
             test_text, width, height, 
-            text_position="middle", 
+            text_position="bottom", 
             text_style="outline"
         )
         print(f"   ✅ 외곽선 이미지 생성 성공: {outline_image}")
@@ -62,7 +62,7 @@ def test_text_styles():
     try:
         background_image = video_gen.create_text_image(
             test_text, width, height, 
-            text_position="middle", 
+            text_position="top", 
             text_style="background"
         )
         print(f"   ✅ 반투명 배경 이미지 생성 성공: {background_image}")
@@ -81,7 +81,7 @@ def test_text_styles():
     
     # 3. 다양한 텍스트 위치에서 테스트
     print("3️⃣  다양한 텍스트 위치 테스트")
-    positions = ["top", "middle", "bottom"]
+    positions = ["top", "bottom"]
     styles = ["outline", "background"]
     
     for position in positions:

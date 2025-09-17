@@ -19,7 +19,9 @@
       "Bash(npm run build:*)",
       "Bash(npx tsc:*)",
       "mcp__context7__resolve-library-id",
-      "mcp__context7__get-library-docs"
+      "mcp__context7__get-library-docs",
+      "Bash(npm install)",
+      "Bash(source:*)"
     ],
     "deny": [],
     "ask": []

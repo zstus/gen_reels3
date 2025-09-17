@@ -22,8 +22,8 @@ export interface ReelsContent {
 // 이미지 업로드 모드
 export type ImageUploadMode = 'per-script' | 'per-two-scripts';
 
-// 텍스트 위치 타입
-export type TextPosition = 'top' | 'middle' | 'bottom';
+// 텍스트 위치 타입 (2단계 시스템)
+export type TextPosition = 'top' | 'bottom';
 
 // 텍스트 스타일 타입
 export type TextStyle = 'outline' | 'background';
@@ -80,6 +80,45 @@ export interface GenerateVideoRequest {
 
 // 영상 생성 상태 타입
 export type GenerationStatus = 'idle' | 'generating' | 'completed' | 'error';
+
+// 배치 작업 상태 타입
+export type JobStatus = 'pending' | 'processing' | 'completed' | 'failed';
+
+// 작업 정보 타입
+export interface JobInfo {
+  job_id: string;
+  status: JobStatus;
+  created_at: string;
+  updated_at: string;
+  result?: {
+    video_path?: string;
+    duration?: string;
+    completed_at?: string;
+  };
+  error_message?: string;
+}
+
+// 비동기 영상 생성 요청 타입
+export interface AsyncVideoRequest {
+  user_email: string;
+  content_data: string;
+  music_mood: MusicMood;
+  image_allocation_mode: ImageUploadMode;
+  text_position: TextPosition;
+  text_style: TextStyle;
+  selected_bgm_path?: string;
+  use_test_files?: boolean;
+  images?: File[];
+}
+
+// 비동기 영상 생성 응답 타입
+export interface AsyncVideoResponse {
+  status: 'success' | 'error';
+  message: string;
+  job_id?: string;
+  user_email?: string;
+  estimated_time?: string;
+}
 
 // 단계 타입
 export type Step = 'login' | 'content' | 'images' | 'music' | 'generate' | 'download';

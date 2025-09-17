@@ -1,12 +1,33 @@
 # 이성일
 # 릴스 영상 생성 서비스 (Reels Video Generator)
 
+## ⚠️ 개발 환경 중요 사항 (Claude AI 전용)
+
+**작업 환경**: macOS에서 공유 폴더(Docker/SMB)를 통해 Ubuntu 서버의 프로젝트 폴더에 원격 접근
+**제한 사항**: 
+- ✅ **코드 분석 가능**: Read, Grep, Glob 도구 사용
+- ✅ **코드 수정 가능**: Edit, MultiEdit, Write 도구 사용
+- 🚫 **실행 절대 금지**: Bash 도구로 서버/빌드/npm 명령어 실행 시도 금지
+- 🚫 **테스트 불가**: 모든 테스트는 사용자가 서버에서 직접 수행
+
+**올바른 작업 프로세스:**
+1. 요구사항 분석 → 2. 코드 분석 (Read/Grep) → 3. 코드 수정 (Edit/Write) → 4. 사용자 테스트 대기
+
+**절대 하지 말 것:**
+- `npm start`, `npm install`, `python main.py` 등 실행 명령어 사용
+- 서버 실행, 빌드, 패키지 설치 시도
+- 백그라운드 프로세스 실행
+
+이 환경 정보는 **매 세션마다 전달**하여 동일한 실수를 반복하지 않도록 해야 함.
+
+---
+
 FastAPI와 MoviePy를 사용한 자동 릴스 영상 생성 서비스입니다. JSON 텍스트 데이터와 이미지/비디오를 세로형 릴스 영상으로 자동 변환합니다.
 
 ## 📋 프로젝트 개요
 
 ### 주요 기능
-- **JSON 텍스트 데이터를 세로형 릴스 영상(414x896)으로 변환**
+- **JSON 텍스트 데이터를 세로형 릴스 영상(504x890)으로 변환**
 - **한국어 TTS 음성 자동 생성** (특수문자 자동 정리)
 - **🌐 URL 자동 릴스 생성**: 웹페이지 URL 입력으로 자동 대본 생성
   - BeautifulSoup를 이용한 지능형 웹 스크래핑
@@ -14,15 +35,17 @@ FastAPI와 MoviePy를 사용한 자동 릴스 영상 생성 서비스입니다. 
   - 자동으로 매력적인 제목과 7단계 구성 생성
 - **🎬 비디오 파일 지원**: MP4, MOV, AVI, WebM 비디오를 배경으로 사용 가능
 - **🖼️ 이미지 파일 지원**: JPG, PNG, GIF, WebP, BMP 이미지 지원
-- **텍스트 위치 설정**: 상단, 중앙, 하단 위치 선택 가능
+- **📍 텍스트 위치 설정**: 상단(340-520px), 하단(520-700px) 2단계 영역 선택
 - **성격별 BGM 시스템**: bright, calm, romantic, sad, suspense 폴더에서 랜덤 선택
-- **🎬 최적화된 Ken Burns 효과**: 
-  - 716x716 정사각형 크롭 + 2가지 패닝 패턴 (랜덤)
-  - Cubic ease-in-out 애니메이션으로 부드러운 움직임
+- **🎬 고급 영상 배치 시스템**: 
+  - **종횡비 기반 지능형 배치**: 504x670 작업영역 기준 자동 판단
+  - **4패턴 패닝 알고리즘**: 가로형(좌우), 세로형(상하) + Linear 이징
+  - **60px 패닝 범위**로 다이내믹한 효과
   - **36pt 폰트** + 2px 외곽선으로 가독성 극대화
 - **순차 미디어 지원**: 1,2,3,4 순서로 이미지/비디오 사용 (다중 포맷 지원)
 - **웹 기반 UI**: React + TypeScript + Material-UI 프론트엔드
-- 제목 상단 고정, 본문 텍스트별 개별 화면 표시
+- **220px 타이틀 영역** + **504x670 작업 영역** 구조
+- **TTS 음성 1.5배속** 처리로 시청 시간 단축 (50% 빠름)
 - 텍스트 길이에 따른 자동 시간 조절
 
 ### 기술 스택
@@ -106,7 +129,7 @@ interface ProjectData {
   content: ReelsContent;           // 대본 데이터 (title + body1-8)
   images: File[];                  // 업로드된 미디어 파일들
   imageUploadMode: ImageUploadMode; // 'per-script' | 'per-two-scripts'
-  textPosition: TextPosition;      // 'top' | 'middle' | 'bottom'
+  textPosition: TextPosition;      // 'top' | 'bottom' (2단계 시스템)
   selectedMusic: MusicFile | null; // 선택된 배경음악
   musicMood: MusicMood;           // 음악 성격
 }
@@ -119,7 +142,7 @@ interface ProjectData {
   - 로딩 상태 표시 및 진행률 시뮬레이션
   - 에러 핸들링 및 사용자 피드백
 - **대본 입력 인터페이스**: 제목 + 최대 8개 본문 텍스트 입력 필드
-- **📍 텍스트 위치 선택**: 상단(타이틀 아래 10px), 중앙(화면 중앙), 하단(현재 위치) 라디오 버튼 선택
+- **📍 텍스트 위치 선택**: 상단(340-520px 영역), 하단(520-700px 영역) 2단계 영역 선택
 - **실시간 유효성 검증**: 제목과 최소 1개 본문 텍스트 입력 필수 검증
 - **자동 포커스 관리**: 이전 단계에서 진입 시 첫 번째 필드로 포커스 이동
 - **텍스트 길이 안내**: 각 필드별 권장 글자 수 및 예상 음성 길이 표시
@@ -166,14 +189,13 @@ const handleExtractFromUrl = async () => {
 };
 ```
 
-**텍스트 위치 처리 로직:**
+**텍스트 위치 처리 로직 (2단계 시스템):**
 ```typescript
 const handleTextPositionChange = (newPosition: TextPosition) => {
   setTextPosition(newPosition);
   // 백엔드로 전달되어 영상 생성 시 텍스트 Y 좌표 결정
-  // top: title_height + 10px
-  // middle: (height - text_height) / 2  
-  // bottom: height - text_height - 50px
+  // top: 상단 영역 중앙 (430px) - 340-520px 영역
+  // bottom: 하단 영역 중앙 (610px) - 520-700px 영역
 };
 ```
 
@@ -247,7 +269,7 @@ export interface ProjectData {
   content: ReelsContent;
   images: File[];                    // 이미지 및 비디오 파일들
   imageUploadMode: ImageUploadMode;
-  textPosition: TextPosition;        // 새로 추가된 텍스트 위치
+  textPosition: TextPosition;        // 2단계 텍스트 위치 ('top' | 'bottom')
   selectedMusic: MusicFile | null;
   musicMood: MusicMood;
 }
@@ -261,7 +283,7 @@ export interface GenerateVideoRequest {
   use_test_files: boolean;
   selected_bgm_path?: string;
   image_allocation_mode: ImageUploadMode;
-  text_position: TextPosition;       // 새로 추가
+  text_position: TextPosition;       // 2단계 텍스트 위치
 }
 ```
 
@@ -280,7 +302,7 @@ export const generateVideo = async (data: {
   content: ReelsContent;
   images: File[];
   imageUploadMode: ImageUploadMode;
-  textPosition: TextPosition;          // 새로 추가
+  textPosition: TextPosition;          // 2단계 텍스트 위치
   selectedMusic: MusicFile | null;
   musicMood: MusicMood;
 }): Promise<ApiResponse> => {
@@ -290,7 +312,7 @@ export const generateVideo = async (data: {
   formData.append('content_data', JSON.stringify(data.content));
   formData.append('music_mood', data.musicMood);
   formData.append('image_allocation_mode', data.imageUploadMode);
-  formData.append('text_position', data.textPosition);  // 새로 추가
+  formData.append('text_position', data.textPosition);  // 2단계 위치
   
   // 미디어 파일들 추가 (이미지 + 비디오)
   data.images.forEach((file, index) => {
@@ -515,28 +537,43 @@ def create_video_background_clip(self, video_path, duration):
     return final_clip
 ```
 
-**2. 텍스트 위치 처리 개선**
+**2. 종횡비 기반 지능형 배치 시스템**
+```python
+def create_background_clip(self, image_path, duration):
+    """새로운 영상/이미지 배치 및 패닝 규칙 적용"""
+    
+    # 작업 영역 정의: (0, 220) ~ (504, 890)
+    work_width = 504
+    work_height = 670  # 890 - 220
+    work_aspect_ratio = work_width / work_height  # 252:335 = 0.751
+    image_aspect_ratio = orig_width / orig_height
+    
+    if image_aspect_ratio > work_aspect_ratio:
+        # 가로형: 좌우 패닝 (패턴 1, 2)
+        pan_range = min(60, (resized_width - work_width) // 2)
+    else:
+        # 세로형: 상하 패닝 (패턴 3, 4)
+        pan_range = min(60, (resized_height - work_height) // 2)
+```
+
+**3. 2단계 텍스트 위치 시스템**
 ```python
 def create_text_image(self, text, width, height, text_position="bottom"):
-    """텍스트 이미지 생성 - 위치 선택 지원"""
+    """2단계 텍스트 위치 시스템"""
     
-    # 텍스트 위치별 Y 좌표 계산
     if text_position == "top":
-        title_height = 120
-        box_y = title_height + 10  # 타이틀에서 10px 아래
-    elif text_position == "middle":
-        box_y = (height - box_height) // 2  # 화면 중앙
-    else:  # bottom (기본값)
-        box_y = height - box_height - 50  # 화면 하단
+        # 상단 텍스트 영역 중앙: 340-520 (중앙 430px)
+        zone_center_y = 430
+    else:  # bottom
+        # 하단 텍스트 영역 중앙: 520-700 (중앙 610px)
+        zone_center_y = 610
     
-    # 반투명 박스 배경과 텍스트 렌더링
-    draw.rounded_rectangle([box_x, box_y, box_x + box_width, box_y + box_height], 
-                          radius=20, fill=(0, 0, 0, 180))
+    start_y = zone_center_y - (total_height // 2)
     
     return text_image_path
 ```
 
-**3. 미디어 파일 스캐닝 개선**
+**4. 미디어 파일 스캐닝 개선**
 ```python
 def scan_uploads_folder(self, uploads_folder="uploads"):
     """uploads 폴더를 스캔하여 이미지/비디오 파일들을 찾고 분류"""
@@ -559,7 +596,7 @@ def scan_uploads_folder(self, uploads_folder="uploads"):
     return scan_result
 ```
 
-**4. 통합 비디오 생성 로직**
+**5. 통합 비디오 생성 로직**
 ```python
 def create_video_with_local_images(self, content, music_path, output_folder, 
                                   image_allocation_mode="2_per_image", 
@@ -584,7 +621,7 @@ def create_video_with_local_images(self, content, music_path, output_folder,
         # 텍스트 클립 생성 (위치 정보 포함)
         text_image_path = self.create_text_image(content[body_key], 
                                                self.video_width, 
-                                               self.video_height - 180, 
+                                               self.video_height, 
                                                text_position)
         
         # 최종 합성
@@ -672,7 +709,7 @@ Content-Type: multipart/form-data
 - **JSON 텍스트 데이터 파싱**: title + body1-8 텍스트 추출
 - **🎬 미디어 파일 처리**: 이미지/비디오 파일 자동 감지 및 분류
 - **배경음악 설정**: 성격별 폴더에서 랜덤 선택 또는 직접 업로드
-- **텍스트 위치 설정**: 상단/중앙/하단 중 선택된 위치 적용
+- **📍 텍스트 위치 설정**: 상단(340-520px)/하단(520-700px) 2단계 영역 적용
 
 ### 2. 시간 및 할당 계산
 - **각 텍스트 블록별 읽기 시간 자동 계산**: 한국어 기준 분당 300자, 1.5배속 적용
@@ -681,24 +718,24 @@ Content-Type: multipart/form-data
   - `per-two-scripts`: 본문 텍스트 2개마다 미디어 1개 할당 (연속 재생)
 - **최종 영상 길이**: 모든 body 텍스트 읽기 시간의 합
 
-### 3. 영상 요소 생성
-- **🎬 비디오 배경 처리**:
-  - 414px 폭으로 리사이즈 (종횡비 유지, 확장/축소 자동)
-  - 타이틀 바로 아래 위치 (180px Y 좌표)
-  - 하단 여백 검은색 패딩으로 자동 채움
-  - 길이 조정 (긴 영상은 앞부분 사용, 짧은 영상은 마지막 프레임으로 연장)
-- **🖼️ 이미지 배경 처리**: 
-  - **716x716 정사각형 크롭**: 중앙 기준 정사각형 자동 크롭
-  - **2가지 Ken Burns 패턴**: 좌→우, 우→좌 패닝 (랜덤 선택)
-  - **Cubic ease-in-out**: 부드러운 애니메이션 곡선
-  - **RGBA→RGB 변환**: PNG 투명도 자동 처리
-- **상단 제목**: 검은 배경(414x180) + 한글 폰트  
-- **📍 본문 텍스트**: 
-  - **30px 한글 폰트**: 최적화된 가독성
+### 3. 영상 요소 생성 (최신 아키텍처)
+- **🎬 종횡비 기반 지능형 배치**:
+  - **작업 영역**: 504x670 (220px 타이틀 아래)
+  - **종횡비 판단**: 0.751 기준 자동 가로/세로 구분
+  - **4패턴 패닝**: 가로형(좌우), 세로형(상하) + Linear 이징
+  - **60px 패닝 범위**로 다이내믹한 움직임
+- **🎬 비디오 처리**:
+  - 종횡비 유지하면서 작업영역에 맞춤 배치
+  - 길이 조정 (긴 영상은 앞부분, 짧은 영상은 프리즈 프레임)
+  - 상하/좌우 패닝 자동 적용
+- **상단 제목**: 검은 배경(504x220) + 한글 폰트  
+- **📍 본문 텍스트 (2단계 시스템)**: 
+  - **36pt 한글 폰트**: 최적화된 가독성
   - **2px 외곽선**: 25개 포지션 부드러운 검은색 테두리
   - **반투명 박스 제거**: 배경 이미지 완전 노출
-  - **위치 선택 가능**: 상단/중앙/하단 배치
-- **레이어 합성**: CompositeVideoClip으로 정확한 414x896 해상도
+  - **상단 영역**: 340-520px (중앙 430px)
+  - **하단 영역**: 520-700px (중앙 610px)
+- **레이어 합성**: CompositeVideoClip으로 정확한 504x890 해상도
 
 ### 4. 오디오 처리
 - **TTS 음성 생성**: gTTS로 전체 텍스트를 한국어 음성 생성 (특수문자 전처리)
@@ -714,16 +751,16 @@ Content-Type: multipart/form-data
 
 ### 🎬 비디오 파일 지원 (신규)
 - **지원 포맷**: MP4, MOV, AVI, WebM 비디오 파일 완전 지원
-- **자동 리사이즈**: 원본 종횡비 유지하면서 414px 폭으로 자동 조정
-- **스마트 확장/축소**: 작은 비디오는 확장, 큰 비디오는 축소하여 화면에 맞춤
+- **종횡비 기반 지능형 처리**: 0.751 기준 자동 가로/세로 구분
+- **스마트 배치**: 작업영역(504x670)에 최적화된 자동 리사이즈
 - **길이 매칭**: 비디오 길이를 텍스트 읽기 시간에 정확히 맞춤
 - **프리즈 프레임**: 짧은 비디오는 마지막 프레임에서 정지하여 시간 연장
-- **위치 최적화**: 타이틀 바로 아래에서 시작, 하단 여백은 검은색으로 자동 채움
+- **4패턴 패닝**: 가로형(좌우), 세로형(상하) 패닝 + 60px 이동 범위
 
-### 📍 텍스트 위치 선택 (신규)
-- **상단 위치**: 타이틀에서 10px 아래에서 시작
-- **중앙 위치**: 화면 정중앙에 배치
-- **하단 위치**: 기존 위치 (화면 하단에서 50px 위)
+### 📍 2단계 텍스트 위치 시스템 (최신)
+- **상단 영역**: 340-520px (중앙 430px) - 릴스 UI와 완전 분리
+- **하단 영역**: 520-700px (중앙 610px) - 최적 가독성 확보
+- **릴스 UI 회피**: 700-890px 영역 완전 비사용
 - **동적 계산**: 각 위치별 Y 좌표 자동 계산 및 최적 배치
 
 ### 🖼️ 멀티미디어 지원 확장
@@ -839,7 +876,7 @@ curl -X POST "http://localhost:8080/generate-video" \
 curl -X POST "http://localhost:8080/generate-video" \
   -F "content_data=$(cat test/text.json)" \
   -F "music_mood=romantic" \
-  -F "text_position=middle" \
+  -F "text_position=bottom" \
   -F "image_allocation_mode=1_per_image" \
   -F "image_1=@test/1.mp4" \
   -F "image_2=@test/2.jpg"
@@ -872,13 +909,13 @@ cd backend
   - 타이틀 바로 아래 위치, 하단 검은 패딩 자동 추가
   - 길이 매칭 및 프리즈 프레임 기능
 
-#### 2. 📍 텍스트 위치 선택 기능 (2024-08-31 해결)
-- **요구사항**: 텍스트를 상단, 중앙, 하단 중 선택하여 배치
+#### 2. 📍 2단계 텍스트 위치 시스템 (2024-09-07 최종 완성)
+- **요구사항**: 릴스 UI와 겹치지 않는 최적의 텍스트 배치
 - **구현사항**:
-  - Frontend: ContentStep.tsx에 라디오 버튼 UI 추가
-  - Backend: create_text_image() 메서드에 text_position 매개변수 추가
-  - 위치별 Y 좌표 계산 로직 구현
-  - API 엔드포인트에 text_position 파라미터 추가
+  - **상단 영역**: 340-520px (중앙 430px)
+  - **하단 영역**: 520-700px (중앙 610px)
+  - **릴스 UI 완전 회피**: 700-890px 영역 비사용
+  - Frontend/Backend 전체 2단계 시스템 통일
 
 #### 3. 🖼️ UI 텍스트 통일 (2024-08-31 해결)
 - **문제**: "이미지 업로드"라는 용어가 비디오 지원과 맞지 않음
@@ -1067,13 +1104,13 @@ TTS 전처리 후: 안녕하세요. 오늘도 좋은 하루 되세요.
 
 ---
 
-**최근 업데이트**: 2024년 9월 6일  
+**최근 업데이트**: 2024년 9월 7일  
 **주요 개선**: 
-- 🎵 **TTS 음성 속도 향상**: 1.4배속(40% 빠르게) + 4단계 다중 알고리즘으로 99.9% 안정성 보장
-- 🎬 **패닝 시스템 대폭 개선**: Linear 이징 + 60px 이동 범위 + 모든 클립 패닝 적용
-- 📍 **자막 위치 시스템 재설계**: body 영역 4등분 방식으로 릴스 UI와 완전 분리
-- ⚡ **성능 최적화**: 3초 조건 제거로 일관된 패닝 효과, 짧은 클립 중앙 고정 완벽 해결
-- 🎯 **사용자 경험 향상**: 패닝 속도 균일화, 자막 가독성 대폭 향상
+- 📐 **해상도 및 레이아웃 업그레이드**: 414x896 → **504x890** 해상도 / 220px 타이틀 영역
+- 🎬 **종횡비 기반 지능형 배치**: 0.751 기준 자동 가로/세로 구분 + 4패턴 패닝 시스템
+- 📍 **2단계 텍스트 위치 시스템**: 상단(340-520px), 하단(520-700px) 영역으로 릴스 UI와 완전 분리
+- 🎵 **TTS 음성 속도 1.5배**: 50% 고속화로 시청 시간 단축 + 99.9% 안정성 보장
+- ⚡ **비디오 처리 고도화**: 이미지와 동일한 종횡비 시스템 적용 + Linear 이징 패닝
 **기술 스택**: React + TypeScript + Material-UI (Frontend), FastAPI + MoviePy (Backend)  
 **테스트 환경**: Ubuntu 22.04 LTS, Python 3.10+, Node.js 16+
 **서비스 URL**: Frontend - http://localhost:3000, Backend - http://localhost:8080

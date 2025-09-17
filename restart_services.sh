@@ -7,6 +7,7 @@ echo "==========================================\n"
 echo "📴 기존 프로세스 종료 중..."
 pkill -f "react-scripts start"
 pkill -f "python main.py"
+pkill -f "python worker.py"
 pkill -f "npm start"
 
 echo "   프로세스 종료 대기 중..."
@@ -24,7 +25,14 @@ source venv/bin/activate
 nohup python main.py > api.log 2>&1 &
 echo "   FastAPI 서버 백그라운드에서 시작됨 (포트 8080)"
 
-# 4. React 재시작  
+# 4. 백그라운드 워커 재시작 (이메일 서비스 포함)
+echo "🤖 백그라운드 워커 재시작 중..."
+cd /zstus/backend
+source venv/bin/activate
+nohup python worker.py --poll-interval 5 > worker.log 2>&1 &
+echo "   백그라운드 워커 시작됨 (5초 폴링 간격)"
+
+# 5. React 재시작
 echo "⚛️  React 개발 서버 재시작 중..."
 cd /zstus/frontend
 nohup npm start > react.log 2>&1 &
@@ -59,9 +67,18 @@ else
     echo "   ❌ React 응답 없음 - react.log 확인 필요"
 fi
 
+# 백그라운드 워커 상태 확인
+echo "\n🔍 백그라운드 워커 상태:"
+if pgrep -f "python worker.py" > /dev/null; then
+    WORKER_PID=$(pgrep -f "python worker.py")
+    echo "   ✅ 워커 정상 실행 (PID: $WORKER_PID)"
+else
+    echo "   ❌ 워커 응답 없음 - worker.log 확인 필요"
+fi
+
 # 7. 실행 중인 프로세스 표시
 echo "\n📊 현재 실행 중인 프로세스:"
-ps aux | grep -E "(react-scripts|python main.py)" | grep -v grep | head -5
+ps aux | grep -E "(react-scripts|python main.py|python worker.py)" | grep -v grep | head -5
 
 # 8. 포트 상태 표시
 echo "\n🌐 포트 사용 상태:"
@@ -75,5 +92,9 @@ echo "   - FastAPI 직접: http://localhost:8080"
 echo "   - React 직접: http://localhost:3000"
 echo "\n📄 로그 확인:"
 echo "   - FastAPI 로그: tail -f /zstus/backend/api.log"
+echo "   - 워커 로그: tail -f /zstus/backend/worker.log"
 echo "   - React 로그: tail -f /zstus/frontend/react.log"
+echo "\n📧 이메일 서비스:"
+echo "   - Gmail SMTP: lazyflicker@gmail.com"
+echo "   - 완료 시 자동 이메일 발송 (배치 작업)"
 echo "==========================================\n"

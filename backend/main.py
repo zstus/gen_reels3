@@ -1,4 +1,4 @@
-from fastapi import FastAPI, File, UploadFile, Form, HTTPException
+from fastapi import FastAPI, File, UploadFile, Form, HTTPException, Query
 from fastapi.responses import JSONResponse, FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
@@ -45,6 +45,18 @@ except ImportError as e:
     AIOHTTP_AVAILABLE = False
 # Updated with create_simple_group_clip method
 
+# 새로운 모듈들 import (배치 작업 시스템)
+try:
+    from job_queue import job_queue, JobStatus
+    from email_service import email_service
+    JOB_QUEUE_AVAILABLE = True
+    print("✅ 배치 작업 시스템 로드 성공")
+except ImportError as e:
+    print(f"⚠️ 배치 작업 시스템 로드 실패: {e}")
+    job_queue = None
+    email_service = None
+    JOB_QUEUE_AVAILABLE = False
+
 # .env 파일 로드
 load_dotenv()
 
@@ -71,6 +83,25 @@ class ReelsContent(BaseModel):
     body5: str = ""
     body6: str = ""
     body7: str = ""
+
+# 배치 작업 관련 모델들
+class AsyncVideoRequest(BaseModel):
+    user_email: str
+    content_data: str
+    music_mood: str = "bright"
+    image_allocation_mode: str = "2_per_image"
+    text_position: str = "bottom"
+    text_style: str = "outline"
+    selected_bgm_path: str = ""
+    use_test_files: bool = False
+
+class JobStatusResponse(BaseModel):
+    job_id: str
+    status: str
+    created_at: str
+    updated_at: str
+    result: Optional[dict] = None
+    error_message: Optional[str] = None
 
 # 로깅 설정
 logging.basicConfig(level=logging.INFO)
@@ -398,7 +429,7 @@ async def generate_video(
     image_allocation_mode: str = Form(default="2_per_image"),  # "2_per_image" 또는 "1_per_image"
     
     # 텍스트 위치 선택
-    text_position: str = Form(default="bottom"),  # "top", "middle", "bottom"
+    text_position: str = Form(default="bottom"),  # "top", "bottom"
     
     # 텍스트 스타일 선택
     text_style: str = Form(default="outline"),  # "outline" (외곽선) 또는 "background" (반투명 배경)
@@ -461,7 +492,7 @@ async def generate_video(
             print(f"⚠️ 잘못된 이미지 할당 모드, 기본값 사용: {image_allocation_mode}")
         
         # 텍스트 위치 검증
-        if text_position not in ["top", "middle", "bottom"]:
+        if text_position not in ["top", "bottom"]:
             text_position = "bottom"  # 기본값
             print(f"⚠️ 잘못된 텍스트 위치, 기본값 사용: {text_position}")
         
@@ -493,6 +524,192 @@ async def generate_video(
                 "message": str(e)
             }
         )
+
+class SingleImageRequest(BaseModel):
+    text: str
+    additional_context: Optional[str] = None
+
+@app.post("/generate-single-image")
+async def generate_single_image(request: SingleImageRequest):
+    """개별 텍스트에 대한 이미지 자동 생성"""
+    try:
+        logger.info(f"🔥 개별 이미지 생성 요청 시작")
+        logger.info(f"📝 요청 텍스트: {request.text}")
+        logger.info(f"📝 추가 컨텍스트: {request.additional_context}")
+        
+        if not OPENAI_AVAILABLE:
+            logger.error("❌ OpenAI 라이브러리가 설치되지 않음")
+            raise HTTPException(status_code=500, detail="OpenAI 라이브러리가 설치되지 않았습니다")
+        
+        # OpenAI API 키 확인
+        OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
+        if not OPENAI_API_KEY:
+            logger.error("❌ OpenAI API 키가 설정되지 않음")
+            raise HTTPException(status_code=500, detail="OpenAI API 키가 설정되지 않았습니다")
+        
+        logger.info("🔑 OpenAI API 키 확인 완료")
+        
+        # 이미지 생성용 프롬프트 생성
+        image_prompt = create_image_generation_prompt(request.text, request.additional_context)
+        logger.info(f"🎯 생성된 DALL-E 프롬프트: {image_prompt[:200]}...")
+        
+        # OpenAI DALL-E를 통한 이미지 생성
+        client = OpenAI(api_key=OPENAI_API_KEY, timeout=30.0)
+        logger.info("🤖 DALL-E API 호출 시작...")
+        
+        try:
+            response = client.images.generate(
+                model="dall-e-3",
+                prompt=image_prompt,
+                size="1024x1024",
+                quality="standard",
+                n=1,
+            )
+            logger.info("✅ DALL-E API 호출 성공")
+        except Exception as dalle_error:
+            logger.error(f"💥 DALL-E API 호출 실패: {dalle_error}")
+            # 프롬프트 안전화 시도
+            if "safety system" in str(dalle_error) or "content_policy_violation" in str(dalle_error):
+                logger.info("🛡️ 안전 정책 위반 감지 - 프롬프트 안전화 시도")
+                safe_prompt = create_safe_image_prompt(request.text, request.additional_context)
+                logger.info(f"🔒 안전화된 프롬프트: {safe_prompt[:200]}...")
+                
+                response = client.images.generate(
+                    model="dall-e-3",
+                    prompt=safe_prompt,
+                    size="1024x1024",
+                    quality="standard",
+                    n=1,
+                )
+                logger.info("✅ 안전화된 프롬프트로 성공")
+            else:
+                raise dalle_error
+        
+        image_url = response.data[0].url
+        logger.info(f"🌐 이미지 URL 수신: {image_url}")
+        
+        # 생성된 이미지 다운로드 및 저장
+        import requests
+        from datetime import datetime
+        
+        logger.info("📥 이미지 다운로드 시작...")
+        image_response = requests.get(image_url, timeout=30)
+        image_response.raise_for_status()
+        logger.info(f"📥 이미지 다운로드 완료 ({len(image_response.content)} bytes)")
+        
+        # uploads 폴더에 저장
+        os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        filename = f"generated_single_{timestamp}_{uuid.uuid4().hex[:8]}.png"
+        local_path = os.path.join(UPLOAD_FOLDER, filename)
+        
+        with open(local_path, 'wb') as f:
+            f.write(image_response.content)
+        
+        logger.info(f"💾 개별 이미지 저장 완료: {filename}")
+        logger.info(f"📂 로컬 경로: {local_path}")
+        
+        return {
+            "status": "success",
+            "message": "이미지가 성공적으로 생성되었습니다",
+            "image_url": f"/uploads/{filename}",
+            "local_path": local_path
+        }
+        
+    except HTTPException:
+        raise  # HTTPException은 그대로 전파
+    except Exception as e:
+        logger.error(f"💥 개별 이미지 생성 치명적 오류: {e}")
+        logger.error(f"🔍 오류 타입: {type(e).__name__}")
+        raise HTTPException(status_code=500, detail=f"이미지 생성 실패: {str(e)}")
+
+def create_image_generation_prompt(text: str, additional_context: Optional[str] = None) -> str:
+    """텍스트 기반 이미지 생성 프롬프트 생성"""
+    
+    # 실사풍 기본 프롬프트 구성
+    base_prompt = f"""
+Create a photorealistic digital painting with soft, natural lighting and seamless blending based on this Korean text: "{text}"
+
+The image should have:
+- No visible outlines or hard edges between objects
+- Natural shadows and highlights
+- Realistic textures and materials
+- Soft gradients and smooth color transitions
+- Professional photography-like composition
+- Warm, ambient lighting
+- High detail and depth
+- Suitable for vertical video format (9:16 aspect ratio content)
+- Safe for all audiences
+"""
+    
+    # 추가 컨텍스트가 있으면 포함
+    if additional_context:
+        base_prompt += f"\nAdditional context: \"{additional_context}\""
+    
+    base_prompt += """
+
+Style: Digital painting, photorealistic, cinematic lighting, professional photography aesthetic
+Quality: High resolution, sharp details, realistic depth of field
+Mood: Natural, engaging, appropriate for social media
+Avoid: Vector graphics, line art, cartoon style, bold outlines, flat colors, text, letters, words, typography, captions, labels, any written content
+"""
+    
+    return base_prompt.strip()
+
+def create_safe_image_prompt(text: str, additional_context: Optional[str] = None) -> str:
+    """안전 정책 위반을 피하기 위한 안전화된 프롬프트 생성"""
+    
+    # 폭력적/위험한 표현들을 안전한 표현으로 대체
+    safe_text = text.replace("때리", "터치").replace("때린", "터치").replace("펀치", "움직임")
+    safe_text = safe_text.replace("타격", "접촉").replace("공격", "동작").replace("폭발", "반응")
+    safe_text = safe_text.replace("충격", "에너지").replace("파괴", "변화").replace("깨", "변형")
+    
+    if additional_context:
+        safe_additional = additional_context.replace("때리", "터치").replace("때린", "터치").replace("펀치", "움직임")
+        safe_additional = safe_additional.replace("타격", "접촉").replace("공격", "동작").replace("폭발", "반응")
+    else:
+        safe_additional = None
+    
+    # 매우 안전한 프롬프트 구성
+    base_prompt = f"""
+Create a peaceful, educational illustration about marine life and science based on this Korean text: "{safe_text}"
+
+The image should be:
+- Educational and informative
+- Bright, colorful, and family-friendly
+- Featuring marine creatures in their natural habitat
+- Scientific and nature-focused
+- Suitable for educational content
+- Completely safe for all audiences
+
+Focus on:
+- Beautiful ocean scenes
+- Colorful marine life
+- Scientific concepts visualization
+- Peaceful underwater environments
+"""
+    
+    if safe_additional:
+        base_prompt += f"\nAdditional educational context: \"{safe_additional}\""
+    
+    base_prompt += """
+
+Style: Educational illustration, nature documentary style
+Quality: High resolution, sharp details
+Mood: Peaceful, educational, wonder and discovery
+No violence, conflict, or aggressive themes
+"""
+    
+    return base_prompt.strip()
+
+@app.get("/uploads/{filename}")
+async def serve_uploaded_file(filename: str):
+    """업로드된 파일 제공"""
+    file_path = os.path.join(UPLOAD_FOLDER, filename)
+    if not os.path.exists(file_path):
+        raise HTTPException(status_code=404, detail="파일을 찾을 수 없습니다")
+    
+    return FileResponse(file_path)
 
 @app.get("/bgm-list")
 async def get_bgm_list():
@@ -957,14 +1174,21 @@ async def generate_images_with_dalle(texts: List[str]) -> List[str]:
             try:
                 logger.info(f"📸 이미지 {i+1}/{len(texts)} 생성 시작: {text[:30]}...")
                 
-                # DALL-E 프롬프트 생성 (콘텐츠 필터링 회피를 위해 더 중성적으로)
+                # DALL-E 실사풍 프롬프트 생성
                 prompt = f"""
-Create square illustration representing this sentence: "{text}"
-Style: modern and professional illustration
-Format: Square (714x714)
-Background: Simple, clean background
-No text in the image. don't forget not to use text in the image.
-Focus on positive visual metaphors
+Create a photorealistic digital painting with soft, natural lighting and seamless blending representing this sentence: "{text}"
+
+The image should have:
+- No visible outlines or hard edges between objects
+- Natural shadows and highlights
+- Realistic textures and materials
+- Soft gradients and smooth color transitions
+- Professional photography-like composition
+- Warm, ambient lighting
+- High detail and depth
+
+Style: Digital painting, photorealistic, cinematic lighting, professional photography aesthetic
+Avoid: Vector graphics, line art, cartoon style, bold outlines, flat colors, text, letters, words, typography, captions, labels, any written content
 """
                 
                 logger.info(f"🎯 이미지 {i+1} DALL-E 프롬프트: {prompt.strip()}")
@@ -1010,15 +1234,21 @@ Focus on positive visual metaphors
                 if "content_policy_violation" in str(e):
                     logger.info(f"🔄 이미지 {i+1} 콘텐츠 필터링으로 인한 재시도 중...")
                     try:
-                        # 더 중성적인 프롬프트로 재시도
+                        # 실사풍 안전 프롬프트로 재시도
                         retry_prompt = """
-Create a simple, colorful square illustration about family gathering and home.
-Style: warm, friendly, cartoon-like illustration
-Format: Square (714x714)
-Theme: family, home, celebration, togetherness
-Background: Simple, clean background
-Mood: positive and cheerful
-No text in the image
+Create a photorealistic digital painting with soft, natural lighting and seamless blending of people in a peaceful, natural setting.
+
+The image should have:
+- No visible outlines or hard edges between objects
+- Natural shadows and highlights
+- Realistic textures and materials
+- Soft gradients and smooth color transitions
+- Professional photography-like composition
+- Warm, ambient lighting
+- High detail and depth
+
+Style: Digital painting, photorealistic, cinematic lighting, professional photography aesthetic
+Avoid: Vector graphics, line art, cartoon style, bold outlines, flat colors, text, letters, words, typography, captions, labels, any written content
 """
                         
                         logger.info(f"🎯 이미지 {i+1} 재시도 프롬프트: {retry_prompt.strip()}")
@@ -1102,14 +1332,25 @@ async def generate_images_with_dalle_sequential(texts: List[str]) -> List[str]:
             try:
                 logger.info(f"📸 이미지 {i+1}/{len(texts)} 생성 시작: {text[:30]}...")
                 
-                # DALL-E 프롬프트 생성
+                # DALL-E 실사풍 프롬프트 생성 (순차 처리용)
                 prompt = f"""
-Create square illustration representing this sentence: "{text}"
-Style: modern and professional illustration
-Format: Square (714x714)
-Background: Simple, clean background
-No text in the image. don't forget not to use text in the image.
-Focus on positive visual metaphors
+Create a photorealistic digital painting with soft, natural lighting and seamless blending representing this sentence: "{text}"
+
+The image should have:
+- No visible outlines or hard edges between objects
+- Natural shadows and highlights
+- Realistic textures and materials
+- Soft gradients and smooth color transitions
+- Professional photography-like composition
+- Warm, ambient lighting
+- High detail and depth
+- Square format (1024x1024)
+- Clean, realistic background
+
+Style: Digital painting, photorealistic, cinematic lighting, professional photography aesthetic
+Quality: High resolution, sharp details, realistic depth of field
+Mood: Natural, engaging, positive visual metaphors
+Avoid: Vector graphics, line art, cartoon style, bold outlines, flat colors, text, letters, words, typography, captions, labels, any written content
 """
                 
                 logger.info(f"🎯 이미지 {i+1} DALL-E 프롬프트: {prompt.strip()}")
@@ -1229,6 +1470,41 @@ async def get_image(filename: str):
         logger.error(f"이미지 파일 서빙 오류: {e}")
         raise HTTPException(status_code=500, detail="이미지 파일을 읽을 수 없습니다.")
 
+@app.get("/download-image/{filename}")
+async def download_image(filename: str):
+    """생성된 이미지 파일 다운로드 (attachment로)"""
+    try:
+        file_path = os.path.join(uploads_dir, filename)
+        
+        # 파일 존재 여부 확인
+        if not os.path.exists(file_path):
+            raise HTTPException(status_code=404, detail="이미지 파일을 찾을 수 없습니다.")
+        
+        # 보안을 위해 파일명 검증
+        if not filename.startswith("generated_") or not filename.endswith(".png"):
+            raise HTTPException(status_code=403, detail="접근이 허용되지 않은 파일입니다.")
+        
+        # 더 친화적인 파일명 생성 (타임스탬프 기반)
+        from datetime import datetime
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        download_filename = f"reels_image_{timestamp}.png"
+        
+        return FileResponse(
+            path=file_path,
+            media_type="image/png",
+            filename=download_filename,
+            headers={
+                "Content-Disposition": f"attachment; filename={download_filename}",
+                "Cache-Control": "no-cache"
+            }
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"이미지 다운로드 오류: {e}")
+        raise HTTPException(status_code=500, detail="이미지 다운로드에 실패했습니다.")
+
 @app.post("/extract-reels-from-url")
 async def extract_reels_from_url(request: URLExtractRequest):
     """URL에서 릴스 대본 추출"""
@@ -1291,6 +1567,278 @@ async def extract_reels_from_url(request: URLExtractRequest):
     except Exception as e:
         logger.error(f"릴스 추출 중 예외 발생: {e}")
         raise HTTPException(status_code=500, detail="릴스 대본 추출 중 오류가 발생했습니다.")
+
+# 배치 작업 관련 API 엔드포인트들
+@app.post("/generate-video-async")
+async def generate_video_async(
+    user_email: str = Form(...),
+    content_data: str = Form(...),
+    music_mood: str = Form(default="bright"),
+    image_allocation_mode: str = Form(default="2_per_image"),
+    text_position: str = Form(default="bottom"),
+    text_style: str = Form(default="outline"),
+    selected_bgm_path: str = Form(default=""),
+    use_test_files: bool = Form(default=False),
+
+    # 이미지 파일 업로드 (최대 8개)
+    image_1: Optional[UploadFile] = File(None),
+    image_2: Optional[UploadFile] = File(None),
+    image_3: Optional[UploadFile] = File(None),
+    image_4: Optional[UploadFile] = File(None),
+    image_5: Optional[UploadFile] = File(None),
+    image_6: Optional[UploadFile] = File(None),
+    image_7: Optional[UploadFile] = File(None),
+    image_8: Optional[UploadFile] = File(None),
+):
+    """비동기 영상 생성 요청 - 즉시 Job ID 반환"""
+    try:
+        if not JOB_QUEUE_AVAILABLE:
+            raise HTTPException(
+                status_code=500,
+                detail="배치 작업 시스템이 사용 불가능합니다. 관리자에게 문의하세요."
+            )
+
+        logger.info(f"🚀 비동기 영상 생성 요청: {user_email}")
+
+        # 1. uploads 폴더 정리 및 파일 저장
+        if os.path.exists(UPLOAD_FOLDER):
+            shutil.rmtree(UPLOAD_FOLDER)
+        os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+
+        # 업로드된 파일들 저장
+        uploaded_files = [
+            ("image_1", image_1), ("image_2", image_2), ("image_3", image_3), ("image_4", image_4),
+            ("image_5", image_5), ("image_6", image_6), ("image_7", image_7), ("image_8", image_8)
+        ]
+
+        saved_files = []
+        for field_name, uploaded_file in uploaded_files:
+            if uploaded_file and uploaded_file.filename:
+                # 파일명에서 숫자 추출 (1, 2, 3, 4...)
+                file_number = field_name.split('_')[1]
+                file_extension = uploaded_file.filename.split('.')[-1].lower()
+                save_filename = f"{file_number}.{file_extension}"
+                save_path = os.path.join(UPLOAD_FOLDER, save_filename)
+
+                with open(save_path, "wb") as buffer:
+                    shutil.copyfileobj(uploaded_file.file, buffer)
+
+                saved_files.append(save_filename)
+                logger.info(f"📁 파일 저장: {save_filename}")
+
+        # 2. 작업 파라미터 구성
+        video_params = {
+            'content_data': content_data,
+            'music_mood': music_mood,
+            'image_allocation_mode': image_allocation_mode,
+            'text_position': text_position,
+            'text_style': text_style,
+            'selected_bgm_path': selected_bgm_path,
+            'use_test_files': use_test_files,
+            'uploaded_files': saved_files
+        }
+
+        # 3. 작업을 큐에 추가
+        job_id = job_queue.add_job(user_email, video_params)
+
+        logger.info(f"✅ 작업 큐에 추가 완료: {job_id}")
+
+        return JSONResponse(
+            content={
+                "status": "success",
+                "message": "영상 생성 작업이 시작되었습니다. 완료되면 이메일로 알려드립니다.",
+                "job_id": job_id,
+                "user_email": user_email,
+                "estimated_time": "약 3-10분"
+            }
+        )
+
+    except Exception as e:
+        logger.error(f"❌ 비동기 영상 생성 요청 실패: {e}")
+        raise HTTPException(status_code=500, detail=f"작업 요청 실패: {str(e)}")
+
+@app.get("/job-status/{job_id}")
+async def get_job_status(job_id: str):
+    """작업 상태 조회"""
+    try:
+        if not JOB_QUEUE_AVAILABLE:
+            raise HTTPException(status_code=500, detail="배치 작업 시스템이 사용 불가능합니다.")
+
+        job_data = job_queue.get_job(job_id)
+        if not job_data:
+            raise HTTPException(status_code=404, detail="작업을 찾을 수 없습니다.")
+
+        return JobStatusResponse(
+            job_id=job_data['job_id'],
+            status=job_data['status'],
+            created_at=job_data['created_at'],
+            updated_at=job_data['updated_at'],
+            result=job_data.get('result'),
+            error_message=job_data.get('error_message')
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"❌ 작업 상태 조회 실패: {e}")
+        raise HTTPException(status_code=500, detail="작업 상태 조회 중 오류가 발생했습니다.")
+
+@app.get("/download-video")
+async def download_video(token: str = Query(...)):
+    """보안 다운로드 링크를 통한 영상 다운로드"""
+    try:
+        logger.info(f"📥 다운로드 요청 시작 (기존 엔드포인트): token={token[:20]}...")
+
+        if not JOB_QUEUE_AVAILABLE:
+            logger.error("❌ 배치 작업 시스템 사용 불가")
+            raise HTTPException(status_code=500, detail="배치 작업 시스템이 사용 불가능합니다.")
+
+        # 토큰 검증
+        logger.info("🔐 토큰 검증 시작")
+        payload = email_service.verify_download_token(token)
+        if not payload:
+            logger.error("❌ 토큰 검증 실패")
+            raise HTTPException(status_code=401, detail="유효하지 않거나 만료된 다운로드 링크입니다.")
+
+        video_path = payload.get('video_path')
+        user_email = payload.get('user_email')
+        logger.info(f"✅ 토큰 검증 성공: user={user_email}, video_path={video_path}")
+
+        # 파일 경로 처리 개선
+        if os.path.isabs(video_path):
+            # 절대 경로인 경우 그대로 사용
+            full_video_path = video_path
+            logger.info(f"📁 절대 경로 사용: {full_video_path}")
+        else:
+            # 상대 경로인 경우 OUTPUT_FOLDER와 결합
+            full_video_path = os.path.join(OUTPUT_FOLDER, video_path)
+            logger.info(f"📁 상대 경로 결합: {OUTPUT_FOLDER} + {video_path} = {full_video_path}")
+
+        # 파일 존재 확인
+        if not os.path.exists(full_video_path):
+            logger.error(f"❌ 영상 파일 없음: {full_video_path}")
+            # 대체 경로들 시도
+            basename = os.path.basename(video_path)
+            alternative_path = os.path.join(OUTPUT_FOLDER, basename)
+            logger.info(f"🔍 대체 경로 확인: {alternative_path}")
+
+            if os.path.exists(alternative_path):
+                full_video_path = alternative_path
+                logger.info(f"✅ 대체 경로에서 파일 발견: {full_video_path}")
+            else:
+                # 출력 폴더의 모든 파일 나열
+                try:
+                    files_in_output = os.listdir(OUTPUT_FOLDER) if os.path.exists(OUTPUT_FOLDER) else []
+                    logger.error(f"❌ OUTPUT_FOLDER 내용: {files_in_output}")
+                except Exception as list_error:
+                    logger.error(f"❌ OUTPUT_FOLDER 접근 실패: {list_error}")
+                raise HTTPException(status_code=404, detail="영상 파일을 찾을 수 없습니다.")
+
+        file_size = os.path.getsize(full_video_path)
+        logger.info(f"📥 영상 다운로드 시작: {user_email} → {os.path.basename(video_path)} ({file_size} bytes)")
+
+        # 파일 다운로드 응답
+        return FileResponse(
+            path=full_video_path,
+            filename=os.path.basename(video_path),
+            media_type='video/mp4'
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"❌ 영상 다운로드 실패: {e}")
+        raise HTTPException(status_code=500, detail="영상 다운로드 중 오류가 발생했습니다.")
+
+@app.get("/api/download-video")
+async def api_download_video(token: str = Query(...)):
+    """보안 다운로드 링크를 통한 영상 다운로드 (nginx 라우팅용 /api 경로)"""
+    try:
+        logger.info(f"📥 다운로드 요청 시작: token={token[:20]}...")
+
+        if not JOB_QUEUE_AVAILABLE:
+            logger.error("❌ 배치 작업 시스템 사용 불가")
+            raise HTTPException(status_code=500, detail="배치 작업 시스템이 사용 불가능합니다.")
+
+        # 토큰 검증
+        logger.info("🔐 토큰 검증 시작")
+        payload = email_service.verify_download_token(token)
+        if not payload:
+            logger.error("❌ 토큰 검증 실패")
+            raise HTTPException(status_code=401, detail="유효하지 않거나 만료된 다운로드 링크입니다.")
+
+        video_path = payload.get('video_path')
+        user_email = payload.get('user_email')
+        logger.info(f"✅ 토큰 검증 성공: user={user_email}, video_path={video_path}")
+
+        # 파일 경로 처리 개선
+        if os.path.isabs(video_path):
+            # 절대 경로인 경우 그대로 사용
+            full_video_path = video_path
+            logger.info(f"📁 절대 경로 사용: {full_video_path}")
+        else:
+            # 상대 경로인 경우 OUTPUT_FOLDER와 결합
+            full_video_path = os.path.join(OUTPUT_FOLDER, video_path)
+            logger.info(f"📁 상대 경로 결합: {OUTPUT_FOLDER} + {video_path} = {full_video_path}")
+
+        # 파일 존재 확인
+        if not os.path.exists(full_video_path):
+            logger.error(f"❌ 영상 파일 없음: {full_video_path}")
+            # 대체 경로들 시도
+            basename = os.path.basename(video_path)
+            alternative_path = os.path.join(OUTPUT_FOLDER, basename)
+            logger.info(f"🔍 대체 경로 확인: {alternative_path}")
+
+            if os.path.exists(alternative_path):
+                full_video_path = alternative_path
+                logger.info(f"✅ 대체 경로에서 파일 발견: {full_video_path}")
+            else:
+                # 출력 폴더의 모든 파일 나열
+                try:
+                    files_in_output = os.listdir(OUTPUT_FOLDER) if os.path.exists(OUTPUT_FOLDER) else []
+                    logger.error(f"❌ OUTPUT_FOLDER 내용: {files_in_output}")
+                except Exception as list_error:
+                    logger.error(f"❌ OUTPUT_FOLDER 접근 실패: {list_error}")
+                raise HTTPException(status_code=404, detail="영상 파일을 찾을 수 없습니다.")
+
+        file_size = os.path.getsize(full_video_path)
+        logger.info(f"📥 영상 다운로드 시작: {user_email} → {os.path.basename(video_path)} ({file_size} bytes)")
+
+        # 파일 다운로드 응답
+        return FileResponse(
+            path=full_video_path,
+            filename=os.path.basename(video_path),
+            media_type='video/mp4'
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"❌ 영상 다운로드 실패: {e}")
+        raise HTTPException(status_code=500, detail="영상 다운로드 중 오류가 발생했습니다.")
+
+@app.get("/api/test")
+async def api_test():
+    """nginx /api 라우팅 테스트용 엔드포인트"""
+    return {
+        "status": "success",
+        "message": "nginx /api 라우팅이 정상 작동합니다",
+        "timestamp": datetime.now().isoformat(),
+        "endpoint": "/api/test"
+    }
+
+@app.get("/queue-stats")
+async def get_queue_stats():
+    """작업 큐 통계 조회 (관리용)"""
+    try:
+        if not JOB_QUEUE_AVAILABLE:
+            raise HTTPException(status_code=500, detail="배치 작업 시스템이 사용 불가능합니다.")
+
+        stats = job_queue.get_job_stats()
+        return {"status": "success", "stats": stats}
+
+    except Exception as e:
+        logger.error(f"❌ 큐 통계 조회 실패: {e}")
+        raise HTTPException(status_code=500, detail="큐 통계 조회 중 오류가 발생했습니다.")
 
 # 정적 파일 서빙
 app.mount("/bgm", StaticFiles(directory=BGM_FOLDER), name="bgm")

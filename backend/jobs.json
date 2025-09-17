@@ -1,0 +1,192 @@
+{
+  "3071dd68-c818-4341-9aa2-c7f4f2366624": {
+    "job_id": "3071dd68-c818-4341-9aa2-c7f4f2366624",
+    "user_email": "xystus@gmail.com",
+    "status": "failed",
+    "created_at": "2025-09-17T14:16:46.475575",
+    "updated_at": "2025-09-17T14:16:58.500159",
+    "video_params": {
+      "content_data": "{\"title\":\"테스트\",\"body1\":\"테스트1\",\"body2\":\"테스트2\",\"body3\":\"\",\"body4\":\"\",\"body5\":\"\",\"body6\":\"\",\"body7\":\"\",\"body8\":\"\"}",
+      "music_mood": "bright",
+      "image_allocation_mode": "1_per_image",
+      "text_position": "bottom",
+      "text_style": "outline",
+      "selected_bgm_path": "All In - Everet Almond.mp3",
+      "use_test_files": false,
+      "uploaded_files": [
+        "1.png",
+        "2.png"
+      ]
+    },
+    "result": null,
+    "error_message": "VideoGenerator.create_video_from_uploads() got an unexpected keyword argument 'content'",
+    "retry_count": 2,
+    "max_retries": 2
+  },
+  "8caecff7-e4a6-4676-a607-d123f63fb250": {
+    "job_id": "8caecff7-e4a6-4676-a607-d123f63fb250",
+    "user_email": "xystus@gmail.com",
+    "status": "failed",
+    "created_at": "2025-09-17T14:23:03.800513",
+    "updated_at": "2025-09-17T14:23:10.798055",
+    "video_params": {
+      "content_data": "{\"title\":\"테스트\",\"body1\":\"테스트_1\",\"body2\":\"테스트_2\",\"body3\":\"\",\"body4\":\"\",\"body5\":\"\",\"body6\":\"\",\"body7\":\"\",\"body8\":\"\"}",
+      "music_mood": "bright",
+      "image_allocation_mode": "1_per_image",
+      "text_position": "bottom",
+      "text_style": "outline",
+      "selected_bgm_path": "Dark Elves - Jimena Contreras.mp3",
+      "use_test_files": false,
+      "uploaded_files": [
+        "1.png",
+        "2.png"
+      ]
+    },
+    "result": null,
+    "error_message": "uploads 폴더 기반 영상 생성 실패: text.json 파일이 없습니다",
+    "retry_count": 2,
+    "max_retries": 2
+  },
+  "57c3808f-440c-4d0b-957f-bc254d0e6e53": {
+    "job_id": "57c3808f-440c-4d0b-957f-bc254d0e6e53",
+    "user_email": "xystus@gmail.com",
+    "status": "failed",
+    "created_at": "2025-09-17T14:25:54.628096",
+    "updated_at": "2025-09-17T14:26:26.941605",
+    "video_params": {
+      "content_data": "{\"title\":\"테스트\",\"body1\":\"테스트1\",\"body2\":\"테스트2\",\"body3\":\"\",\"body4\":\"\",\"body5\":\"\",\"body6\":\"\",\"body7\":\"\",\"body8\":\"\"}",
+      "music_mood": "bright",
+      "image_allocation_mode": "1_per_image",
+      "text_position": "bottom",
+      "text_style": "outline",
+      "selected_bgm_path": "Soaring - The Grey Room _ Golden Palms.mp3",
+      "use_test_files": false,
+      "uploaded_files": [
+        "1.png",
+        "2.png"
+      ]
+    },
+    "result": null,
+    "error_message": "'str' object has no attribute 'get'",
+    "retry_count": 2,
+    "max_retries": 2
+  },
+  "55a6dae0-a909-4181-8369-d011b1e3d77b": {
+    "job_id": "55a6dae0-a909-4181-8369-d011b1e3d77b",
+    "user_email": "xystus@gmail.com",
+    "status": "completed",
+    "created_at": "2025-09-17T14:31:52.913838",
+    "updated_at": "2025-09-17T14:32:02.744435",
+    "video_params": {
+      "content_data": "{\"title\":\"테스트\",\"body1\":\"테스트1\",\"body2\":\"테스트2\",\"body3\":\"\",\"body4\":\"\",\"body5\":\"\",\"body6\":\"\",\"body7\":\"\",\"body8\":\"\"}",
+      "music_mood": "bright",
+      "image_allocation_mode": "1_per_image",
+      "text_position": "bottom",
+      "text_style": "outline",
+      "selected_bgm_path": "For Granted - Dyalla.mp3",
+      "use_test_files": false,
+      "uploaded_files": [
+        "1.png",
+        "2.png"
+      ]
+    },
+    "result": {
+      "video_path": "/zstus/backend/output_videos/reels_8b8f2da2.mp4",
+      "duration": "약 10-30초",
+      "completed_at": "2025-09-17T14:32:02.744225"
+    },
+    "error_message": null,
+    "retry_count": 0,
+    "max_retries": 2
+  },
+  "cbe2216a-f540-40e3-9762-2a2d12804e4c": {
+    "job_id": "cbe2216a-f540-40e3-9762-2a2d12804e4c",
+    "user_email": "xystus@gmail.com",
+    "status": "completed",
+    "created_at": "2025-09-17T14:45:06.126287",
+    "updated_at": "2025-09-17T14:45:18.851301",
+    "video_params": {
+      "content_data": "{\"title\":\"테스트 입니다\",\"body1\":\"테스트 1\",\"body2\":\"테스트2\",\"body3\":\"\",\"body4\":\"\",\"body5\":\"\",\"body6\":\"\",\"body7\":\"\",\"body8\":\"\"}",
+      "music_mood": "bright",
+      "image_allocation_mode": "1_per_image",
+      "text_position": "bottom",
+      "text_style": "outline",
+      "selected_bgm_path": "Dark Elves - Jimena Contreras.mp3",
+      "use_test_files": false,
+      "uploaded_files": [
+        "1.png",
+        "2.png"
+      ]
+    },
+    "result": {
+      "video_path": "/zstus/backend/output_videos/reels_371c71cb.mp4",
+      "duration": "약 10-30초",
+      "completed_at": "2025-09-17T14:45:18.851006"
+    },
+    "error_message": null,
+    "retry_count": 0,
+    "max_retries": 2
+  },
+  "eaa4bbac-892c-4963-b5f1-a9538836748f": {
+    "job_id": "eaa4bbac-892c-4963-b5f1-a9538836748f",
+    "user_email": "xystus@gmail.com",
+    "status": "completed",
+    "created_at": "2025-09-17T15:25:28.996372",
+    "updated_at": "2025-09-17T15:25:41.676928",
+    "video_params": {
+      "content_data": "{\"title\":\"테스트\",\"body1\":\"테스트\",\"body2\":\"테스트111\",\"body3\":\"\",\"body4\":\"\",\"body5\":\"\",\"body6\":\"\",\"body7\":\"\",\"body8\":\"\"}",
+      "music_mood": "bright",
+      "image_allocation_mode": "1_per_image",
+      "text_position": "bottom",
+      "text_style": "outline",
+      "selected_bgm_path": "Dark Elves - Jimena Contreras.mp3",
+      "use_test_files": false,
+      "uploaded_files": [
+        "1.png",
+        "2.png"
+      ]
+    },
+    "result": {
+      "video_path": "/zstus/backend/output_videos/reels_196595bc.mp4",
+      "duration": "약 10-30초",
+      "completed_at": "2025-09-17T15:25:41.676636"
+    },
+    "error_message": null,
+    "retry_count": 0,
+    "max_retries": 2
+  },
+  "50333b04-b3ae-45cf-ad1d-734462f25a2f": {
+    "job_id": "50333b04-b3ae-45cf-ad1d-734462f25a2f",
+    "user_email": "xystus@gmail.com",
+    "status": "completed",
+    "created_at": "2025-09-17T15:33:43.301350",
+    "updated_at": "2025-09-17T15:38:04.463179",
+    "video_params": {
+      "content_data": "{\"title\":\"손버릇 나쁜 여자친구랑 사귀는 사람 있어?\",\"body1\":\"나는 삼십대의 건장한 남자고 여자친구를 사귄지 일년이 조금 넘었어. 그런데, 여자친구가 손버릇이 안 좋은거 있지?\",\"body2\":\"도벽이면 차라리 육체적 고통은 없을텐데, 여친은 펀치가 진짜 도를 넘어서게 쎈게 문제야. 아니, 그 센 펀치로 나를 때리는게 문제지.\",\"body3\":\"어제 밥먹고 있었는데 휴지를 가져다 달래. 이미 그전에 물티슈, 빨대 등 심부름을 두어번 했다? \",\"body4\":\"그래서 장난기 있게 째려보면서 휴지를 가지러 가는데, 갑자기 주먹뼈로 내 등짝을 쪼개는 거야. 난 순간적으로 너무 아파서 전율이 오고 오줌을 지릴 뻔 했어. \",\"body5\":\"음식물을 삼키면서 가던 중이어서 입 밖으로 씹던 대구탕이 튀어나오더라고. 주먹 뼈가 기형적으로 자란건지 너무 아프더라고.\",\"body6\":\"순간 욱해서 제대로 사과하라고 하니까 삐져서 '아 그래 미안'이렇게 대충 사과하더니 그 다음부터는 말도 안 함.\",\"body7\":\"아니 깡패가 때리고 삐지는 경우도 있나? 그런데 그것 말고는 다 잘맞아. 이상형이고 화 안 낼때는 단순하고 성격 좋고...\",\"body8\":\"그런데 펀치를 맞으면 내가 요실금 환자가 되어버리니.. 참아야 해? 아니면 헤어져야 해? 니들 생각은 어때?\"}",
+      "music_mood": "bright",
+      "image_allocation_mode": "1_per_image",
+      "text_position": "bottom",
+      "text_style": "outline",
+      "selected_bgm_path": "Treasure Hunt - Jeremy Korpas.mp3",
+      "use_test_files": false,
+      "uploaded_files": [
+        "1.png",
+        "2.mp4",
+        "3.png",
+        "4.png",
+        "5.mp4",
+        "6.png",
+        "7.mp4",
+        "8.mp4"
+      ]
+    },
+    "result": {
+      "video_path": "/zstus/backend/output_videos/reels_1b7ac92b.mp4",
+      "duration": "약 10-30초",
+      "completed_at": "2025-09-17T15:38:04.462856"
+    },
+    "error_message": null,
+    "retry_count": 0,
+    "max_retries": 2
+  }
+}

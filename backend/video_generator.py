@@ -13,8 +13,8 @@ import math
 
 class VideoGenerator:
     def __init__(self):
-        self.video_width = 414
-        self.video_height = 896  # 스마트폰 해상도 (414x896)
+        self.video_width = 504
+        self.video_height = 890  # 쇼츠/릴스 해상도 (504x890)
         self.fps = 30
         self.font_path = os.path.join(os.path.dirname(__file__), "font", "BMYEONSUNG_otf.otf")
         
@@ -207,10 +207,18 @@ class VideoGenerator:
                 raise Exception(f"이미지 다운로드 및 기본 이미지 생성 모두 실패: {str(e)}")
     
     def create_title_image(self, title, width, height):
-        """제목 이미지 생성"""
-        # 검은 배경 이미지 생성
+        """제목 이미지 생성 - 지정 영역(50,65)~(444,200)에 아래 정렬"""
+        # 검은 배경 이미지 생성 (전체 타이틀 영역)
         img = Image.new('RGB', (width, height), color='black')
         draw = ImageDraw.Draw(img)
+        
+        # 타이틀 텍스트 영역 정의: (50, 65) ~ (444, 200)
+        title_left = 50
+        title_top = 65
+        title_right = 444  # 사용자 요구사항: (50,65) ~ (444,200)
+        title_bottom = 200  # 텍스트 영역 하단을 200으로 제한 (하단 20px 여백 확보)
+        title_width = title_right - title_left  # 394px (444-50)
+        title_height = title_bottom - title_top  # 135px (200-65)
         
         # 한글 폰트 설정 (2배 크기로)
         try:
@@ -222,7 +230,7 @@ class VideoGenerator:
             except:
                 font = ImageFont.load_default()
         
-        # 텍스트를 여러 줄로 나누기 (긴 제목 처리)
+        # 텍스트를 여러 줄로 나누기 (타이틀 영역 폭에 맞춰)
         words = title.split(' ')
         lines = []
         current_line = ""
@@ -230,7 +238,7 @@ class VideoGenerator:
         for word in words:
             test_line = current_line + " " + word if current_line else word
             bbox = draw.textbbox((0, 0), test_line, font=font)
-            if bbox[2] - bbox[0] < width - 40:  # 좌우 여백 20씩
+            if bbox[2] - bbox[0] < title_width - 20:  # 타이틀 영역 내 여백 10px씩
                 current_line = test_line
             else:
                 if current_line:
@@ -249,16 +257,38 @@ class VideoGenerator:
             except:
                 emoji_font = None
         
-        # 텍스트 중앙 정렬 (폰트 크기에 맞춘 줄간격)
-        line_height = 45  # 48px 폰트에 맞춘 적정 줄간격
-        total_height = len(lines) * line_height
-        start_y = (height - total_height) // 2
+        # 텍스트 아래 정렬 (타이틀 영역 하단에서 위로 배치)
+        line_height = 50  # 48px 폰트에 맞춘 적정 줄간격
+        total_text_height = len(lines) * line_height
+        
+        # 아래 정렬: 타이틀 영역 하단에서 텍스트 높이만큼 위로
+        start_y = title_bottom - total_text_height - 5  # 안전 여백 5px
+        
+        print(f"📐 타이틀 배치: 영역({title_left},{title_top})~({title_right},{title_bottom})")
+        print(f"📝 텍스트 시작: Y={start_y}, 줄수={len(lines)}, 전체높이={total_text_height}px")
         
         for i, line in enumerate(lines):
             bbox = draw.textbbox((0, 0), line, font=font)
             text_width = bbox[2] - bbox[0]
-            x = (width - text_width) // 2
+            
+            # X 좌표: 타이틀 영역 내 중앙 정렬
+            x = title_left + (title_width - text_width) // 2
             y = start_y + i * line_height
+            
+            # 타이틀 영역 범위 체크
+            if y < title_top:
+                y = title_top + 10  # 최소 상단 여백 확보
+            
+            # 텍스트의 실제 바운딩 박스 계산 (렌더링 전 확인)
+            actual_bbox = draw.textbbox((x, y), line, font=font)
+            text_bottom = actual_bbox[3]  # 실제 텍스트 하단 위치
+            
+            print(f"📍 줄 {i+1}: '{line}' at ({x}, {y})")
+            print(f"📏 실제 텍스트 바운딩박스: {actual_bbox}")
+            print(f"📏 텍스트 하단 위치: {text_bottom}, 영역 하단: {title_bottom}")
+            
+            if text_bottom > title_bottom:
+                print(f"⚠️  경고: 텍스트가 영역을 {text_bottom - title_bottom}px 초과!")
             
             # 일단 기본 폰트로 텍스트 렌더링 (이모지 포함)
             try:
@@ -284,7 +314,7 @@ class VideoGenerator:
         bg_clip = self.create_continuous_background_clip(image_path, total_duration)
         
         # 2. 상단 검은 영역 (전체 시간)
-        black_top = ColorClip(size=(self.video_width, 180), color=(0,0,0))
+        black_top = ColorClip(size=(self.video_width, 220), color=(0,0,0))
         black_top = black_top.set_duration(total_duration).set_position((0, 0))
         
         # 3. 제목 클립 설정
@@ -298,8 +328,8 @@ class VideoGenerator:
         current_time = 0.0
         
         for body_key, body_text, tts_path, clip_duration in group_segments:
-            text_image_path = self.create_text_image(body_text, self.video_width, self.video_height - 180, text_position, text_style)
-            text_clip = ImageClip(text_image_path).set_start(current_time).set_duration(clip_duration).set_position((0, 180))
+            text_image_path = self.create_text_image(body_text, self.video_width, self.video_height, text_position, text_style)
+            text_clip = ImageClip(text_image_path).set_start(current_time).set_duration(clip_duration).set_position((0, 0))
             text_clips.append(text_clip)
             current_time += clip_duration
         
@@ -321,7 +351,7 @@ class VideoGenerator:
         bg_clip = self.create_continuous_background_clip(image_path, total_duration)
         
         # 2. 상단 검은 영역 (전체 시간)
-        black_top = ColorClip(size=(self.video_width, 180), color=(0,0,0))
+        black_top = ColorClip(size=(self.video_width, 220), color=(0,0,0))
         black_top = black_top.set_duration(total_duration).set_position((0, 0))
         
         # 3. 제목 (전체 시간)
@@ -332,8 +362,8 @@ class VideoGenerator:
         current_time = 0.0
         
         for body_key, body_text, tts_path, clip_duration in group_segments:
-            text_image_path = self.create_text_image(body_text, self.video_width, self.video_height - 180, text_position, text_style)
-            text_clip = ImageClip(text_image_path).set_start(current_time).set_duration(clip_duration).set_position((0, 180))
+            text_image_path = self.create_text_image(body_text, self.video_width, self.video_height, text_position, text_style)
+            text_clip = ImageClip(text_image_path).set_start(current_time).set_duration(clip_duration).set_position((0, 0))
             text_clips.append(text_clip)
             current_time += clip_duration
         
@@ -385,25 +415,20 @@ class VideoGenerator:
         total_height = len(lines) * line_height
         padding = 20  # 패딩 조정
         
-        # 텍스트 위치 계산 (body 자막 영역 4등분 방식)
-        # 전체 높이: 896px, 타이틀 영역: 180px, body 자막 영역: 716px
-        # body 영역을 4등분: 179px씩 4개 영역, 위에서 3개만 사용
+        # 텍스트 위치 계산 (새로운 영역 구성)
+        # 전체 해상도: 504x890, 타이틀 영역: 220px
+        # 상단 텍스트 영역: 340-520 (중앙: 430px)
+        # 하단 텍스트 영역: 520-700 (중앙: 610px)
         
-        title_height = 180  # 타이틀 영역 높이 (고정)
-        body_area_height = height - title_height  # 716px (body 자막 사용 가능 영역)
-        zone_height = body_area_height // 4  # 179px (각 영역 높이)
+        title_height = 220  # 타이틀 영역 높이 (고정)
         
         if text_position == "top":
-            # 상: 1번째 영역의 가운데 (180 + 179/2 = 180 + 89.5 ≈ 269px)
-            zone_center_y = title_height + (zone_height // 2)
+            # 상단 텍스트 영역 중앙: 340-520 (중앙 430px)
+            zone_center_y = 430
             start_y = zone_center_y - (total_height // 2)
-        elif text_position == "middle":
-            # 중: 2번째 영역의 가운데 (180 + 179 + 179/2 = 180 + 268.5 ≈ 448px)
-            zone_center_y = title_height + zone_height + (zone_height // 2)
-            start_y = zone_center_y - (total_height // 2)
-        else:  # bottom (기본값)
-            # 하: 3번째 영역의 가운데 (180 + 179*2 + 179/2 = 180 + 447.5 ≈ 627px)
-            zone_center_y = title_height + (zone_height * 2) + (zone_height // 2)
+        else:  # bottom (middle도 bottom과 동일하게 처리)
+            # 하단 텍스트 영역 중앙: 520-700 (중앙 610px)
+            zone_center_y = 610
             start_y = zone_center_y - (total_height // 2)
         
         # 최소값 보장 (타이틀 영역 침범 방지)
@@ -443,13 +468,15 @@ class VideoGenerator:
             
             # 텍스트 렌더링 (부드러운 외곽선 효과)
             try:
-                # 더 부드러운 외곽선 (2px 두께)
+                # 더 부드러운 외곽선 (3px 두께, 1.5배 강화)
                 outline_positions = [
-                    (-2, -2), (-2, -1), (-2, 0), (-2, 1), (-2, 2),
-                    (-1, -2), (-1, -1), (-1, 0), (-1, 1), (-1, 2),
-                    (0, -2), (0, -1),           (0, 1), (0, 2),
-                    (1, -2), (1, -1), (1, 0), (1, 1), (1, 2),
-                    (2, -2), (2, -1), (2, 0), (2, 1), (2, 2)
+                    (-3, -3), (-3, -2), (-3, -1), (-3, 0), (-3, 1), (-3, 2), (-3, 3),
+                    (-2, -3), (-2, -2), (-2, -1), (-2, 0), (-2, 1), (-2, 2), (-2, 3),
+                    (-1, -3), (-1, -2), (-1, -1), (-1, 0), (-1, 1), (-1, 2), (-1, 3),
+                    (0, -3), (0, -2), (0, -1),            (0, 1), (0, 2), (0, 3),
+                    (1, -3), (1, -2), (1, -1), (1, 0), (1, 1), (1, 2), (1, 3),
+                    (2, -3), (2, -2), (2, -1), (2, 0), (2, 1), (2, 2), (2, 3),
+                    (3, -3), (3, -2), (3, -1), (3, 0), (3, 1), (3, 2), (3, 3)
                 ]
                 
                 # 검은색 외곽선 그리기
@@ -577,44 +604,95 @@ class VideoGenerator:
         return p
 
     def create_background_clip(self, image_path, duration):
-        """3가지 Ken Burns 효과 중 랜덤 선택 - 정사각형 크롭 + 패턴 적용"""
+        """새로운 영상/이미지 배치 및 패닝 규칙 적용"""
         print(f"🎬 배경 클립 생성 시작: {image_path} (duration: {duration:.1f}s)")
         
-        # 이미지를 정사각형으로 크롭 후 716x716으로 리사이즈
-        square_image_path = self.crop_to_square(image_path)
-        
         try:
+            # 이미지 정보 로드
+            with Image.open(image_path) as img:
+                orig_width, orig_height = img.size
+                print(f"📐 이미지 원본: {orig_width}x{orig_height}")
+            
+            # 작업 영역 정의: (0, 220) ~ (504, 890)
+            work_width = 504
+            work_height = 670  # 890 - 220
+            work_aspect_ratio = work_width / work_height  # 252:335 = 0.751
+            image_aspect_ratio = orig_width / orig_height
+            
+            print(f"📊 종횡비 비교: 이미지 {image_aspect_ratio:.3f} vs 작업영역 {work_aspect_ratio:.3f}")
+            
             # 배경 클립 생성
-            bg_clip = ImageClip(square_image_path).set_duration(duration)
+            bg_clip = ImageClip(image_path).set_duration(duration)
             
-            # 타이틀 아래 영역 계산 (타이틀 높이 180px)
-            title_height = 180
-            
-            # 2가지 패닝 패턴 중 랜덤 선택 (확대 패턴 제거)
-            pattern = random.randint(1, 2)
-            
-            # 모든 클립에 패닝 적용 (3초 미만 포함)
-            if pattern == 1:
-                # 패턴 1: 좌 → 우 패닝 (Linear 이징 + 60px 이동 범위)
-                def left_to_right(t):
-                    progress = self.linear_easing_function(t / duration)  # 일정한 속도
-                    # 302px 여유공간에서 60px 이동 (더 명확한 패닝 효과)
-                    x_offset = -(151 - 60 * progress)  # 왼쪽에서 오른쪽으로 60px 이동
-                    return (x_offset, title_height)
+            if image_aspect_ratio > work_aspect_ratio:
+                # 가로형 이미지: 세로 높이를 작업 영역에 맞춰 배치하고 좌우 패닝
+                print(f"🔄 가로형 이미지 처리: 세로 높이를 {work_height}에 맞춤")
                 
-                bg_clip = bg_clip.set_position(left_to_right)
-                print(f"🎬 패턴 1: 좌 → 우 패닝 (duration: {duration:.1f}s)")
+                # 세로를 작업 영역에 맞춰 리사이즈
+                bg_clip = bg_clip.resize(height=work_height)
+                resized_width = int(orig_width * work_height / orig_height)
+                print(f"🔧 리사이즈 완료: {resized_width}x{work_height}")
                 
+                # 좌우 패닝 범위 계산
+                pan_range = min(60, (resized_width - work_width) // 2)  # 최대 60px 또는 여유 공간의 절반
+                
+                # 2가지 좌우 패닝 패턴 중 랜덤 선택
+                pattern = random.randint(1, 2)
+                
+                if pattern == 1:
+                    # 패턴 1: 좌 → 우 패닝
+                    def left_to_right(t):
+                        progress = self.linear_easing_function(t / duration)
+                        x_offset = -((resized_width - work_width) // 2 - pan_range * progress)
+                        return (x_offset, 220)  # Y는 타이틀 바로 아래
+                    
+                    bg_clip = bg_clip.set_position(left_to_right)
+                    print(f"🎬 패턴 1: 좌 → 우 패닝 ({pan_range}px 이동)")
+                    
+                else:
+                    # 패턴 2: 우 → 좌 패닝
+                    def right_to_left(t):
+                        progress = self.linear_easing_function(t / duration)
+                        x_offset = -((resized_width - work_width) // 2 - pan_range * (1 - progress))
+                        return (x_offset, 220)  # Y는 타이틀 바로 아래
+                    
+                    bg_clip = bg_clip.set_position(right_to_left)
+                    print(f"🎬 패턴 2: 우 → 좌 패닝 ({pan_range}px 이동)")
+                    
             else:
-                # 패턴 2: 우 → 좌 패닝 (Linear 이징 + 60px 이동 범위)
-                def right_to_left(t):
-                    progress = self.linear_easing_function(t / duration)  # 일정한 속도
-                    # 302px 여유공간에서 60px 이동 (더 명확한 패닝 효과)
-                    x_offset = -(151 - 60 * (1 - progress))  # 오른쪽에서 왼쪽으로 60px 이동
-                    return (x_offset, title_height)
+                # 세로형 이미지: 가로 폭을 작업 영역에 맞춰 배치하고 상하 패닝
+                print(f"🔄 세로형 이미지 처리: 가로 폭을 {work_width}에 맞춤")
                 
-                bg_clip = bg_clip.set_position(right_to_left)
-                print(f"🎬 패턴 2: 우 → 좌 패닝 (duration: {duration:.1f}s)")
+                # 가로를 작업 영역에 맞춰 리사이즈
+                bg_clip = bg_clip.resize(width=work_width)
+                resized_height = int(orig_height * work_width / orig_width)
+                print(f"🔧 리사이즈 완료: {work_width}x{resized_height}")
+                
+                # 상하 패닝 범위 계산
+                pan_range = min(60, (resized_height - work_height) // 2)  # 최대 60px 또는 여유 공간의 절반
+                
+                # 2가지 상하 패닝 패턴 중 랜덤 선택
+                pattern = random.randint(3, 4)  # 패턴 3, 4로 구분
+                
+                if pattern == 3:
+                    # 패턴 3: 위 → 아래 패닝
+                    def top_to_bottom(t):
+                        progress = self.linear_easing_function(t / duration)
+                        y_offset = 220 - ((resized_height - work_height) // 2 - pan_range * progress)
+                        return (0, y_offset)  # X는 중앙
+                    
+                    bg_clip = bg_clip.set_position(top_to_bottom)
+                    print(f"🎬 패턴 3: 위 → 아래 패닝 ({pan_range}px 이동)")
+                    
+                else:
+                    # 패턴 4: 아래 → 위 패닝
+                    def bottom_to_top(t):
+                        progress = self.linear_easing_function(t / duration)
+                        y_offset = 220 - ((resized_height - work_height) // 2 - pan_range * (1 - progress))
+                        return (0, y_offset)  # X는 중앙
+                    
+                    bg_clip = bg_clip.set_position(bottom_to_top)
+                    print(f"🎬 패턴 4: 아래 → 위 패닝 ({pan_range}px 이동)")
             
             return bg_clip
                 
@@ -622,17 +700,8 @@ class VideoGenerator:
             print(f"❌ 배경 클립 생성 에러: {str(e)}")
             # 에러 발생시 기본 클립 반환
             fallback_clip = ImageClip(image_path).set_duration(duration)
-            fallback_clip = fallback_clip.resize(height=716).set_position((0, 180))
+            fallback_clip = fallback_clip.resize(height=670).set_position((0, 220))
             return fallback_clip
-            
-        finally:
-            # 임시 파일 정리
-            if square_image_path != image_path and os.path.exists(square_image_path):
-                try:
-                    os.unlink(square_image_path)
-                    print(f"🗑️ 임시 파일 정리: {square_image_path}")
-                except:
-                    pass
 
 
     
@@ -648,7 +717,7 @@ class VideoGenerator:
             bg_clip = ImageClip(square_image_path).set_duration(total_duration)
             
             # 타이틀 아래 영역 계산
-            title_height = 180
+            title_height = 220
             
             # 2가지 패닝 패턴 중 랜덤 선택 (확대 패턴 제거)
             pattern = random.randint(1, 2)
@@ -684,7 +753,7 @@ class VideoGenerator:
             print(f"❌ 연속 배경 클립 에러: {str(e)}")
             # 에러 발생시 기본 클립 반환
             fallback_clip = ImageClip(image_path).set_duration(total_duration)
-            fallback_clip = fallback_clip.resize(height=716).set_position((0, 180))
+            fallback_clip = fallback_clip.resize(height=670).set_position((0, 0))
             return fallback_clip
             
         finally:
@@ -698,47 +767,29 @@ class VideoGenerator:
 
     
     def create_video_background_clip(self, video_path, duration):
-        """비디오 배경 클립 생성 - 414px 폭으로 리사이즈 후 타이틀 아래 중앙정렬"""
+        """새로운 비디오 배치 및 패닝 규칙 적용"""
         from moviepy.editor import VideoFileClip, ColorClip, CompositeVideoClip
         
+        print(f"🎬 비디오 배경 클립 생성 시작: {video_path} (duration: {duration:.1f}s)")
+        
         try:
-            print(f"🎬 비디오 배경 클립 생성 시작: {video_path}")
-            
             # 비디오 파일 로드
             video_clip = VideoFileClip(video_path)
-            
-            # 타이틀 아래 영역 계산 (타이틀 높이 180px)
-            title_height = 180
-            available_height = self.video_height - title_height  # 896 - 180 = 716px
             
             # 비디오 원본 크기
             orig_width = video_clip.w
             orig_height = video_clip.h
-            
             print(f"📐 비디오 원본: {orig_width}x{orig_height}")
-            print(f"🎯 목표: 폭 414px로 리사이즈 후 타이틀 아래 중앙정렬")
             
-            # 1단계: 전체 배경을 검은색으로 채우기
-            black_background = ColorClip(size=(self.video_width, available_height), 
-                                       color=(0,0,0), duration=duration)
-            black_background = black_background.set_position((0, title_height))
+            # 작업 영역 정의: (0, 220) ~ (504, 890)
+            work_width = 504
+            work_height = 670  # 890 - 220
+            work_aspect_ratio = work_width / work_height  # 252:335 = 0.751
+            video_aspect_ratio = orig_width / orig_height
             
-            # 2단계: 비디오를 414px 폭으로 리사이즈 (종횡비 유지)
-            if orig_width < self.video_width:
-                print(f"📈 비디오 폭 확장 필요: {orig_width}px → {self.video_width}px")
-                # 작은 비디오는 414px로 확장 (종횡비 유지)
-                video_clip = video_clip.resize(width=self.video_width)
-            elif orig_width > self.video_width:
-                print(f"📉 비디오 폭 축소 필요: {orig_width}px → {self.video_width}px")
-                # 큰 비디오는 414px로 축소 (종횡비 유지)
-                video_clip = video_clip.resize(width=self.video_width)
-            else:
-                print(f"✅ 비디오 폭 이미 적정: {orig_width}px = {self.video_width}px")
+            print(f"📊 종횡비 비교: 비디오 {video_aspect_ratio:.3f} vs 작업영역 {work_aspect_ratio:.3f}")
             
-            resized_height = video_clip.h
-            print(f"🔧 리사이즈 완료: {self.video_width}x{resized_height}")
-            
-            # 3단계: 비디오 길이 조정
+            # 비디오 길이 조정 (먼저 처리)
             if video_clip.duration > duration:
                 video_clip = video_clip.subclip(0, duration)
                 print(f"⏂ 비디오 길이 조정: {duration}초로 잘라냄")
@@ -750,32 +801,87 @@ class VideoGenerator:
                 video_clip = CompositeVideoClip([video_clip, extension_clip.set_start(video_clip.duration)])
                 print(f"⏩ 비디오 길이 연장: {duration}초까지 마지막 프레임으로 채움")
             
-            # 4단계: 타이틀 바로 아래에 중앙정렬로 위치 설정
-            x_center = 0  # 가로는 이미 414px로 맞춤
-            y_position = title_height  # 타이틀 바로 아래
+            if video_aspect_ratio > work_aspect_ratio:
+                # 가로형 비디오: 세로 높이를 작업 영역에 맞춰 배치하고 좌우 패닝
+                print(f"🔄 가로형 비디오 처리: 세로 높이를 {work_height}에 맞춤")
+                
+                # 세로를 작업 영역에 맞춰 리사이즈
+                video_clip = video_clip.resize(height=work_height)
+                resized_width = int(orig_width * work_height / orig_height)
+                print(f"🔧 리사이즈 완료: {resized_width}x{work_height}")
+                
+                # 좌우 패닝 범위 계산
+                pan_range = min(60, (resized_width - work_width) // 2)  # 최대 60px 또는 여유 공간의 절반
+                
+                # 2가지 좌우 패닝 패턴 중 랜덤 선택
+                pattern = random.randint(1, 2)
+                
+                if pattern == 1:
+                    # 패턴 1: 좌 → 우 패닝
+                    def left_to_right(t):
+                        progress = self.linear_easing_function(t / duration)
+                        x_offset = -((resized_width - work_width) // 2 - pan_range * progress)
+                        return (x_offset, 220)  # Y는 타이틀 바로 아래
+                    
+                    video_clip = video_clip.set_position(left_to_right)
+                    print(f"🎬 패턴 1: 좌 → 우 패닝 ({pan_range}px 이동)")
+                    
+                else:
+                    # 패턴 2: 우 → 좌 패닝
+                    def right_to_left(t):
+                        progress = self.linear_easing_function(t / duration)
+                        x_offset = -((resized_width - work_width) // 2 - pan_range * (1 - progress))
+                        return (x_offset, 220)  # Y는 타이틀 바로 아래
+                    
+                    video_clip = video_clip.set_position(right_to_left)
+                    print(f"🎬 패턴 2: 우 → 좌 패닝 ({pan_range}px 이동)")
+                    
+            else:
+                # 세로형 비디오: 가로 폭을 작업 영역에 맞춰 배치하고 상하 패닝
+                print(f"🔄 세로형 비디오 처리: 가로 폭을 {work_width}에 맞춤")
+                
+                # 가로를 작업 영역에 맞춰 리사이즈
+                video_clip = video_clip.resize(width=work_width)
+                resized_height = int(orig_height * work_width / orig_width)
+                print(f"🔧 리사이즈 완료: {work_width}x{resized_height}")
+                
+                # 상하 패닝 범위 계산
+                pan_range = min(60, (resized_height - work_height) // 2)  # 최대 60px 또는 여유 공간의 절반
+                
+                # 2가지 상하 패닝 패턴 중 랜덤 선택
+                pattern = random.randint(3, 4)  # 패턴 3, 4로 구분
+                
+                if pattern == 3:
+                    # 패턴 3: 위 → 아래 패닝
+                    def top_to_bottom(t):
+                        progress = self.linear_easing_function(t / duration)
+                        y_offset = 220 - ((resized_height - work_height) // 2 - pan_range * progress)
+                        return (0, y_offset)  # X는 중앙
+                    
+                    video_clip = video_clip.set_position(top_to_bottom)
+                    print(f"🎬 패턴 3: 위 → 아래 패닝 ({pan_range}px 이동)")
+                    
+                else:
+                    # 패턴 4: 아래 → 위 패닝
+                    def bottom_to_top(t):
+                        progress = self.linear_easing_function(t / duration)
+                        y_offset = 220 - ((resized_height - work_height) // 2 - pan_range * (1 - progress))
+                        return (0, y_offset)  # X는 중앙
+                    
+                    video_clip = video_clip.set_position(bottom_to_top)
+                    print(f"🎬 패턴 4: 아래 → 위 패닝 ({pan_range}px 이동)")
             
-            video_clip = video_clip.set_position((x_center, y_position))
-            
-            # 5단계: 검은 배경 위에 비디오 합성
-            final_clip = CompositeVideoClip([black_background, video_clip])
-            
-            print(f"✅ 완성: 검은배경({self.video_width}x{available_height}) + 비디오({self.video_width}x{resized_height})")
-            print(f"🎉 비디오 배경 클립 생성 완료!")
-            
-            return final_clip
-            
+            return video_clip
+                
         except Exception as e:
             print(f"❌ 비디오 배경 클립 생성 실패: {e}")
             import traceback
             traceback.print_exc()
             
             # 실패 시 검은 화면으로 대체
-            title_height = 180
-            available_height = self.video_height - title_height
-            fallback_clip = ColorClip(size=(self.video_width, available_height), 
-                                    color=(0,0,0), duration=duration)
-            fallback_clip = fallback_clip.set_position((0, title_height))
-            print(f"🔄 검은 화면으로 대체: {self.video_width}x{available_height}")
+            fallback_clip = ColorClip(size=(504, 670), color=(0,0,0), duration=duration)
+            fallback_clip = fallback_clip.set_position((0, 220))
+            print(f"🔄 검은 화면으로 대체: 504x670")
             return fallback_clip
     
     def create_tts_with_naver(self, text):
@@ -861,7 +967,7 @@ class VideoGenerator:
             return None
     
     def create_tts_audio(self, text, lang='ko'):
-        """Google TTS로 최적화된 한국어 음성 생성 - 30% 빠른 속도 적용"""
+        """Google TTS로 최적화된 한국어 음성 생성 - 1.7배 빠른 속도 적용"""
         try:
             print(f"Google TTS 생성 중: {text[:50]}...")
             
@@ -882,8 +988,8 @@ class VideoGenerator:
             original_temp_file.close()
             print(f"Google TTS 원본 생성 완료: {original_temp_file.name}")
             
-            # 40% 빠르게 속도 조정
-            speed_adjusted_file = self.speed_up_audio(original_temp_file.name, speed_factor=1.4)
+            # 70% 빠르게 속도 조정 (1.7배속)
+            speed_adjusted_file = self.speed_up_audio(original_temp_file.name, speed_factor=1.7)
             
             # 속도 조정이 실패하면 원본 파일 사용, 성공하면 원본 파일만 정리
             if speed_adjusted_file != original_temp_file.name and os.path.exists(speed_adjusted_file):
@@ -891,7 +997,7 @@ class VideoGenerator:
                 if os.path.exists(original_temp_file.name):
                     os.unlink(original_temp_file.name)
                     print(f"🗑️ 원본 TTS 파일 정리: {original_temp_file.name}")
-                print(f"Google TTS 생성 완료 (40% 고속화): {speed_adjusted_file}")
+                print(f"Google TTS 생성 완료 (70% 고속화): {speed_adjusted_file}")
             else:
                 # 속도 조정 실패: 원본 파일 그대로 사용 (삭제하지 않음)
                 print(f"Google TTS 생성 완료 (원본 속도): {speed_adjusted_file}")
@@ -902,7 +1008,7 @@ class VideoGenerator:
             print(f"TTS 생성 실패: {e}")
             return None
     
-    def speed_up_audio(self, audio_path, speed_factor=1.4):
+    def speed_up_audio(self, audio_path, speed_factor=1.5):
         """고급 오디오 속도 조정 (다중 알고리즘 지원)"""
         try:
             print(f"🎵 고급 오디오 속도 조정 시작: {speed_factor}x 속도")
@@ -1193,11 +1299,11 @@ class VideoGenerator:
             
             print(f"로컬 이미지 {len(local_images)}개를 사용하여 영상 생성")
             
-            # 제목 이미지 생성 (414x180, 더 넓은 영역)
+            # 제목 이미지 생성 (504x220, 정확한 타이틀 영역)
             title_image_path = self.create_title_image(
                 content['title'], 
                 self.video_width, 
-                180
+                220
             )
             
             # 각 body별로 개별 TTS 생성 (빈 값 제외)
@@ -1250,12 +1356,12 @@ class VideoGenerator:
                         bg_clip = self.create_video_background_clip(current_image_path, body_duration)
                     else:
                         bg_clip = self.create_background_clip(current_image_path, body_duration)
-                    black_top = ColorClip(size=(self.video_width, 180), color=(0,0,0)).set_duration(body_duration).set_position((0, 0))
+                    black_top = ColorClip(size=(self.video_width, 220), color=(0,0,0)).set_duration(body_duration).set_position((0, 0))
                     title_clip = ImageClip(title_image_path).set_duration(body_duration).set_position((0, 0))
                     
                     # 텍스트 클립
-                    text_image_path = self.create_text_image(content[body_key], self.video_width, self.video_height - 180, text_position, text_style)
-                    text_clip = ImageClip(text_image_path).set_duration(body_duration).set_position((0, 180))
+                    text_image_path = self.create_text_image(content[body_key], self.video_width, self.video_height, text_position, text_style)
+                    text_clip = ImageClip(text_image_path).set_duration(body_duration).set_position((0, 0))
                     
                     # 개별 클립 합성
                     individual_clip = CompositeVideoClip([bg_clip, black_top, title_clip, text_clip], size=(self.video_width, self.video_height))
@@ -1303,15 +1409,15 @@ class VideoGenerator:
                         bg_clip = self.create_video_background_clip(current_image_path, group_total_duration)
                     else:
                         bg_clip = self.create_continuous_background_clip(current_image_path, group_total_duration, 0.0)
-                    black_top = ColorClip(size=(self.video_width, 180), color=(0,0,0)).set_duration(group_total_duration)
+                    black_top = ColorClip(size=(self.video_width, 220), color=(0,0,0)).set_duration(group_total_duration)
                     title_clip = ImageClip(title_image_path).set_duration(group_total_duration).set_position((0, 0))
                     
                     # 텍스트 클립들
                     text_clips = []
                     current_time = 0.0
                     for body_key, body_text, tts_path, duration in group_tts_info:
-                        text_image_path = self.create_text_image(body_text, self.video_width, self.video_height - 180, text_position, text_style)
-                        text_clip = ImageClip(text_image_path).set_start(current_time).set_duration(duration).set_position((0, 180))
+                        text_image_path = self.create_text_image(body_text, self.video_width, self.video_height, text_position, text_style)
+                        text_clip = ImageClip(text_image_path).set_start(current_time).set_duration(duration).set_position((0, 0))
                         text_clips.append(text_clip)
                         print(f"      {body_key}: {current_time:.1f}~{current_time + duration:.1f}초")
                         current_time += duration
@@ -1381,11 +1487,11 @@ class VideoGenerator:
                 image_path = self.download_image(image_url)
                 image_paths.append(image_path)
             
-            # 제목 이미지 생성 (414x180, 더 넓은 영역)
+            # 제목 이미지 생성 (504x220, 정확한 타이틀 영역)
             title_image_path = self.create_title_image(
                 content['title'], 
                 self.video_width, 
-                180
+                220
             )
             
             # 각 body별로 개별 TTS 생성 (빈 값 제외)
@@ -1441,11 +1547,11 @@ class VideoGenerator:
                     
                     # 개별 body 클립 생성
                     bg_clip = self.create_background_clip(current_image_path, clip_duration)
-                    black_top = ColorClip(size=(self.video_width, 180), color=(0,0,0)).set_duration(clip_duration).set_position((0, 0))
+                    black_top = ColorClip(size=(self.video_width, 220), color=(0,0,0)).set_duration(clip_duration).set_position((0, 0))
                     title_clip = ImageClip(title_image_path).set_duration(clip_duration).set_position((0, 0))
                     
-                    text_image_path = self.create_text_image(content[body_key], self.video_width, self.video_height - 180, text_position, text_style)
-                    text_clip = ImageClip(text_image_path).set_duration(clip_duration).set_position((0, 180))
+                    text_image_path = self.create_text_image(content[body_key], self.video_width, self.video_height, text_position, text_style)
+                    text_clip = ImageClip(text_image_path).set_duration(clip_duration).set_position((0, 0))
                     
                     # 개별 클립 합성
                     combined_clip = CompositeVideoClip([bg_clip, black_top, title_clip, text_clip], size=(self.video_width, self.video_height))
@@ -1484,11 +1590,11 @@ class VideoGenerator:
                     
                     # 기존 방식대로 클립 생성
                     bg_clip = self.create_background_clip(current_image_path, clip_duration)
-                    black_top = ColorClip(size=(self.video_width, 180), color=(0,0,0)).set_duration(clip_duration).set_position((0, 0))
+                    black_top = ColorClip(size=(self.video_width, 220), color=(0,0,0)).set_duration(clip_duration).set_position((0, 0))
                     title_clip = ImageClip(title_image_path).set_duration(clip_duration).set_position((0, 0))
                     
-                    text_image_path = self.create_text_image(content[body_key], self.video_width, self.video_height - 180, text_position, text_style)
-                    text_clip = ImageClip(text_image_path).set_duration(clip_duration).set_position((0, 180))
+                    text_image_path = self.create_text_image(content[body_key], self.video_width, self.video_height, text_position, text_style)
+                    text_clip = ImageClip(text_image_path).set_duration(clip_duration).set_position((0, 0))
                     
                     # 클립 합성
                     combined_clip = CompositeVideoClip([bg_clip, black_top, title_clip, text_clip], size=(self.video_width, self.video_height))

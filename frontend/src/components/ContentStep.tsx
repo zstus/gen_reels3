@@ -379,7 +379,7 @@ const ContentStep: React.FC<ContentStepProps> = ({ content, textPosition, textSt
 
             {/* 텍스트 위치 선택 */}
             <FormControl sx={{ mb: 3 }}>
-              <FormLabel component="legend">텍스트 위치 선택</FormLabel>
+              <FormLabel component="legend">텍스트 위치 선택 (2단계)</FormLabel>
               <RadioGroup
                 row
                 value={textPosition}
@@ -388,17 +388,12 @@ const ContentStep: React.FC<ContentStepProps> = ({ content, textPosition, textSt
                 <FormControlLabel
                   value="top"
                   control={<Radio />}
-                  label="상 (타이틀 아래)"
-                />
-                <FormControlLabel
-                  value="middle"
-                  control={<Radio />}
-                  label="중 (화면 중앙)"
+                  label="상단 (340-520px 영역)"
                 />
                 <FormControlLabel
                   value="bottom"
                   control={<Radio />}
-                  label="하 (화면 하단)"
+                  label="하단 (520-700px 영역)"
                 />
               </RadioGroup>
             </FormControl>

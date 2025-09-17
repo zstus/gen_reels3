@@ -16,6 +16,9 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
+  TextField,
+  FormControlLabel,
+  Switch,
 } from '@mui/material';
 import {
   PlayArrow,
@@ -27,8 +30,11 @@ import {
   MusicNote,
   Image as ImageIcon,
   TextFields,
+  Email,
+  Schedule,
+  Send,
 } from '@mui/icons-material';
-import { ProjectData, GenerationStatus } from '../types';
+import { ProjectData, GenerationStatus, AsyncVideoResponse } from '../types';
 import apiService from '../services/api';
 
 interface GenerateStepProps {
@@ -42,13 +48,32 @@ const GenerateStep: React.FC<GenerateStepProps> = ({
   onBack,
   onReset,
 }) => {
+  // 사용자 정보 가져오기 (임시로 localStorage에서 직접 가져오기)
+  const getUserFromStorage = () => {
+    try {
+      const savedUser = localStorage.getItem('user');
+      return savedUser ? JSON.parse(savedUser) : null;
+    } catch {
+      return null;
+    }
+  };
+
+  const user = getUserFromStorage();
+
+  // 기존 상태 변수들
   const [generationStatus, setGenerationStatus] = useState<GenerationStatus>('idle');
   const [progress, setProgress] = useState(0);
   const [statusMessage, setStatusMessage] = useState('');
   const [videoPath, setVideoPath] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
-  const [estimatedTime, setEstimatedTime] = useState(0);
+
+  // 배치 작업 관련 상태 변수들
+  const [userEmail, setUserEmail] = useState<string>(user?.email || '');
+  const [enableAsyncMode, setEnableAsyncMode] = useState<boolean>(true);
+  const [jobId, setJobId] = useState<string | null>(null);
+  const [asyncResponse, setAsyncResponse] = useState<AsyncVideoResponse | null>(null);
+  const [estimatedTime, setEstimatedTime] = useState<string>('약 3-10분');
 
   // 예상 생성 시간 계산
   const calculateEstimatedTime = () => {
@@ -64,13 +89,68 @@ const GenerateStep: React.FC<GenerateStepProps> = ({
     return Math.max(60, baseTime + scriptTime + imageTime);
   };
 
-  // 영상 생성 시작
-  const startGeneration = async () => {
+  // 배치 영상 생성 시작 (비동기)
+  const startAsyncGeneration = async () => {
+    // 이메일 주소 검증
+    if (!userEmail.trim()) {
+      setError('이메일 주소를 입력해주세요.');
+      return;
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(userEmail)) {
+      setError('유효한 이메일 주소를 입력해주세요.');
+      return;
+    }
+
+    setGenerationStatus('generating');
+    setProgress(30);
+    setError(null);
+    setVideoPath(null);
+    setJobId(null);
+    setAsyncResponse(null);
+
+    try {
+      setStatusMessage('배치 작업 요청 중...');
+
+      // 배치 작업 API 호출
+      const contentData = JSON.stringify(projectData.content);
+      const response = await apiService.generateVideoAsync({
+        userEmail: userEmail,
+        content: contentData,
+        images: projectData.images,
+        imageUploadMode: projectData.imageUploadMode,
+        textPosition: projectData.textPosition,
+        textStyle: projectData.textStyle,
+        musicFile: projectData.selectedMusic || undefined,
+        musicMood: projectData.musicMood,
+      });
+
+      if (response.status === 'success') {
+        setProgress(50);
+        setStatusMessage('작업이 큐에 추가되었습니다. 완료되면 이메일로 알려드립니다.');
+        setJobId(response.job_id || null);
+        setAsyncResponse(response);
+        setEstimatedTime(response.estimated_time || '약 3-10분');
+        setGenerationStatus('completed');
+      } else {
+        throw new Error(response.message || '작업 요청에 실패했습니다');
+      }
+    } catch (err: any) {
+      console.error('배치 작업 요청 실패:', err);
+      setError(err.message || '작업 요청 중 오류가 발생했습니다');
+      setGenerationStatus('error');
+      setProgress(0);
+      setStatusMessage('');
+    }
+  };
+
+  // 기존 동기식 영상 생성 (레거시)
+  const startSyncGeneration = async () => {
     setGenerationStatus('generating');
     setProgress(0);
     setError(null);
     setVideoPath(null);
-    setEstimatedTime(calculateEstimatedTime());
 
     try {
       // 진행률 시뮬레이션
@@ -119,6 +199,15 @@ const GenerateStep: React.FC<GenerateStepProps> = ({
     }
   };
 
+  // 영상 생성 시작 (모드에 따라 분기)
+  const startGeneration = () => {
+    if (enableAsyncMode) {
+      startAsyncGeneration();
+    } else {
+      startSyncGeneration();
+    }
+  };
+
   // 영상 다운로드
   const downloadVideo = () => {
     if (videoPath) {
@@ -163,8 +252,7 @@ const GenerateStep: React.FC<GenerateStepProps> = ({
       estimatedDuration,
       imageCount: projectData.images.length,
       imageMode: projectData.imageUploadMode === 'per-script' ? '대사마다 이미지' : '2대사마다 이미지',
-      textPosition: projectData.textPosition === 'top' ? '상단 (타이틀 아래)' : 
-                   projectData.textPosition === 'middle' ? '중앙' : '하단',
+      textPosition: projectData.textPosition === 'top' ? '상단 (340-520px 영역)' : '하단 (520-700px 영역)',
       textStyle: projectData.textStyle === 'outline' ? '외곽선 (배경 투명)' : '반투명 검은 배경',
       musicName: projectData.selectedMusic?.displayName || '기본 음악',
       musicMood: projectData.musicMood,
@@ -249,10 +337,71 @@ const GenerateStep: React.FC<GenerateStepProps> = ({
           </Paper>
         </Grid>
 
-        {/* 오른쪽: 생성 상태 */}
+        {/* 오른쪽: 이메일 설정 & 생성 상태 */}
         <Grid item xs={12} md={6}>
+          {/* 이메일 알림 설정 */}
+          <Paper sx={{ p: 3, mb: 2 }}>
+            <Typography variant="h6" gutterBottom>
+              <Email sx={{ mr: 1, verticalAlign: 'middle' }} />
+              이메일 알림 설정
+            </Typography>
+
+            <Box sx={{ mb: 2 }}>
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={enableAsyncMode}
+                    onChange={(e) => setEnableAsyncMode(e.target.checked)}
+                    color="primary"
+                  />
+                }
+                label="배치 작업 모드 (이메일 알림)"
+              />
+            </Box>
+
+            {enableAsyncMode && (
+              <Box sx={{ mb: 2 }}>
+                <TextField
+                  fullWidth
+                  label="알림받을 이메일 주소"
+                  type="email"
+                  value={userEmail}
+                  onChange={(e) => setUserEmail(e.target.value)}
+                  placeholder={user?.email || 'your.email@example.com'}
+                  helperText="영상 생성 완료 시 다운로드 링크가 발송됩니다"
+                  variant="outlined"
+                  InputProps={{
+                    startAdornment: <Email sx={{ mr: 1, color: 'action.active' }} />
+                  }}
+                />
+              </Box>
+            )}
+
+            <Alert
+              severity={enableAsyncMode ? "info" : "warning"}
+              sx={{ mb: 2 }}
+            >
+              {enableAsyncMode ? (
+                <>
+                  <strong>배치 작업 모드:</strong><br/>
+                  • 영상 생성 요청 후 즉시 대응 가능<br/>
+                  • 완료되면 이메일로 다운로드 링크 전송<br/>
+                  • 예상 시간: {estimatedTime}
+                </>
+              ) : (
+                <>
+                  <strong>즉시 생성 모드:</strong><br/>
+                  • 생성 완료까지 브라우저 유지 필요<br/>
+                  • 최대 6분 소요, 네트워크 불안 시 실패 가능
+                </>
+              )}
+            </Alert>
+          </Paper>
+
+          {/* 생성 상태 */}
           <Paper sx={{ p: 3 }}>
             <Typography variant="h6" gutterBottom>
+              <Schedule sx={{ mr: 1, verticalAlign: 'middle' }} />
               생성 상태
             </Typography>
 
@@ -301,25 +450,73 @@ const GenerateStep: React.FC<GenerateStepProps> = ({
 
             {generationStatus === 'completed' && (
               <Box sx={{ textAlign: 'center', py: 4 }}>
-                <CheckCircle sx={{ fontSize: 64, color: 'success.main', mb: 2 }} />
-                <Typography variant="h6" gutterBottom>
-                  영상 생성 완료!
-                </Typography>
-                <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-                  릴스 영상이 성공적으로 생성되었습니다
-                </Typography>
-                <Alert severity="success" sx={{ mb: 3 }}>
-                  {statusMessage}
-                </Alert>
-                <Button
-                  variant="contained"
-                  size="large"
-                  startIcon={<Download />}
-                  onClick={downloadVideo}
-                  sx={{ mr: 2 }}
-                >
-                  영상 다운로드
-                </Button>
+                {enableAsyncMode ? (
+                  <>
+                    <Send sx={{ fontSize: 64, color: 'success.main', mb: 2 }} />
+                    <Typography variant="h6" gutterBottom>
+                      작업 요청 완료!
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+                      배치 작업이 시작되었습니다
+                    </Typography>
+                    <Alert severity="success" sx={{ mb: 2 }}>
+                      {statusMessage}
+                    </Alert>
+
+                    {asyncResponse && (
+                      <Card sx={{ mb: 3, textAlign: 'left' }}>
+                        <CardContent>
+                          <Typography variant="subtitle2" gutterBottom>
+                            📧 작업 정보
+                          </Typography>
+                          <Typography variant="body2" color="text.secondary">
+                            • 작업 ID: {jobId}
+                          </Typography>
+                          <Typography variant="body2" color="text.secondary">
+                            • 이메일: {asyncResponse.user_email}
+                          </Typography>
+                          <Typography variant="body2" color="text.secondary">
+                            • 예상 시간: {asyncResponse.estimated_time}
+                          </Typography>
+                          <Typography variant="body2" color="text.secondary">
+                            • 상태: 작업 큐에서 대기 중
+                          </Typography>
+                        </CardContent>
+                      </Card>
+                    )}
+
+                    <Alert severity="info" sx={{ mb: 3, textAlign: 'left' }}>
+                      <strong>다음 단계:</strong><br/>
+                      1. 작업이 백그라운드에서 진행됩니다<br/>
+                      2. 완료되면 입력하신 이메일로 다운로드 링크를 보내드립니다<br/>
+                      3. 이메일의 링크를 클릭하여 영상을 다운로드하세요<br/>
+                      4. 다운로드 링크는 48시간 후 만료됩니다
+                    </Alert>
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle sx={{ fontSize: 64, color: 'success.main', mb: 2 }} />
+                    <Typography variant="h6" gutterBottom>
+                      영상 생성 완료!
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+                      릴스 영상이 성공적으로 생성되었습니다
+                    </Typography>
+                    <Alert severity="success" sx={{ mb: 3 }}>
+                      {statusMessage}
+                    </Alert>
+                    <Button
+                      variant="contained"
+                      size="large"
+                      startIcon={<Download />}
+                      onClick={downloadVideo}
+                      sx={{ mr: 2 }}
+                    >
+                      영상 다운로드
+                    </Button>
+                  </>
+                )}
+
                 <Button
                   variant="outlined"
                   size="large"

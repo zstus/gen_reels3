@@ -17,10 +17,12 @@ import {
   Chip,
   LinearProgress,
   CircularProgress,
+  Divider,
 } from '@mui/material';
 import { CloudUpload, Delete, Image as ImageIcon, AutoFixHigh } from '@mui/icons-material';
 import { useDropzone } from 'react-dropzone';
 import { ReelsContent, ImageUploadMode } from '../types';
+import TextImagePairManager from './TextImagePairManager';
 
 interface ImageStepProps {
   images: File[];
@@ -104,8 +106,30 @@ const ImageStep: React.FC<ImageStepProps> = ({
     });
 
     if (validFiles.length > 0) {
-      const newImages = [...images, ...validFiles].slice(0, requiredImageCount);
-      onChange(newImages, imageUploadMode);
+      // 스마트 이미지 할당: 빈 슬롯부터 채우기
+      const updatedImages = [...images];
+      
+      // 각 valid 파일에 대해 첫 번째로 비어있는 슬롯에 __imageIndex 설정하여 추가
+      let validFileIndex = 0;
+      for (let i = 0; i < requiredImageCount && validFileIndex < validFiles.length; i++) {
+        // 해당 인덱스에 이미지가 없으면 새 파일 할당
+        const hasImageAtIndex = images.some(img => (img as any).__imageIndex === i);
+        if (!hasImageAtIndex) {
+          const file = validFiles[validFileIndex];
+          (file as any).__imageIndex = i;
+          updatedImages.push(file);
+          validFileIndex++;
+        }
+      }
+      
+      // 위치 정보 기준으로 정렬
+      updatedImages.sort((a, b) => {
+        const indexA = (a as any).__imageIndex ?? 0;
+        const indexB = (b as any).__imageIndex ?? 0;
+        return indexA - indexB;
+      });
+      
+      onChange(updatedImages, imageUploadMode);
     }
 
     setErrors(newErrors);
@@ -117,12 +141,14 @@ const ImageStep: React.FC<ImageStepProps> = ({
       'image/*': ['.jpeg', '.jpg', '.png', '.gif', '.webp', '.bmp'],
       'video/*': ['.mp4', '.mov', '.avi', '.webm']
     },
-    maxFiles: requiredImageCount - images.length,
-    disabled: images.length >= requiredImageCount
+    // 무제한 파일 업로드 허용 (빈 슬롯에 자동 할당)
+    maxFiles: undefined,
+    disabled: false
   });
 
-  const removeImage = (index: number) => {
-    const newImages = images.filter((_, i) => i !== index);
+  const removeImage = (imageIndex: number) => {
+    // 특정 __imageIndex를 가진 파일만 제거
+    const newImages = images.filter(img => (img as any).__imageIndex !== imageIndex);
     onChange(newImages, imageUploadMode);
   };
 
@@ -153,7 +179,12 @@ const ImageStep: React.FC<ImageStepProps> = ({
     return file.type.startsWith('video/');
   };
 
-  const canProceed = images.length === requiredImageCount;
+  // 위치 정보가 있는 실제 이미지 개수 계산
+  const getActualImageCount = () => {
+    return images.filter(img => typeof (img as any).__imageIndex === 'number').length;
+  };
+
+  const canProceed = getActualImageCount() === requiredImageCount;
 
   // 자동 이미지 생성 함수
   const handleAutoGenerate = async (mode: 'per_script' | 'per_two_scripts') => {
@@ -207,13 +238,40 @@ const ImageStep: React.FC<ImageStepProps> = ({
           
           const blob = await imageResponse.blob();
           const fileName = `generated_image_${index + 1}.png`;
-          return new File([blob], fileName, { type: 'image/png' });
+          const file = new File([blob], fileName, { type: 'image/png' });
+          
+          // 🔧 중요: TextImagePairManager에서 매칭을 위한 __imageIndex 설정
+          (file as any).__imageIndex = index;
+          
+          return file;
         })
       );
 
-      // 기존 이미지에 새로 생성된 이미지들 추가
-      const newImages = [...images, ...imageFiles].slice(0, requiredImageCount);
-      onChange(newImages, imageUploadMode);
+      // 🔧 기존 이미지와 새로 생성된 이미지를 스마트하게 병합
+      // 빈 슬롯부터 채우고, imageIndex 순으로 정렬
+      const updatedImages = [...images];
+      
+      imageFiles.forEach((file) => {
+        const targetIndex = (file as any).__imageIndex;
+        // 해당 인덱스에 기존 이미지가 있으면 교체, 없으면 추가
+        const existingIndex = updatedImages.findIndex(img => (img as any).__imageIndex === targetIndex);
+        if (existingIndex >= 0) {
+          updatedImages[existingIndex] = file;
+        } else {
+          updatedImages.push(file);
+        }
+      });
+      
+      // imageIndex 순으로 정렬
+      updatedImages.sort((a, b) => {
+        const indexA = (a as any).__imageIndex ?? 0;
+        const indexB = (b as any).__imageIndex ?? 0;
+        return indexA - indexB;
+      });
+      
+      // 필요한 개수만큼만 유지
+      const finalImages = updatedImages.slice(0, requiredImageCount);
+      onChange(finalImages, imageUploadMode);
       
       const successCount = imageFiles.length;
       const totalRequested = imageUrls.length;
@@ -243,247 +301,164 @@ const ImageStep: React.FC<ImageStepProps> = ({
         릴스 영상의 배경으로 사용할 이미지 또는 영상을 업로드하세요. (이미지: JPG, PNG, GIF, WebP / 영상: MP4, MOV, AVI, WebM)
       </Typography>
 
-      <Grid container spacing={3}>
-        {/* 왼쪽: 업로드 설정 */}
-        <Grid item xs={12} md={6}>
-          <Paper sx={{ p: 3, mb: 3 }}>
-            <Typography variant="h6" gutterBottom>
-              업로드 모드 선택
-            </Typography>
-            
-            <FormControl component="fieldset">
-              <RadioGroup
-                value={imageUploadMode}
-                onChange={handleModeChange}
-              >
-                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
-                  <FormControlLabel
-                    value="per-two-scripts"
-                    control={<Radio />}
-                    label={
-                      <Box>
-                        <Typography variant="body1">
-                          대사 2개마다 미디어 1개
-                        </Typography>
-                        <Typography variant="caption" color="text.secondary">
-                          필요 미디어: {Math.ceil(Object.values(content).slice(1).filter(script => script?.trim()).length / 2)}개
-                        </Typography>
-                      </Box>
-                    }
-                  />
-                  <Button
-                    variant="outlined"
-                    size="small"
-                    startIcon={<AutoFixHigh />}
-                    onClick={() => handleAutoGenerate('per_two_scripts')}
-                    disabled={isGenerating || Object.values(content).slice(1).filter(script => script?.trim()).length === 0}
-                    sx={{ ml: 2, minWidth: 100 }}
-                  >
-                    자동생성
-                  </Button>
-                </Box>
-                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
-                  <FormControlLabel
-                    value="per-script"
-                    control={<Radio />}
-                    label={
-                      <Box>
-                        <Typography variant="body1">
-                          대사마다 미디어 1개
-                        </Typography>
-                        <Typography variant="caption" color="text.secondary">
-                          필요 미디어: {Object.values(content).slice(1).filter(script => script?.trim()).length}개
-                        </Typography>
-                      </Box>
-                    }
-                  />
-                  <Button
-                    variant="outlined"
-                    size="small"
-                    startIcon={<AutoFixHigh />}
-                    onClick={() => handleAutoGenerate('per_script')}
-                    disabled={isGenerating || Object.values(content).slice(1).filter(script => script?.trim()).length === 0}
-                    sx={{ ml: 2, minWidth: 100 }}
-                  >
-                    자동생성
-                  </Button>
-                </Box>
-              </RadioGroup>
-            </FormControl>
-            
-            {/* 생성 진행 상황 표시 */}
-            {isGenerating && (
-              <Box sx={{ mt: 2, display: 'flex', alignItems: 'center' }}>
-                <CircularProgress size={20} sx={{ mr: 1 }} />
-                <Typography variant="body2" color="primary">
-                  {generationProgress}
-                </Typography>
-              </Box>
-            )}
-            
-            {generationProgress && !isGenerating && (
-              <Alert severity="success" sx={{ mt: 2 }}>
-                {generationProgress}
-              </Alert>
-            )}
-          </Paper>
-
-          {/* 드래그 앤 드롭 영역 */}
-          <Paper sx={{ p: 3 }}>
-            <Box
-              {...getRootProps()}
-              sx={{
-                border: 2,
-                borderColor: isDragActive ? 'primary.main' : 'grey.300',
-                borderStyle: 'dashed',
-                borderRadius: 2,
-                p: 4,
-                textAlign: 'center',
-                cursor: images.length >= requiredImageCount ? 'not-allowed' : 'pointer',
-                bgcolor: isDragActive ? 'action.hover' : 'background.paper',
-                opacity: images.length >= requiredImageCount ? 0.6 : 1,
-                transition: 'all 0.2s ease-in-out',
-                '&:hover': {
-                  borderColor: images.length >= requiredImageCount ? 'grey.300' : 'primary.main',
-                  bgcolor: images.length >= requiredImageCount ? 'background.paper' : 'action.hover',
+      {/* 업로드 모드 선택 */}
+      <Paper sx={{ p: 3, mb: 3 }}>
+        <Typography variant="h6" gutterBottom>
+          업로드 모드 선택
+        </Typography>
+        
+        <FormControl component="fieldset">
+          <RadioGroup
+            value={imageUploadMode}
+            onChange={handleModeChange}
+          >
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+              <FormControlLabel
+                value="per-two-scripts"
+                control={<Radio />}
+                label={
+                  <Box>
+                    <Typography variant="body1">
+                      대사 2개마다 미디어 1개
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      필요 미디어: {Math.ceil(Object.values(content).slice(1).filter(script => script?.trim()).length / 2)}개
+                    </Typography>
+                  </Box>
                 }
-              }}
-            >
-              <input {...getInputProps()} />
-              <CloudUpload sx={{ fontSize: 48, color: 'grey.400', mb: 2 }} />
-              <Typography variant="h6" gutterBottom>
-                {isDragActive ? '여기에 파일을 놓으세요' : '미디어 파일을 드래그하거나 클릭하여 선택'}
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                지원 형식: JPG, PNG, GIF, WebP, BMP, MP4, MOV, AVI, WebM (최대 10MB)
-              </Typography>
-              <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-                업로드 상태: {images.length}/{requiredImageCount}개
-              </Typography>
-            </Box>
-
-            {/* 업로드 진행률 */}
-            {Object.entries(uploadProgress).map(([filename, progress]) => (
-              <Box key={filename} sx={{ mt: 2 }}>
-                <Typography variant="caption" color="text.secondary">
-                  {filename} 업로드 중...
-                </Typography>
-                <LinearProgress variant="determinate" value={progress} sx={{ mt: 0.5 }} />
-              </Box>
-            ))}
-
-            {/* 에러 메시지 */}
-            {errors.map((error, index) => (
-              <Alert severity="error" key={index} sx={{ mt: 2 }}>
-                {error}
-              </Alert>
-            ))}
-          </Paper>
-        </Grid>
-
-        {/* 오른쪽: 업로드된 미디어 미리보기 */}
-        <Grid item xs={12} md={6}>
-          <Paper sx={{ p: 3 }}>
-            <Typography variant="h6" gutterBottom>
-              업로드된 미디어 ({images.length}/{requiredImageCount})
-            </Typography>
-
-            {images.length === 0 ? (
-              <Box
-                sx={{
-                  textAlign: 'center',
-                  py: 4,
-                  color: 'text.secondary'
-                }}
+              />
+              <Button
+                variant="outlined"
+                size="small"
+                startIcon={<AutoFixHigh />}
+                onClick={() => handleAutoGenerate('per_two_scripts')}
+                disabled={isGenerating || Object.values(content).slice(1).filter(script => script?.trim()).length === 0}
+                sx={{ ml: 2, minWidth: 100 }}
               >
-                <ImageIcon sx={{ fontSize: 64, mb: 2 }} />
-                <Typography variant="body2">
-                  아직 업로드된 미디어가 없습니다
-                </Typography>
-              </Box>
-            ) : (
-              <Grid container spacing={2}>
-                {images.map((file, index) => (
-                  <Grid item xs={6} key={index}>
-                    <Card sx={{ position: 'relative' }}>
-                      {isVideoFile(file) ? (
-                        <video
-                          src={getMediaPreview(file)}
-                          style={{
-                            width: '100%',
-                            height: 120,
-                            objectFit: 'cover',
-                          }}
-                          muted
-                          loop
-                          autoPlay
-                        />
-                      ) : (
-                        <Box
-                          sx={{
-                            width: '100%',
-                            height: 120,
-                            backgroundImage: `url(${getMediaPreview(file)})`,
-                            backgroundSize: 'cover',
-                            backgroundPosition: 'center',
-                            position: 'relative'
-                          }}
-                        />
-                      )}
-                      <IconButton
-                        size="small"
-                        onClick={() => removeImage(index)}
-                        sx={{
-                          position: 'absolute',
-                          top: 4,
-                          right: 4,
-                          bgcolor: 'rgba(255,255,255,0.8)',
-                          zIndex: 1,
-                          '&:hover': {
-                            bgcolor: 'rgba(255,255,255,0.9)'
-                          }
-                        }}
-                      >
-                        <Delete color="error" />
-                      </IconButton>
-                      <Chip
-                        label={index + 1}
-                        size="small"
-                        color="primary"
-                        sx={{
-                          position: 'absolute',
-                          top: 4,
-                          left: 4
-                        }}
-                      />
-                      <CardContent sx={{ p: 1 }}>
-                        <Typography variant="caption" noWrap>
-                          {file.name}
-                        </Typography>
-                        <Typography variant="caption" color="text.secondary" display="block">
-                          {formatFileSize(file.size)}
-                        </Typography>
-                      </CardContent>
-                    </Card>
-                  </Grid>
-                ))}
-              </Grid>
-            )}
+                자동생성
+              </Button>
+            </Box>
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+              <FormControlLabel
+                value="per-script"
+                control={<Radio />}
+                label={
+                  <Box>
+                    <Typography variant="body1">
+                      대사마다 미디어 1개
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      필요 미디어: {Object.values(content).slice(1).filter(script => script?.trim()).length}개
+                    </Typography>
+                  </Box>
+                }
+              />
+              <Button
+                variant="outlined"
+                size="small"
+                startIcon={<AutoFixHigh />}
+                onClick={() => handleAutoGenerate('per_script')}
+                disabled={isGenerating || Object.values(content).slice(1).filter(script => script?.trim()).length === 0}
+                sx={{ ml: 2, minWidth: 100 }}
+              >
+                자동생성
+              </Button>
+            </Box>
+          </RadioGroup>
+        </FormControl>
+        
+        {/* 생성 진행 상황 표시 */}
+        {isGenerating && (
+          <Box sx={{ mt: 2, display: 'flex', alignItems: 'center' }}>
+            <CircularProgress size={20} sx={{ mr: 1 }} />
+            <Typography variant="body2" color="primary">
+              {generationProgress}
+            </Typography>
+          </Box>
+        )}
+        
+        {generationProgress && !isGenerating && (
+          <Alert severity="success" sx={{ mt: 2 }}>
+            {generationProgress}
+          </Alert>
+        )}
+      </Paper>
 
-            {!canProceed && images.length > 0 && (
-              <Alert severity="info" sx={{ mt: 2 }}>
-                {requiredImageCount - images.length}개의 미디어를 더 업로드해주세요
-              </Alert>
-            )}
+      {/* 미디어 파일 멀티 드래그 영역 */}
+      <Paper sx={{ p: 3, mb: 3 }}>
+        <Typography variant="h6" gutterBottom>
+          미디어 파일 멀티 드래그 영역
+        </Typography>
+        <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+          여러 미디어 파일을 한 번에 드래그하여 업로드하세요. 빈 슬롯부터 자동으로 채워집니다.
+        </Typography>
+        
+        <Box
+          {...getRootProps()}
+          sx={{
+            border: 2,
+            borderColor: isDragActive ? 'primary.main' : 'grey.300',
+            borderStyle: 'dashed',
+            borderRadius: 2,
+            p: 4,
+            textAlign: 'center',
+            cursor: 'pointer',
+            bgcolor: isDragActive ? 'action.hover' : 'background.paper',
+            transition: 'all 0.2s ease-in-out',
+            '&:hover': {
+              borderColor: 'primary.main',
+              bgcolor: 'action.hover',
+            }
+          }}
+        >
+          <input {...getInputProps()} />
+          <CloudUpload sx={{ fontSize: 48, color: 'grey.400', mb: 2 }} />
+          <Typography variant="h6" gutterBottom>
+            {isDragActive ? '여기에 파일을 놓으세요' : '미디어 파일을 드래그하거나 클릭하여 선택'}
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            지원 형식: JPG, PNG, GIF, WebP, BMP, MP4, MOV, AVI, WebM (최대 10MB)
+          </Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+            현재 상태: {getActualImageCount()}/{requiredImageCount}개
+          </Typography>
+        </Box>
 
-            {canProceed && (
-              <Alert severity="success" sx={{ mt: 2 }}>
-                모든 미디어가 업로드되었습니다! 다음 단계로 진행할 수 있습니다.
-              </Alert>
-            )}
-          </Paper>
-        </Grid>
-      </Grid>
+        {/* 업로드 진행률 */}
+        {Object.entries(uploadProgress).map(([filename, progress]) => (
+          <Box key={filename} sx={{ mt: 2 }}>
+            <Typography variant="caption" color="text.secondary">
+              {filename} 업로드 중...
+            </Typography>
+            <LinearProgress variant="determinate" value={progress} sx={{ mt: 0.5 }} />
+          </Box>
+        ))}
+
+        {/* 에러 메시지 */}
+        {errors.map((error, index) => (
+          <Alert severity="error" key={index} sx={{ mt: 2 }}>
+            {error}
+          </Alert>
+        ))}
+        
+        {/* 진행률 표시 */}
+        {canProceed && (
+          <Alert severity="success" sx={{ mt: 2 }}>
+            모든 미디어가 업로드되었습니다! 다음 단계로 진행할 수 있습니다.
+          </Alert>
+        )}
+      </Paper>
+
+      {/* 텍스트-이미지 매칭 관리 영역 */}
+      <Box sx={{ mt: 4 }}>
+        <Divider sx={{ mb: 3 }} />
+        <TextImagePairManager
+          content={content}
+          imageUploadMode={imageUploadMode}
+          images={images}
+          onChange={onChange}
+        />
+      </Box>
 
       {/* 하단 버튼 */}
       <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 4 }}>

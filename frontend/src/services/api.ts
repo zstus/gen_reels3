@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { ApiResponse, GenerateVideoRequest, MusicFolder, MusicFile, MusicMood, ImageUploadMode, TextPosition, TextStyle } from '../types';
+import { ApiResponse, GenerateVideoRequest, MusicFolder, MusicFile, MusicMood, ImageUploadMode, TextPosition, TextStyle, AsyncVideoRequest, AsyncVideoResponse, JobInfo } from '../types';
 
 // API 베이스 URL 설정
 const API_BASE_URL = '/api';
@@ -7,7 +7,7 @@ const API_BASE_URL = '/api';
 // Axios 인스턴스 생성
 const apiClient = axios.create({
   baseURL: API_BASE_URL,
-  timeout: 300000, // 5분 (영상 생성 시간 고려)
+  timeout: 400000, // 약 6.7분 (영상 생성 시간 고려)
   headers: {
     'Content-Type': 'application/json',
   },
@@ -148,6 +148,89 @@ export const apiService = {
   // BGM 파일 URL 생성 (미리듣기용)
   getBgmUrl(mood: MusicMood, filename: string): string {
     return `/bgm/${mood}/${encodeURIComponent(filename)}`;
+  },
+
+  // 배치 작업 관련 API 메서드들
+
+  // 비동기 영상 생성 요청
+  async generateVideoAsync(data: {
+    userEmail: string;
+    content: string;
+    images: File[];
+    imageUploadMode: ImageUploadMode;
+    textPosition: TextPosition;
+    textStyle: TextStyle;
+    musicFile?: MusicFile;
+    musicMood: MusicMood;
+    useTestFiles?: boolean;
+  }): Promise<AsyncVideoResponse> {
+    const formData = new FormData();
+
+    // 필수 데이터 추가
+    formData.append('user_email', data.userEmail);
+    formData.append('content_data', data.content);
+    formData.append('music_mood', data.musicMood);
+    formData.append('use_test_files', String(data.useTestFiles || false));
+
+    // 이미지 할당 모드 추가 (백엔드 형식에 맞게 변환)
+    const backendImageMode = data.imageUploadMode === 'per-script' ? '1_per_image' : '2_per_image';
+    formData.append('image_allocation_mode', backendImageMode);
+
+    // 텍스트 위치 및 스타일 추가
+    formData.append('text_position', data.textPosition);
+    formData.append('text_style', data.textStyle);
+
+    // 선택된 음악 파일 경로 추가
+    if (data.musicFile) {
+      formData.append('selected_bgm_path', data.musicFile.filename);
+    }
+
+    // 이미지 파일들 추가
+    if (data.images.length > 0 && !data.useTestFiles) {
+      data.images.forEach((image, index) => {
+        formData.append(`image_${index + 1}`, image, `${index + 1}.${image.name.split('.').pop()}`);
+      });
+    }
+
+    try {
+      const response = await apiClient.post('/generate-video-async', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+
+      return response.data;
+    } catch (error) {
+      console.error('비동기 영상 생성 요청 실패:', error);
+      throw error;
+    }
+  },
+
+  // 작업 상태 조회
+  async getJobStatus(jobId: string): Promise<JobInfo> {
+    try {
+      const response = await apiClient.get(`/job-status/${jobId}`);
+      return response.data;
+    } catch (error) {
+      console.error('작업 상태 조회 실패:', error);
+      throw error;
+    }
+  },
+
+  // 큐 통계 조회 (관리용)
+  async getQueueStats(): Promise<{ status: string; stats: any }> {
+    try {
+      const response = await apiClient.get('/queue-stats');
+      return response.data;
+    } catch (error) {
+      console.error('큐 통계 조회 실패:', error);
+      throw error;
+    }
+  },
+
+  // 보안 다운로드 링크 생성
+  getSecureDownloadUrl(token: string): string {
+    return `/api/download-video?token=${encodeURIComponent(token)}`;
   }
 };
 
