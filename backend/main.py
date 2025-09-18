@@ -8,6 +8,7 @@ import json
 import os
 import requests
 import shutil
+import time
 from urllib.parse import urlparse
 from video_generator import VideoGenerator
 import random
@@ -433,7 +434,11 @@ async def generate_video(
     
     # 텍스트 스타일 선택
     text_style: str = Form(default="outline"),  # "outline" (외곽선) 또는 "background" (반투명 배경)
-    
+
+    # 폰트 설정
+    title_font: str = Form(default="BMYEONSUNG_otf.otf"),  # 타이틀 폰트
+    body_font: str = Form(default="BMYEONSUNG_otf.otf"),   # 본문 폰트
+
     # 이미지 파일 업로드 (최대 8개)
     image_1: Optional[UploadFile] = File(None),
     image_2: Optional[UploadFile] = File(None),
@@ -504,8 +509,18 @@ async def generate_video(
         print(f"🖼️ 이미지 할당 모드: {image_allocation_mode}")
         print(f"📝 텍스트 위치: {text_position}")
         print(f"🎨 텍스트 스타일: {text_style}")
-        
-        output_path = video_gen.create_video_from_uploads(OUTPUT_FOLDER, bgm_file, image_allocation_mode, text_position, text_style)
+        print(f"🔤 타이틀 폰트: {title_font}")
+        print(f"📝 본문 폰트: {body_font}")
+
+        output_path = video_gen.create_video_from_uploads(
+            OUTPUT_FOLDER,
+            bgm_file,
+            image_allocation_mode,
+            text_position,
+            text_style,
+            title_font,
+            body_font
+        )
         
         return JSONResponse(
             status_code=200,
@@ -839,6 +854,222 @@ async def get_bgm_by_mood(mood: str):
             content={
                 "status": "error",
                 "message": str(e)
+            }
+        )
+
+@app.get("/font-list")
+async def get_font_list():
+    """font 폴더의 폰트 파일 목록 조회"""
+    try:
+        font_folder = os.path.join(os.path.dirname(__file__), "font")
+        fonts = []
+
+        if os.path.exists(font_folder):
+            # 폰트 파일 확장자
+            font_patterns = ["*.ttf", "*.otf", "*.woff", "*.woff2"]
+            for pattern in font_patterns:
+                found_files = glob.glob(os.path.join(font_folder, pattern))
+                for file_path in found_files:
+                    filename = os.path.basename(file_path)
+                    # 확장자 제거한 표시 이름
+                    display_name = os.path.splitext(filename)[0]
+
+                    # 파일 크기 정보
+                    file_size = os.path.getsize(file_path)
+                    file_size_mb = round(file_size / (1024 * 1024), 2)
+
+                    fonts.append({
+                        "filename": filename,
+                        "display_name": display_name,
+                        "file_path": filename,  # 상대 경로
+                        "size_mb": file_size_mb,
+                        "extension": os.path.splitext(filename)[1].lower()
+                    })
+
+        # 파일명 순으로 정렬
+        fonts.sort(key=lambda x: x['display_name'])
+
+        return JSONResponse(
+            status_code=200,
+            content={
+                "status": "success",
+                "message": f"{len(fonts)}개의 폰트 파일을 찾았습니다",
+                "data": fonts
+            }
+        )
+
+    except Exception as e:
+        logger.error(f"폰트 목록 조회 오류: {e}")
+        return JSONResponse(
+            status_code=500,
+            content={
+                "status": "error",
+                "message": str(e)
+            }
+        )
+
+@app.post("/preview-video")
+async def preview_video(
+    title: str = Form(...),
+    body1: str = Form(...),
+    text_position: str = Form(default="bottom"),
+    text_style: str = Form(default="outline"),
+    title_font: str = Form(default="BMYEONSUNG_otf.otf"),
+    body_font: str = Form(default="BMYEONSUNG_otf.otf"),
+    image_1: Optional[UploadFile] = File(None),
+):
+    """미리보기 이미지 생성"""
+    try:
+        logger.info(f"미리보기 요청: {title[:20]}...")
+
+        # VideoGenerator 인스턴스 생성
+        video_generator = VideoGenerator()
+
+        # 업로드 폴더 확인
+        uploads_folder = os.path.join(os.path.dirname(__file__), "uploads")
+        os.makedirs(uploads_folder, exist_ok=True)
+
+        # 이미지/비디오 파일 처리
+        preview_image_path = None
+        if image_1 and hasattr(image_1, 'filename') and image_1.filename:
+            # 업로드된 파일 저장
+            image_filename = f"preview_{int(time.time())}_{image_1.filename}"
+            image_save_path = os.path.join(uploads_folder, image_filename)
+
+            with open(image_save_path, "wb") as buffer:
+                shutil.copyfileobj(image_1.file, buffer)
+
+            # 비디오 파일인지 확인
+            video_extensions = ['.mp4', '.mov', '.avi', '.webm']
+            is_video = any(image_1.filename.lower().endswith(ext) for ext in video_extensions)
+            
+            if is_video:
+                # 비디오 파일에서 첫 번째 프레임 추출
+                try:
+                    from moviepy.editor import VideoFileClip
+                    import tempfile
+                    
+                    # 비디오에서 첫 번째 프레임 추출
+                    video_clip = VideoFileClip(image_save_path)
+                    frame = video_clip.get_frame(0)  # 첫 번째 프레임 (t=0)
+                    video_clip.close()
+                    
+                    # 프레임을 이미지로 저장
+                    from PIL import Image
+                    frame_image = Image.fromarray(frame)
+                    
+                    # 비디오 파일명을 이미지 파일명으로 변경
+                    frame_filename = f"preview_{int(time.time())}_frame.png"
+                    frame_save_path = os.path.join(uploads_folder, frame_filename)
+                    frame_image.save(frame_save_path, "PNG")
+                    
+                    # 원본 비디오 파일 삭제
+                    os.unlink(image_save_path)
+                    preview_image_path = frame_save_path
+                    
+                    logger.info(f"비디오에서 프레임 추출 완료: {frame_filename}")
+                    
+                except Exception as e:
+                    logger.warning(f"비디오 프레임 추출 실패: {e}, 기본 이미지 사용")
+                    # 비디오 처리 실패 시 원본 파일 삭제하고 기본 이미지 사용
+                    try:
+                        os.unlink(image_save_path)
+                    except:
+                        pass
+                    preview_image_path = None
+            else:
+                # 이미지 파일은 그대로 사용
+                preview_image_path = image_save_path
+        else:
+            # 테스트 이미지 사용
+            test_folder = os.path.join(os.path.dirname(__file__), "test")
+            test_images = []
+            for ext in ["jpg", "jpeg", "png", "webp", "gif", "bmp"]:
+                test_files = glob.glob(os.path.join(test_folder, f"1.{ext}"))
+                test_images.extend(test_files)
+
+            if test_images:
+                preview_image_path = test_images[0]
+
+        if not preview_image_path or not os.path.exists(preview_image_path):
+            raise HTTPException(status_code=400, detail="미리보기용 이미지를 찾을 수 없습니다")
+
+        # 타이틀 이미지 생성 (504x220)
+        title_image_path = video_generator.create_title_image(
+            title,
+            504,
+            220,
+            title_font
+        )
+
+        # 본문 텍스트 이미지 생성 (504x890)
+        body_text_image_path = video_generator.create_text_image(
+            body1,
+            504,
+            890,
+            text_position,
+            text_style,
+            is_title=False,
+            title_font=title_font,
+            body_font=body_font
+        )
+
+        # PIL로 미리보기 이미지 합성
+        from PIL import Image
+
+        # 배경 이미지 (504x890)
+        final_image = Image.new('RGB', (504, 890), color=(0, 0, 0))
+
+        # 배경 이미지 처리
+        if os.path.exists(preview_image_path):
+            bg_image = Image.open(preview_image_path)
+            # 504x670 작업 영역에 맞게 리사이즈
+            work_area_height = 670  # 890 - 220
+            bg_image = bg_image.resize((504, work_area_height), Image.Resampling.LANCZOS)
+            final_image.paste(bg_image, (0, 220))  # 타이틀 아래에 배치
+
+        # 타이틀 이미지 합성 (상단)
+        if os.path.exists(title_image_path):
+            title_img = Image.open(title_image_path)
+            final_image.paste(title_img, (0, 0))
+
+        # 본문 텍스트 이미지 합성 (오버레이)
+        if os.path.exists(body_text_image_path):
+            body_img = Image.open(body_text_image_path).convert('RGBA')
+            final_image.paste(body_img, (0, 0), body_img)
+
+        # 미리보기 이미지 저장
+        preview_filename = f"preview_{int(time.time())}.png"
+        preview_save_path = os.path.join(uploads_folder, preview_filename)
+        final_image.save(preview_save_path, "PNG")
+
+        # 임시 파일 정리
+        for temp_file in [title_image_path, body_text_image_path]:
+            if temp_file and os.path.exists(temp_file):
+                try:
+                    os.unlink(temp_file)
+                except:
+                    pass
+
+        logger.info(f"미리보기 생성 완료: {preview_filename}")
+
+        return JSONResponse(
+            status_code=200,
+            content={
+                "status": "success",
+                "message": "미리보기 생성 성공",
+                "preview_url": f"/uploads/{preview_filename}",
+                "preview_path": preview_save_path
+            }
+        )
+
+    except Exception as e:
+        logger.error(f"미리보기 생성 오류: {e}")
+        return JSONResponse(
+            status_code=500,
+            content={
+                "status": "error",
+                "message": f"미리보기 생성 실패: {str(e)}"
             }
         )
 
@@ -1599,6 +1830,10 @@ async def generate_video_async(
     text_style: str = Form(default="outline"),
     selected_bgm_path: str = Form(default=""),
     use_test_files: bool = Form(default=False),
+    
+    # 폰트 설정 추가
+    title_font: str = Form(default="BMYEONSUNG_otf.otf"),  # 타이틀 폰트
+    body_font: str = Form(default="BMYEONSUNG_otf.otf"),   # 본문 폰트
 
     # 이미지 파일 업로드 (최대 8개)
     image_1: Optional[UploadFile] = File(None),
@@ -1655,7 +1890,10 @@ async def generate_video_async(
             'text_style': text_style,
             'selected_bgm_path': selected_bgm_path,
             'use_test_files': use_test_files,
-            'uploaded_files': saved_files
+            'uploaded_files': saved_files,
+            # 폰트 파라미터 추가
+            'title_font': title_font,
+            'body_font': body_font
         }
 
         # 3. 작업을 큐에 추가

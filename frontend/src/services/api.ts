@@ -89,6 +89,8 @@ export const apiService = {
     musicFile?: MusicFile;
     musicMood: MusicMood;
     useTestFiles?: boolean;
+    titleFont?: string;
+    bodyFont?: string;
   }): Promise<ApiResponse> {
     const formData = new FormData();
     
@@ -106,6 +108,14 @@ export const apiService = {
 
     // 텍스트 스타일 추가
     formData.append('text_style', data.textStyle);
+
+    // 폰트 설정 추가
+    if (data.titleFont) {
+      formData.append('title_font', data.titleFont);
+    }
+    if (data.bodyFont) {
+      formData.append('body_font', data.bodyFont);
+    }
 
     // 선택된 음악 파일 경로 추가
     if (data.musicFile) {
@@ -163,6 +173,8 @@ export const apiService = {
     musicFile?: MusicFile;
     musicMood: MusicMood;
     useTestFiles?: boolean;
+    titleFont?: string;
+    bodyFont?: string;
   }): Promise<AsyncVideoResponse> {
     const formData = new FormData();
 
@@ -179,6 +191,14 @@ export const apiService = {
     // 텍스트 위치 및 스타일 추가
     formData.append('text_position', data.textPosition);
     formData.append('text_style', data.textStyle);
+
+    // 폰트 설정 추가
+    if (data.titleFont) {
+      formData.append('title_font', data.titleFont);
+    }
+    if (data.bodyFont) {
+      formData.append('body_font', data.bodyFont);
+    }
 
     // 선택된 음악 파일 경로 추가
     if (data.musicFile) {
@@ -231,6 +251,43 @@ export const apiService = {
   // 보안 다운로드 링크 생성
   getSecureDownloadUrl(token: string): string {
     return `/api/download-video?token=${encodeURIComponent(token)}`;
+  },
+
+  // 미리보기 생성
+  async generatePreview(data: {
+    title: string;
+    body1: string;
+    textPosition: TextPosition;
+    textStyle: TextStyle;
+    titleFont: string;
+    bodyFont: string;
+    image?: File;
+  }): Promise<{ status: string; preview_url: string; message: string }> {
+    const formData = new FormData();
+
+    formData.append('title', data.title);
+    formData.append('body1', data.body1);
+    formData.append('text_position', data.textPosition);
+    formData.append('text_style', data.textStyle);
+    formData.append('title_font', data.titleFont);
+    formData.append('body_font', data.bodyFont);
+
+    if (data.image) {
+      formData.append('image_1', data.image);
+    }
+
+    try {
+      const response = await apiClient.post('/preview-video', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+
+      return response.data;
+    } catch (error) {
+      console.error('미리보기 생성 실패:', error);
+      throw error;
+    }
   }
 };
 

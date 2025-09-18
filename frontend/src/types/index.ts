@@ -46,6 +46,21 @@ export interface MusicFolder {
   files: MusicFile[];
 }
 
+// 폰트 파일 타입
+export interface FontFile {
+  filename: string;
+  display_name: string;
+  file_path: string;
+  size_mb: number;
+  extension: string;
+}
+
+// 폰트 설정 타입
+export interface FontSettings {
+  titleFont: string;
+  bodyFont: string;
+}
+
 // 프로젝트 상태 타입
 export interface ProjectData {
   content: ReelsContent;
@@ -55,6 +70,7 @@ export interface ProjectData {
   textStyle: TextStyle;
   selectedMusic: MusicFile | null;
   musicMood: MusicMood;
+  fontSettings: FontSettings;
 }
 
 // API 응답 타입
@@ -76,6 +92,8 @@ export interface GenerateVideoRequest {
   image_allocation_mode: ImageUploadMode;
   text_position: TextPosition;
   text_style: TextStyle;
+  title_font?: string;
+  body_font?: string;
 }
 
 // 영상 생성 상태 타입

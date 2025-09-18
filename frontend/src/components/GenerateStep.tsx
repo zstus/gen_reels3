@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Box,
   Paper,
@@ -19,6 +19,17 @@ import {
   TextField,
   FormControlLabel,
   Switch,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  RadioGroup,
+  Radio,
+  FormLabel,
+  Accordion,
+  AccordionSummary,
+  AccordionDetails,
+  Skeleton,
 } from '@mui/material';
 import {
   PlayArrow,
@@ -33,8 +44,13 @@ import {
   Email,
   Schedule,
   Send,
+  ExpandMore,
+  Visibility,
+  FontDownload,
+  Style,
+  FormatColorText,
 } from '@mui/icons-material';
-import { ProjectData, GenerationStatus, AsyncVideoResponse } from '../types';
+import { ProjectData, GenerationStatus, AsyncVideoResponse, FontFile, TextPosition, TextStyle } from '../types';
 import apiService from '../services/api';
 
 interface GenerateStepProps {
@@ -75,6 +91,18 @@ const GenerateStep: React.FC<GenerateStepProps> = ({
   const [asyncResponse, setAsyncResponse] = useState<AsyncVideoResponse | null>(null);
   const [estimatedTime, setEstimatedTime] = useState<string>('약 3-10분');
 
+  // 폰트 및 스타일 관련 상태 변수들
+  const [availableFonts, setAvailableFonts] = useState<FontFile[]>([]);
+  const [loadingFonts, setLoadingFonts] = useState(true);
+  const [titleFont, setTitleFont] = useState<string>('BMYEONSUNG_otf.otf');
+  const [bodyFont, setBodyFont] = useState<string>('BMYEONSUNG_otf.otf');
+  const [textPosition, setTextPosition] = useState<TextPosition>('bottom');
+  const [textStyle, setTextStyle] = useState<TextStyle>('outline');
+
+  // 미리보기 관련 상태
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
+  const [loadingPreview, setLoadingPreview] = useState(false);
+
   // 예상 생성 시간 계산
   const calculateEstimatedTime = () => {
     const scriptCount = Object.values(projectData.content)
@@ -88,6 +116,67 @@ const GenerateStep: React.FC<GenerateStepProps> = ({
     
     return Math.max(60, baseTime + scriptTime + imageTime);
   };
+
+  // 폰트 목록 가져오기
+  useEffect(() => {
+    const fetchFonts = async () => {
+      try {
+        setLoadingFonts(true);
+        const response = await fetch('/font-list');
+        const data = await response.json();
+
+        if (data.status === 'success') {
+          setAvailableFonts(data.data);
+        } else {
+          console.error('폰트 목록 가져오기 실패:', data.message);
+        }
+      } catch (error) {
+        console.error('폰트 목록 가져오기 오류:', error);
+      } finally {
+        setLoadingFonts(false);
+      }
+    };
+
+    fetchFonts();
+  }, []);
+
+  // 미리보기 생성
+  const generatePreview = async () => {
+    if (!projectData.content.title || !projectData.content.body1) {
+      alert('미리보기를 위해서는 제목과 첫 번째 대사가 필요합니다.');
+      return;
+    }
+
+    setLoadingPreview(true);
+    try {
+      const response = await apiService.generatePreview({
+        title: projectData.content.title,
+        body1: projectData.content.body1,
+        textPosition: textPosition,
+        textStyle: textStyle,
+        titleFont: titleFont,
+        bodyFont: bodyFont,
+        image: projectData.images[0] || undefined,
+      });
+
+      if (response.status === 'success') {
+        setPreviewImage(response.preview_url);
+        console.log('미리보기 생성 성공:', response.message);
+      } else {
+        throw new Error(response.message || '미리보기 생성 실패');
+      }
+
+    } catch (error) {
+      console.error('미리보기 생성 오류:', error);
+      alert('미리보기 생성 중 오류가 발생했습니다.');
+      setPreviewImage(null);
+    } finally {
+      setLoadingPreview(false);
+    }
+  };
+
+  // 자동 미리보기 생성은 제거하고, 수동으로만 미리보기 생성하도록 변경
+  // useEffect로 인한 무한 루프 방지
 
   // 배치 영상 생성 시작 (비동기)
   const startAsyncGeneration = async () => {
@@ -120,10 +209,12 @@ const GenerateStep: React.FC<GenerateStepProps> = ({
         content: contentData,
         images: projectData.images,
         imageUploadMode: projectData.imageUploadMode,
-        textPosition: projectData.textPosition,
-        textStyle: projectData.textStyle,
+        textPosition: textPosition,
+        textStyle: textStyle,
         musicFile: projectData.selectedMusic || undefined,
         musicMood: projectData.musicMood,
+        titleFont: titleFont,
+        bodyFont: bodyFont,
       });
 
       if (response.status === 'success') {
@@ -176,10 +267,12 @@ const GenerateStep: React.FC<GenerateStepProps> = ({
         content: contentData,
         images: projectData.images,
         imageUploadMode: projectData.imageUploadMode,
-        textPosition: projectData.textPosition,
-        textStyle: projectData.textStyle,
+        textPosition: textPosition,
+        textStyle: textStyle,
         musicFile: projectData.selectedMusic || undefined,
         musicMood: projectData.musicMood,
+        titleFont: titleFont,
+        bodyFont: bodyFont,
       });
 
       if (response.status === 'success') {
@@ -337,8 +430,172 @@ const GenerateStep: React.FC<GenerateStepProps> = ({
           </Paper>
         </Grid>
 
-        {/* 오른쪽: 이메일 설정 & 생성 상태 */}
+        {/* 오른쪽: 폰트/스타일 설정 & 이메일 설정 & 생성 상태 */}
         <Grid item xs={12} md={6}>
+          {/* 폰트 및 스타일 설정 */}
+          <Paper sx={{ p: 3, mb: 2 }}>
+            <Typography variant="h6" gutterBottom>
+              <FontDownload sx={{ mr: 1, verticalAlign: 'middle' }} />
+              폰트 및 스타일 설정
+            </Typography>
+
+            {/* 폰트 설정 */}
+            <Accordion sx={{ mb: 2 }}>
+              <AccordionSummary expandIcon={<ExpandMore />}>
+                <Typography variant="subtitle2">
+                  <Style sx={{ mr: 1, verticalAlign: 'middle' }} />
+                  폰트 선택
+                </Typography>
+              </AccordionSummary>
+              <AccordionDetails>
+                <Grid container spacing={2}>
+                  <Grid item xs={12} sm={6}>
+                    <FormControl fullWidth size="small">
+                      <InputLabel>타이틀 폰트</InputLabel>
+                      <Select
+                        value={titleFont}
+                        label="타이틀 폰트"
+                        onChange={(e) => setTitleFont(e.target.value)}
+                        disabled={loadingFonts}
+                      >
+                        {loadingFonts ? (
+                          <MenuItem disabled>
+                            <CircularProgress size={16} sx={{ mr: 1 }} />
+                            로딩 중...
+                          </MenuItem>
+                        ) : (
+                          availableFonts.map((font) => (
+                            <MenuItem key={font.filename} value={font.filename}>
+                              {font.display_name} ({font.size_mb}MB)
+                            </MenuItem>
+                          ))
+                        )}
+                      </Select>
+                    </FormControl>
+                  </Grid>
+                  <Grid item xs={12} sm={6}>
+                    <FormControl fullWidth size="small">
+                      <InputLabel>본문 폰트</InputLabel>
+                      <Select
+                        value={bodyFont}
+                        label="본문 폰트"
+                        onChange={(e) => setBodyFont(e.target.value)}
+                        disabled={loadingFonts}
+                      >
+                        {loadingFonts ? (
+                          <MenuItem disabled>
+                            <CircularProgress size={16} sx={{ mr: 1 }} />
+                            로딩 중...
+                          </MenuItem>
+                        ) : (
+                          availableFonts.map((font) => (
+                            <MenuItem key={font.filename} value={font.filename}>
+                              {font.display_name} ({font.size_mb}MB)
+                            </MenuItem>
+                          ))
+                        )}
+                      </Select>
+                    </FormControl>
+                  </Grid>
+                </Grid>
+              </AccordionDetails>
+            </Accordion>
+
+            {/* 텍스트 위치 및 스타일 설정 */}
+            <Accordion sx={{ mb: 2 }}>
+              <AccordionSummary expandIcon={<ExpandMore />}>
+                <Typography variant="subtitle2">
+                  <FormatColorText sx={{ mr: 1, verticalAlign: 'middle' }} />
+                  텍스트 위치 및 스타일
+                </Typography>
+              </AccordionSummary>
+              <AccordionDetails>
+                <Box sx={{ mb: 2 }}>
+                  <FormControl component="fieldset">
+                    <FormLabel component="legend">텍스트 위치</FormLabel>
+                    <RadioGroup
+                      row
+                      value={textPosition}
+                      onChange={(e) => setTextPosition(e.target.value as TextPosition)}
+                    >
+                      <FormControlLabel
+                        value="top"
+                        control={<Radio size="small" />}
+                        label="상단"
+                      />
+                      <FormControlLabel
+                        value="bottom"
+                        control={<Radio size="small" />}
+                        label="하단"
+                      />
+                    </RadioGroup>
+                  </FormControl>
+                </Box>
+
+                <Box>
+                  <FormControl component="fieldset">
+                    <FormLabel component="legend">텍스트 스타일</FormLabel>
+                    <RadioGroup
+                      row
+                      value={textStyle}
+                      onChange={(e) => setTextStyle(e.target.value as TextStyle)}
+                    >
+                      <FormControlLabel
+                        value="outline"
+                        control={<Radio size="small" />}
+                        label="외곽선"
+                      />
+                      <FormControlLabel
+                        value="background"
+                        control={<Radio size="small" />}
+                        label="반투명 배경"
+                      />
+                    </RadioGroup>
+                  </FormControl>
+                </Box>
+              </AccordionDetails>
+            </Accordion>
+
+            {/* 미리보기 */}
+            <Box sx={{ textAlign: 'center' }}>
+              <Button
+                variant="outlined"
+                size="small"
+                startIcon={loadingPreview ? <CircularProgress size={16} /> : <Visibility />}
+                onClick={generatePreview}
+                disabled={loadingPreview || !projectData.content.title || !projectData.content.body1 || projectData.images.length === 0}
+                sx={{ mb: 2 }}
+              >
+                {loadingPreview ? '생성 중...' : '미리보기 생성'}
+              </Button>
+
+              {previewImage && (
+                <Box sx={{
+                  mt: 2,
+                  border: '1px solid',
+                  borderColor: 'divider',
+                  borderRadius: 1,
+                  overflow: 'hidden',
+                  maxWidth: 200,
+                  mx: 'auto'
+                }}>
+                  <img
+                    src={previewImage}
+                    alt="미리보기"
+                    style={{
+                      width: '100%',
+                      height: 'auto',
+                      display: 'block'
+                    }}
+                  />
+                  <Typography variant="caption" color="text.secondary" sx={{ p: 1, display: 'block' }}>
+                    미리보기 (타이틀 + 첫 번째 대사)
+                  </Typography>
+                </Box>
+              )}
+            </Box>
+          </Paper>
+
           {/* 이메일 알림 설정 */}
           <Paper sx={{ p: 3, mb: 2 }}>
             <Typography variant="h6" gutterBottom>

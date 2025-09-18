@@ -53,6 +53,10 @@ const MainApp: React.FC = () => {
     textStyle: 'outline',
     selectedMusic: null,
     musicMood: 'bright',
+    fontSettings: {
+      titleFont: 'BMYEONSUNG_otf.otf',
+      bodyFont: 'BMYEONSUNG_otf.otf',
+    },
   });
 
   const handleNext = () => {
@@ -83,6 +87,10 @@ const MainApp: React.FC = () => {
       textStyle: 'outline',
       selectedMusic: null,
       musicMood: 'bright',
+      fontSettings: {
+        titleFont: 'BMYEONSUNG_otf.otf',
+        bodyFont: 'BMYEONSUNG_otf.otf',
+      },
     });
   };
 
@@ -106,13 +114,6 @@ const MainApp: React.FC = () => {
     }));
   };
 
-  const handleTextPositionChange = (textPosition: TextPosition) => {
-    setProjectData(prev => ({ ...prev, textPosition }));
-  };
-
-  const handleTextStyleChange = (textStyle: TextStyle) => {
-    setProjectData(prev => ({ ...prev, textStyle }));
-  };
 
   const handleMenuClick = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);
@@ -133,11 +134,7 @@ const MainApp: React.FC = () => {
         return (
           <ContentStep
             content={projectData.content}
-            textPosition={projectData.textPosition}
-            textStyle={projectData.textStyle}
             onChange={handleContentChange}
-            onTextPositionChange={handleTextPositionChange}
-            onTextStyleChange={handleTextStyleChange}
             onNext={handleNext}
           />
         );

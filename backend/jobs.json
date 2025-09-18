@@ -216,5 +216,373 @@
     "error_message": null,
     "retry_count": 0,
     "max_retries": 2
+  },
+  "0e30b126-0f37-40d9-9681-04a1740338c6": {
+    "job_id": "0e30b126-0f37-40d9-9681-04a1740338c6",
+    "user_email": "xystus@gmail.com",
+    "status": "completed",
+    "created_at": "2025-09-17T23:02:59.036044",
+    "updated_at": "2025-09-17T23:04:43.191288",
+    "video_params": {
+      "content_data": "{\"title\":\"작을수록 더 높이 드는 이유? 허세 과학!\",\"body1\":\"강아지들 소변 볼 때 다리 드는 높이의 비밀에 대해서 알고 있어?\",\"body2\":\"코넬대 연구에 따르면 덩치가 작을수록 다리를 더 높~이 든다고 해.\",\"body3\":\"왜냐면 오줌의 흔적만 보면 높은 곳에서 쏟아진 모양이 더 ‘큰 개’처럼 보이게 하거든.\",\"body4\":\"즉, 다리를 높게 들고 오줌을 싸는 작은 개들은 과학적 지식을 활용한 허세가 있다는거야.\",\"body5\":\"심지어 암컷도 경쟁이 치열할 땐 다리를 더 높이 든대. 동물 세계에서는 암컷의 덩지가 큰게 이성에게 더 유리한가봐. \",\"body6\":\"인간은 소변기가 있어서 그런 증거가 안 남으니 다행이야. 점프하면서 쌀 필요가 없으니 말야. \",\"body7\":\"\",\"body8\":\"\"}",
+      "music_mood": "bright",
+      "image_allocation_mode": "1_per_image",
+      "text_position": "bottom",
+      "text_style": "background",
+      "selected_bgm_path": "All In - Everet Almond.mp3",
+      "use_test_files": false,
+      "uploaded_files": [
+        "1.png",
+        "2.png",
+        "3.png",
+        "4.png",
+        "5.png",
+        "6.png"
+      ]
+    },
+    "result": {
+      "video_path": "/zstus/backend/output_videos/reels_9b22637b.mp4",
+      "duration": "약 10-30초",
+      "completed_at": "2025-09-17T23:04:43.190945"
+    },
+    "error_message": null,
+    "retry_count": 0,
+    "max_retries": 2
+  },
+  "7cd4a5ce-e47b-4774-82e7-690852269a04": {
+    "job_id": "7cd4a5ce-e47b-4774-82e7-690852269a04",
+    "user_email": "xystus@gmail.com",
+    "status": "completed",
+    "created_at": "2025-09-17T23:35:59.292122",
+    "updated_at": "2025-09-17T23:37:59.123803",
+    "video_params": {
+      "content_data": "{\"title\":\"키가 너무 커서 자존감이 떨어져\",\"body1\":\"키 큰 게 부러움의 대상이라는 생각이 일반적이겠지만 20대 여자인 내겐 정말 아니거든?\",\"body2\":\"요즘 여돌들 특성 덕에 키 큰 게 유행이라고들 이야기하잖아?\",\"body3\":\"그런데 그 아이돌들은 키가 작았어도 유명하고 인기가 많았을거야. \",\"body4\":\"현실에서는 작은키의 여자들이 진리라고 생각해. 키 작은 여성의 귀여움은 정말 특별하니까. \",\"body5\":\"엄청 예쁘지 않는 한 키가 크면 좋게말해 모델핏 정도? 하지만 사귀고 싶은 사람은 아닐걸?\",\"body6\":\"그런데 그렇게 예쁠수도 없고 뭔가 애매하다는 생각을 지울 수가 없어. \",\"body7\":\"너 남자니? 조건이 같다면 큰 키의 여자가 좋니? 작은 키의 여자가 귀엽고 사랑스럽니?\",\"body8\":\"\"}",
+      "music_mood": "bright",
+      "image_allocation_mode": "1_per_image",
+      "text_position": "bottom",
+      "text_style": "outline",
+      "selected_bgm_path": "It's Definitely It - Freedom Trail Studio.mp3",
+      "use_test_files": false,
+      "uploaded_files": [
+        "1.mp4",
+        "2.png",
+        "3.png",
+        "4.png",
+        "5.png",
+        "6.png",
+        "7.png"
+      ]
+    },
+    "result": {
+      "video_path": "/zstus/backend/output_videos/reels_8ec1ca76.mp4",
+      "duration": "약 10-30초",
+      "completed_at": "2025-09-17T23:37:59.123463"
+    },
+    "error_message": null,
+    "retry_count": 0,
+    "max_retries": 2
+  },
+  "93ba11f9-322f-4f30-9533-380d667ec924": {
+    "job_id": "93ba11f9-322f-4f30-9533-380d667ec924",
+    "user_email": "xystus@gmail.com",
+    "status": "completed",
+    "created_at": "2025-09-18T03:55:14.954142",
+    "updated_at": "2025-09-18T03:56:24.588190",
+    "video_params": {
+      "content_data": "{\"title\":\"직장생활, 웃기는 게 왜 이리 힘들까?\",\"body1\":\"회사에서 웃을 수 없다면 어떻게 할래?\",\"body2\":\"대표와의 코드 불일치, 계속되는 정신적 피로.\",\"body3\":\"혼자 AI로 웃는 대표, 공감하기 너무 힘들어.\",\"body4\":\"아침 인사 후 퇴근까지 침묵이 일상.\",\"body5\":\"웃음이 사라진 직장생활, 왜 이렇게 됐을까?\",\"body6\":\"부서 많은 회사로 옮기면 좀 나아질까?\",\"body7\":\"너라면 계속 일할래, 아니면 떠날래?\",\"body8\":\"\"}",
+      "music_mood": "romantic",
+      "image_allocation_mode": "2_per_image",
+      "text_position": "bottom",
+      "text_style": "outline",
+      "selected_bgm_path": "Vaquero Perdido - The Mini Vandals.mp3",
+      "use_test_files": false,
+      "uploaded_files": [
+        "1.png",
+        "2.png",
+        "3.png",
+        "4.png"
+      ]
+    },
+    "result": {
+      "video_path": "/zstus/backend/output_videos/reels_51a74eaf.mp4",
+      "duration": "약 10-30초",
+      "completed_at": "2025-09-18T03:56:24.587764"
+    },
+    "error_message": null,
+    "retry_count": 0,
+    "max_retries": 2
+  },
+  "d5e5a47d-9c56-48e5-ba15-1e9c6f189be3": {
+    "job_id": "d5e5a47d-9c56-48e5-ba15-1e9c6f189be3",
+    "user_email": "xystus@gmail.com",
+    "status": "completed",
+    "created_at": "2025-09-18T09:40:08.583000",
+    "updated_at": "2025-09-18T09:43:28.740454",
+    "video_params": {
+      "content_data": "{\"title\":\"아이 낳으면 행복하다는 소리 좀 그만 했으면 좋겠어\",\"body1\":\"왜 사람들은 애기 언제 낳냐? 애기 낳은게 가장 행복하고, 아이는 무엇과도 바꿀 수 없다는 말을 내게 자꾸 하는거야?\",\"body2\":\"당연히 애기 낳으면 행복하겠지. 그걸 몰라서 그러는게 아니야. 나도 아이를 좋아하고, 지나가는 애들 보면 좋아해.\",\"body3\":\"그런데 남편과 나는 흙수저 출신이고, 둘의 벌이를 합쳐도 얼마 되지 않아. \",\"body4\":\"부모님 노후 준비가 안 되어 있어 월마다 용돈도 드리고, 남는 돈으로 둘이서 만족하는 수준으로 살고 있는 중이거든. \",\"body5\":\"안 낳는 이유는 치열한 경쟁과 비교사회에서 자랄 아이에게 남들만큼 못 해줬을 때 자존감이 무너지는 것이 걱정되기 때문이야. \",\"body6\":\"많은 나이가 많은 분들은 지금 세상이 어떤지 잘 모르고 자꾸 아이를 가지라고 하는 것 같아서 불편한 거야.\",\"body7\":\"딩크의 이유가 둘의 행복만은 아니고, 태어날 아이를 위한 것이라는 걸 알아줬으면 좋겠어. 너희들은 어떻게 생각해?\",\"body8\":\"\"}",
+      "music_mood": "suspense",
+      "image_allocation_mode": "1_per_image",
+      "text_position": "bottom",
+      "text_style": "outline",
+      "selected_bgm_path": "Yacoby - Schwartzy.mp3",
+      "use_test_files": false,
+      "uploaded_files": [
+        "1.mp4",
+        "2.mp4",
+        "3.mp4",
+        "4.mp4",
+        "5.mp4",
+        "6.png",
+        "7.png"
+      ]
+    },
+    "result": {
+      "video_path": "/zstus/backend/output_videos/reels_0db90e6a.mp4",
+      "duration": "약 10-30초",
+      "completed_at": "2025-09-18T09:43:28.740063"
+    },
+    "error_message": null,
+    "retry_count": 0,
+    "max_retries": 2
+  },
+  "1624e328-a642-4fde-aa36-fad217334667": {
+    "job_id": "1624e328-a642-4fde-aa36-fad217334667",
+    "user_email": "xystus@gmail.com",
+    "status": "completed",
+    "created_at": "2025-09-18T09:48:45.510583",
+    "updated_at": "2025-09-18T09:50:26.345483",
+    "video_params": {
+      "content_data": "{\"title\":\"펭귄은 똥을 발사? 한다는 거 알아?\",\"body1\":\"펭귄이 배설할 때, 그냥 밑으로 툭 떨어지는 게 아니라 압력을 사용해 ‘발사’를 한다는거 알아?\",\"body2\":\"실험 연구에 따르면 최대 1.33m 거리까지도 날아간다고 해!\",\"body3\":\"비밀은 바로 ‘항문의 괄약근 압력’과 ‘체내 장내 압력’. \",\"body4\":\"이 조합이 엄청난 힘의 포물선 운동을 만들어내는 거야. \",\"body5\":\"왜 이렇게까지 멀리 쏠까? 그 이유는 둥지 주변을 청결하게 유지하기 위해서야. \",\"body6\":\"생물학자들은 이 현상을 ‘에너지 효율적 배설 전략’이라고 불러. \",\"body7\":\"결론: 펭귄은 작은 과학자, 물리학으로 집을 지키는 청결왕! \",\"body8\":\"\"}",
+      "music_mood": "bright",
+      "image_allocation_mode": "2_per_image",
+      "text_position": "bottom",
+      "text_style": "background",
+      "selected_bgm_path": "Fun Vibe - Dyalla.mp3",
+      "use_test_files": false,
+      "uploaded_files": [
+        "1.mp4",
+        "2.png",
+        "3.mp4",
+        "4.png"
+      ]
+    },
+    "result": {
+      "video_path": "/zstus/backend/output_videos/reels_9653b91f.mp4",
+      "duration": "약 10-30초",
+      "completed_at": "2025-09-18T09:50:26.345002"
+    },
+    "error_message": null,
+    "retry_count": 0,
+    "max_retries": 2
+  },
+  "9e247e62-5ee1-4deb-a860-630c8bf46528": {
+    "job_id": "9e247e62-5ee1-4deb-a860-630c8bf46528",
+    "user_email": "xystus@gmail.com",
+    "status": "completed",
+    "created_at": "2025-09-18T13:24:36.601795",
+    "updated_at": "2025-09-18T13:25:11.349377",
+    "video_params": {
+      "content_data": "{\"title\":\"결혼 5개월 전, 이걸 봐버렸다…💔\",\"body1\":\"펜션에서 컵라면 먹으려다, 커피포트 물이 튀어 발등 화상! 🔥\",\"body2\":\"너무 아파서 주저앉았는데… 예비신랑? 그냥 '헐' 한마디 하고 소파 가서 유튜브 틀음…📱\",\"body3\":\"\",\"body4\":\"\",\"body5\":\"\",\"body6\":\"\",\"body7\":\"\",\"body8\":\"\"}",
+      "music_mood": "bright",
+      "image_allocation_mode": "2_per_image",
+      "text_position": "bottom",
+      "text_style": "outline",
+      "selected_bgm_path": "Dark Elves - Jimena Contreras.mp3",
+      "use_test_files": false,
+      "uploaded_files": [
+        "1.png"
+      ]
+    },
+    "result": {
+      "video_path": "/zstus/backend/output_videos/reels_bde8f2f5.mp4",
+      "duration": "약 10-30초",
+      "completed_at": "2025-09-18T13:25:11.348888"
+    },
+    "error_message": null,
+    "retry_count": 0,
+    "max_retries": 2
+  },
+  "dd485e60-43ce-4e5d-9a6d-42d608a795b2": {
+    "job_id": "dd485e60-43ce-4e5d-9a6d-42d608a795b2",
+    "user_email": "xystus@gmail.com",
+    "status": "completed",
+    "created_at": "2025-09-18T14:00:07.160217",
+    "updated_at": "2025-09-18T14:00:45.787319",
+    "video_params": {
+      "content_data": "{\"title\":\"결혼 5개월 전, 이걸 봐버렸다…💔\",\"body1\":\"펜션에서 컵라면 먹으려다, 커피포트 물이 튀어 발등 화상! 🔥\",\"body2\":\"너무 아파서 주저앉았는데… 예비신랑? 그냥 '헐' 한마디 하고 소파 가서 유튜브 틀음…📱\",\"body3\":\"\",\"body4\":\"\",\"body5\":\"\",\"body6\":\"\",\"body7\":\"\",\"body8\":\"\"}",
+      "music_mood": "bright",
+      "image_allocation_mode": "2_per_image",
+      "text_position": "bottom",
+      "text_style": "outline",
+      "selected_bgm_path": "Lace Tablecloths - The Mini Vandals.mp3",
+      "use_test_files": false,
+      "uploaded_files": [
+        "1.png"
+      ]
+    },
+    "result": {
+      "video_path": "/zstus/backend/output_videos/reels_d6a3cafd.mp4",
+      "duration": "약 10-30초",
+      "completed_at": "2025-09-18T14:00:45.786814"
+    },
+    "error_message": null,
+    "retry_count": 0,
+    "max_retries": 2
+  },
+  "e7498e73-2995-4caf-9fa7-64d566152d48": {
+    "job_id": "e7498e73-2995-4caf-9fa7-64d566152d48",
+    "user_email": "xystus@gmail.com",
+    "status": "completed",
+    "created_at": "2025-09-18T14:46:22.206389",
+    "updated_at": "2025-09-18T14:47:01.711332",
+    "video_params": {
+      "content_data": "{\"title\":\"결혼 5개월 전, 이걸 봐버렸다…💔\",\"body1\":\"펜션에서 컵라면 먹으려다, 커피포트 물이 튀어 발등 화상! 🔥\",\"body2\":\"너무 아파서 주저앉았는데… 예비신랑? 그냥 '헐' 한마디 하고 소파 가서 유튜브 틀음…📱\",\"body3\":\"\",\"body4\":\"\",\"body5\":\"\",\"body6\":\"\",\"body7\":\"\",\"body8\":\"\"}",
+      "music_mood": "bright",
+      "image_allocation_mode": "2_per_image",
+      "text_position": "top",
+      "text_style": "outline",
+      "selected_bgm_path": "Purple Desire - The Grey Room _ Clark Sims.mp3",
+      "use_test_files": false,
+      "uploaded_files": [
+        "1.jpg"
+      ]
+    },
+    "result": {
+      "video_path": "/zstus/backend/output_videos/reels_ee491996.mp4",
+      "duration": "약 10-30초",
+      "completed_at": "2025-09-18T14:47:01.710826"
+    },
+    "error_message": null,
+    "retry_count": 0,
+    "max_retries": 2
+  },
+  "0d9d00ea-d245-45a2-8550-0e9530787199": {
+    "job_id": "0d9d00ea-d245-45a2-8550-0e9530787199",
+    "user_email": "xystus@gmail.com",
+    "status": "completed",
+    "created_at": "2025-09-18T15:04:02.838556",
+    "updated_at": "2025-09-18T15:04:38.226330",
+    "video_params": {
+      "content_data": "{\"title\":\"결혼 5개월 전, 이걸 봐버렸다…💔\",\"body1\":\"펜션에서 컵라면 먹으려다, 커피포트 물이 튀어 발등 화상! 🔥\",\"body2\":\"너무 아파서 주저앉았는데… 예비신랑? 그냥 '헐' 한마디 하고 소파 가서 유튜브 틀음…📱\",\"body3\":\"\",\"body4\":\"\",\"body5\":\"\",\"body6\":\"\",\"body7\":\"\",\"body8\":\"\"}",
+      "music_mood": "bright",
+      "image_allocation_mode": "2_per_image",
+      "text_position": "top",
+      "text_style": "background",
+      "selected_bgm_path": "Dark Elves - Jimena Contreras.mp3",
+      "use_test_files": false,
+      "uploaded_files": [
+        "1.jpg"
+      ],
+      "title_font": "IBMPlexSansKR-Bold.ttf",
+      "body_font": "PretendardVariable.ttf"
+    },
+    "result": {
+      "video_path": "/zstus/backend/output_videos/reels_45a7e560.mp4",
+      "duration": "약 10-30초",
+      "completed_at": "2025-09-18T15:04:38.225806"
+    },
+    "error_message": null,
+    "retry_count": 0,
+    "max_retries": 2
+  },
+  "22071b50-70ad-4670-8dca-16bbe0f9c248": {
+    "job_id": "22071b50-70ad-4670-8dca-16bbe0f9c248",
+    "user_email": "xystus@gmail.com",
+    "status": "completed",
+    "created_at": "2025-09-18T15:26:07.205505",
+    "updated_at": "2025-09-18T15:27:50.796701",
+    "video_params": {
+      "content_data": "{\"title\":\"아기 울음, 비행기에서 참아야 하는 거야?\",\"body1\":\"너 해외여행 갈 때, 10시간 동안 아기 울음소리를 들어본 적 있어?\",\"body2\":\"앞뒤 좌석 다 울음폭격 맞고, 귀마개 껴도 다 들려… 진짜 미치는 줄 알았어.\",\"body3\":\"부모는 달랜다 하지만 갓난아기가 달래진다고 달래지냐? 안 자고 또 울지.\",\"body4\":\"솔직히 애기 기억도 못할 여행인데, 이건 부모 욕심 아니야?\",\"body5\":\"같이 탄 사람들만 안 좋은 기억 쌓이는 거지 뭐.\",\"body6\":\"너라면 어때? 아기 데리고 장거리 비행, 가능하다고 생각해?\",\"body7\":\"\",\"body8\":\"\"}",
+      "music_mood": "suspense",
+      "image_allocation_mode": "1_per_image",
+      "text_position": "bottom",
+      "text_style": "background",
+      "selected_bgm_path": "Overboard - The Grey Room _ Golden Palms.mp3",
+      "use_test_files": false,
+      "uploaded_files": [
+        "1.mp4",
+        "2.mp4",
+        "3.png",
+        "4.webp",
+        "5.mp4",
+        "6.png"
+      ],
+      "title_font": "PretendardVariable.ttf",
+      "body_font": "IBMPlexSansKR-Bold.ttf"
+    },
+    "result": {
+      "video_path": "/zstus/backend/output_videos/reels_3c54a3f1.mp4",
+      "duration": "약 10-30초",
+      "completed_at": "2025-09-18T15:27:50.796198"
+    },
+    "error_message": null,
+    "retry_count": 0,
+    "max_retries": 2
+  },
+  "de05b446-7e1a-4d1b-960f-f4538057ec0f": {
+    "job_id": "de05b446-7e1a-4d1b-960f-f4538057ec0f",
+    "user_email": "xystus@gmail.com",
+    "status": "completed",
+    "created_at": "2025-09-18T15:34:47.998443",
+    "updated_at": "2025-09-18T15:37:26.906348",
+    "video_params": {
+      "content_data": "{\"title\":\"비행기에서 아기울음이....\",\"body1\":\"너 해외여행 갈 때, 비행기에서 10시간 동안 아기 울음소리 들어본 적 있어?\",\"body2\":\"앞뒤 좌석 다 울음폭격 맞고, 귀마개 껴도 다 들려… 진짜 미치는 줄 알았어.\",\"body3\":\"부모는 달랜다 하지만 갓난아기가 달래진다고 달래지냐? 안 자고 또 울지.\",\"body4\":\"솔직히 애기 기억도 못할 여행인데, 이건 부모 욕심 아니야? 애 좀 클때까지 못참아?\",\"body5\":\"왜 쉬고 싶어서 여행가는 같이 탄 사람들이 고통 분담을 해야하는 거야? 우리가 매달 가는 여행이냐고...\",\"body6\":\"너라면 어때? 아기 데리고 장거리 비행, 가능하다고 생각해?\",\"body7\":\"\",\"body8\":\"\"}",
+      "music_mood": "suspense",
+      "image_allocation_mode": "1_per_image",
+      "text_position": "bottom",
+      "text_style": "outline",
+      "selected_bgm_path": "Overboard - The Grey Room _ Golden Palms.mp3",
+      "use_test_files": false,
+      "uploaded_files": [
+        "1.mp4",
+        "2.mp4",
+        "3.png",
+        "4.webp",
+        "5.mp4",
+        "6.mp4"
+      ],
+      "title_font": "IBMPlexSansKR-Bold.ttf",
+      "body_font": "PretendardVariable.ttf"
+    },
+    "result": {
+      "video_path": "/zstus/backend/output_videos/reels_98b4090a.mp4",
+      "duration": "약 10-30초",
+      "completed_at": "2025-09-18T15:37:26.905762"
+    },
+    "error_message": null,
+    "retry_count": 0,
+    "max_retries": 2
+  },
+  "1360fbc9-9563-4c5f-a99c-01d2fd4a4b89": {
+    "job_id": "1360fbc9-9563-4c5f-a99c-01d2fd4a4b89",
+    "user_email": "xystus@gmail.com",
+    "status": "completed",
+    "created_at": "2025-09-18T16:05:11.168263",
+    "updated_at": "2025-09-18T16:09:45.750368",
+    "video_params": {
+      "content_data": "{\"title\":\"가을 하늘이 왜 쨍한지 알고 있어?\",\"body1\":\"가을 하늘은 왜 필터 낀 것처럼 새파랗게 보일까? 알 것 같으면서도 모르겠지?\",\"body2\":\"태양빛은 파장이 짧은 파란색 계열이 공기 분자와 부딪힐 때 더 강하게 산란되기 때문에 하늘이 파란색으로 보여. 이건 계절과 상관없이 늘 그래.\",\"body3\":\"근데 가을엔 수증기가 없고 공기도 맑아서 파란 빛의 산란이 더 강해. 그래서 눈에 더 쨍하게 들어오는 거지.\",\"body4\":\"여름엔 대기중에 수증기, 미세먼지, 에어로졸이 많아서 산란이 여러 색으로 섞여 탁해 보이는 거야.\",\"body5\":\"비슷한 이유로 해가 낮게 걸리면 빛이 대기층을 길게 통과해서 파랑은 다 산란되어 사라지고, 긴 파장인 빨강, 주황만 남아 노을이 생기는거야.\",\"body6\":\"결과적으로는 가을 하늘에는 수증기, 에어로졸, 먼지 등이 없기 때문에 산란강도가 강한 파랑만 선명하게 보인다는 거지. \",\"body7\":\"가을이 길지 않은 건 알고 있지? 자주자주 하늘을 쳐다보자고!\",\"body8\":\"\"}",
+      "music_mood": "romantic",
+      "image_allocation_mode": "2_per_image",
+      "text_position": "bottom",
+      "text_style": "outline",
+      "selected_bgm_path": "Windy Road Back To You - The Grey Room _ Golden Palms.mp3",
+      "use_test_files": false,
+      "uploaded_files": [
+        "1.mp4",
+        "2.mp4",
+        "3.png",
+        "4.png"
+      ],
+      "title_font": "NanumSquareEB.ttf",
+      "body_font": "PretendardVariable.ttf"
+    },
+    "result": {
+      "video_path": "/zstus/backend/output_videos/reels_d1409d06.mp4",
+      "duration": "약 10-30초",
+      "completed_at": "2025-09-18T16:09:45.749508"
+    },
+    "error_message": null,
+    "retry_count": 0,
+    "max_retries": 2
   }
 }

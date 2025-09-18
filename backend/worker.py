@@ -74,8 +74,11 @@ class VideoWorker:
             text_position = video_params.get('text_position', 'bottom')
             text_style = video_params.get('text_style', 'outline')
             selected_bgm_path = video_params.get('selected_bgm_path', '')
+            # 폰트 파라미터 추출
+            title_font = video_params.get('title_font', 'BMYEONSUNG_otf.otf')
+            body_font = video_params.get('body_font', 'BMYEONSUNG_otf.otf')
 
-            logger.info(f"📋 영상 파라미터: 음악={music_mood}, 테스트파일={use_test_files}, 텍스트위치={text_position}")
+            logger.info(f"📋 영상 파라미터: 음악={music_mood}, 테스트파일={use_test_files}, 텍스트위치={text_position}, 타이틀폰트={title_font}, 본문폰트={body_font}")
 
             # 콘텐츠 데이터 파싱
             try:
@@ -118,7 +121,9 @@ class VideoWorker:
                     image_allocation_mode=image_allocation_mode,
                     text_position=text_position,
                     text_style=text_style,
-                    uploads_folder=uploads_folder
+                    uploads_folder=uploads_folder,
+                    title_font=title_font,
+                    body_font=body_font
                 )
             else:
                 # 업로드된 파일 사용
@@ -129,7 +134,9 @@ class VideoWorker:
                     image_allocation_mode=image_allocation_mode,
                     text_position=text_position,
                     text_style=text_style,
-                    uploads_folder=uploads_folder
+                    uploads_folder=uploads_folder,
+                    title_font=title_font,
+                    body_font=body_font
                 )
 
             if result and isinstance(result, str):

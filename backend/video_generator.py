@@ -206,12 +206,12 @@ class VideoGenerator:
             else:
                 raise Exception(f"이미지 다운로드 및 기본 이미지 생성 모두 실패: {str(e)}")
     
-    def create_title_image(self, title, width, height):
+    def create_title_image(self, title, width, height, title_font="BMYEONSUNG_otf.otf"):
         """제목 이미지 생성 - 지정 영역(50,65)~(444,200)에 아래 정렬"""
         # 검은 배경 이미지 생성 (전체 타이틀 영역)
         img = Image.new('RGB', (width, height), color='black')
         draw = ImageDraw.Draw(img)
-        
+
         # 타이틀 텍스트 영역 정의: (50, 65) ~ (444, 200)
         title_left = 50
         title_top = 65
@@ -219,16 +219,24 @@ class VideoGenerator:
         title_bottom = 200  # 텍스트 영역 하단을 200으로 제한 (하단 20px 여백 확보)
         title_width = title_right - title_left  # 394px (444-50)
         title_height = title_bottom - title_top  # 135px (200-65)
-        
-        # 한글 폰트 설정 (2배 크기로)
+
+        # 타이틀 폰트 설정
+        title_font_path = os.path.join(os.path.dirname(__file__), "font", title_font)
         try:
-            font = ImageFont.truetype(self.font_path, 48)  # 24 → 48로 2배 크기
+            font = ImageFont.truetype(title_font_path, 48)  # 타이틀용 48pt
+            print(f"✅ 타이틀 폰트 로드 성공: {title_font} (48pt)")
         except Exception as e:
-            print(f"폰트 로드 실패: {e}")
+            print(f"❌ 타이틀 폰트 로드 실패 ({title_font}): {e}")
+            # 기본 폰트로 fallback
             try:
-                font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", 48)
-            except:
-                font = ImageFont.load_default()
+                font = ImageFont.truetype(self.font_path, 48)
+                print(f"✅ 기본 타이틀 폰트로 fallback: {self.font_path}")
+            except Exception as e2:
+                print(f"❌ 기본 타이틀 폰트도 실패: {e2}")
+                try:
+                    font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", 48)
+                except:
+                    font = ImageFont.load_default()
         
         # 텍스트를 여러 줄로 나누기 (타이틀 영역 폭에 맞춰)
         words = title.split(' ')
@@ -306,7 +314,7 @@ class VideoGenerator:
         
         return temp_file.name
     
-    def create_simple_group_clip(self, image_path, group_segments, total_duration, title_image_path=None, text_position="bottom"):
+    def create_simple_group_clip(self, image_path, group_segments, total_duration, title_image_path=None, text_position="bottom", text_style="outline", title_font="BMYEONSUNG_otf.otf", body_font="BMYEONSUNG_otf.otf"):
         """간단한 그룹 클립 생성 (uploads 폴더용)"""
         print(f"    🔧 간단한 그룹 클립 생성: {total_duration:.1f}초")
         
@@ -326,9 +334,9 @@ class VideoGenerator:
         # 4. 각 텍스트를 시간별로 배치
         text_clips = []
         current_time = 0.0
-        
+
         for body_key, body_text, tts_path, clip_duration in group_segments:
-            text_image_path = self.create_text_image(body_text, self.video_width, self.video_height, text_position, text_style)
+            text_image_path = self.create_text_image(body_text, self.video_width, self.video_height, text_position, text_style, is_title=False, title_font=title_font, body_font=body_font)
             text_clip = ImageClip(text_image_path).set_start(current_time).set_duration(clip_duration).set_position((0, 0))
             text_clips.append(text_clip)
             current_time += clip_duration
@@ -343,7 +351,7 @@ class VideoGenerator:
         
         return group_final
 
-    def create_truly_continuous_group_clip(self, image_path, group_segments, total_duration, title_image_path, text_position="bottom"):
+    def create_truly_continuous_group_clip(self, image_path, group_segments, total_duration, title_image_path, text_position="bottom", text_style="outline", title_font="BMYEONSUNG_otf.otf", body_font="BMYEONSUNG_otf.otf"):
         """그룹 내에서 정말 끊기지 않는 연속 클립 생성"""
         print(f"    🔧 연속 그룹 클립 생성: {total_duration:.1f}초")
         
@@ -360,9 +368,9 @@ class VideoGenerator:
         # 4. 간단한 방법: 각 텍스트를 시간별로 배치
         text_clips = []
         current_time = 0.0
-        
+
         for body_key, body_text, tts_path, clip_duration in group_segments:
-            text_image_path = self.create_text_image(body_text, self.video_width, self.video_height, text_position, text_style)
+            text_image_path = self.create_text_image(body_text, self.video_width, self.video_height, text_position, text_style, is_title=False, title_font=title_font, body_font=body_font)
             text_clip = ImageClip(text_image_path).set_start(current_time).set_duration(clip_duration).set_position((0, 0))
             text_clips.append(text_clip)
             current_time += clip_duration
@@ -376,21 +384,35 @@ class VideoGenerator:
         
         return group_final
     
-    def create_text_image(self, text, width, height, text_position="bottom", text_style="outline"):
+    def create_text_image(self, text, width, height, text_position="bottom", text_style="outline", is_title=False, title_font="BMYEONSUNG_otf.otf", body_font="BMYEONSUNG_otf.otf"):
         """텍스트 이미지 생성 (배경 박스 포함)"""
         # 투명 배경 이미지 생성
         img = Image.new('RGBA', (width, height), color=(0, 0, 0, 0))
         draw = ImageDraw.Draw(img)
-        
-        # 한글 폰트 설정 (바디 텍스트용, 36pt로 조정)
+
+        # 폰트 선택 (타이틀/바디 구분)
+        selected_font = title_font if is_title else body_font
+        font_path = os.path.join(os.path.dirname(__file__), "font", selected_font)
+
+        # 폰트 크기 설정 (타이틀은 더 크게)
+        font_size = 42 if is_title else 36
+
+        # 한글 폰트 설정
         try:
-            font = ImageFont.truetype(self.font_path, 36)  # 36pt로 설정
+            font = ImageFont.truetype(font_path, font_size)
+            print(f"✅ 폰트 로드 성공: {selected_font} ({font_size}pt)")
         except Exception as e:
-            print(f"폰트 로드 실패: {e}")
+            print(f"❌ 사용자 폰트 로드 실패 ({selected_font}): {e}")
+            # 기본 폰트로 fallback
             try:
-                font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", 36)
-            except:
-                font = ImageFont.load_default()
+                font = ImageFont.truetype(self.font_path, font_size)
+                print(f"✅ 기본 폰트로 fallback: {self.font_path}")
+            except Exception as e2:
+                print(f"❌ 기본 폰트도 실패: {e2}")
+                try:
+                    font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", font_size)
+                except:
+                    font = ImageFont.load_default()
         
         # 텍스트를 여러 줄로 나누기
         words = text.split(' ')
@@ -1288,7 +1310,7 @@ class VideoGenerator:
         
         return image_files
     
-    def create_video_with_local_images(self, content, music_path, output_folder, image_allocation_mode="2_per_image", text_position="bottom", text_style="outline"):
+    def create_video_with_local_images(self, content, music_path, output_folder, image_allocation_mode="2_per_image", text_position="bottom", text_style="outline", title_font="BMYEONSUNG_otf.otf", body_font="BMYEONSUNG_otf.otf"):
         """로컬 이미지 파일들을 사용한 릴스 영상 생성"""
         try:
             # 로컬 이미지 파일들 가져오기
@@ -1301,9 +1323,10 @@ class VideoGenerator:
             
             # 제목 이미지 생성 (504x220, 정확한 타이틀 영역)
             title_image_path = self.create_title_image(
-                content['title'], 
-                self.video_width, 
-                220
+                content['title'],
+                self.video_width,
+                220,
+                title_font
             )
             
             # 각 body별로 개별 TTS 생성 (빈 값 제외)
@@ -1360,7 +1383,7 @@ class VideoGenerator:
                     title_clip = ImageClip(title_image_path).set_duration(body_duration).set_position((0, 0))
                     
                     # 텍스트 클립
-                    text_image_path = self.create_text_image(content[body_key], self.video_width, self.video_height, text_position, text_style)
+                    text_image_path = self.create_text_image(content[body_key], self.video_width, self.video_height, text_position, text_style, is_title=False, title_font=title_font, body_font=body_font)
                     text_clip = ImageClip(text_image_path).set_duration(body_duration).set_position((0, 0))
                     
                     # 개별 클립 합성
@@ -1416,7 +1439,7 @@ class VideoGenerator:
                     text_clips = []
                     current_time = 0.0
                     for body_key, body_text, tts_path, duration in group_tts_info:
-                        text_image_path = self.create_text_image(body_text, self.video_width, self.video_height, text_position, text_style)
+                        text_image_path = self.create_text_image(body_text, self.video_width, self.video_height, text_position, text_style, is_title=False, title_font=title_font, body_font=body_font)
                         text_clip = ImageClip(text_image_path).set_start(current_time).set_duration(duration).set_position((0, 0))
                         text_clips.append(text_clip)
                         print(f"      {body_key}: {current_time:.1f}~{current_time + duration:.1f}초")
@@ -1489,9 +1512,10 @@ class VideoGenerator:
             
             # 제목 이미지 생성 (504x220, 정확한 타이틀 영역)
             title_image_path = self.create_title_image(
-                content['title'], 
-                self.video_width, 
-                220
+                content['title'],
+                self.video_width,
+                220,
+                title_font
             )
             
             # 각 body별로 개별 TTS 생성 (빈 값 제외)
@@ -1549,8 +1573,8 @@ class VideoGenerator:
                     bg_clip = self.create_background_clip(current_image_path, clip_duration)
                     black_top = ColorClip(size=(self.video_width, 220), color=(0,0,0)).set_duration(clip_duration).set_position((0, 0))
                     title_clip = ImageClip(title_image_path).set_duration(clip_duration).set_position((0, 0))
-                    
-                    text_image_path = self.create_text_image(content[body_key], self.video_width, self.video_height, text_position, text_style)
+
+                    text_image_path = self.create_text_image(content[body_key], self.video_width, self.video_height, text_position, text_style, is_title=False, title_font=title_font, body_font=body_font)
                     text_clip = ImageClip(text_image_path).set_duration(clip_duration).set_position((0, 0))
                     
                     # 개별 클립 합성
@@ -1592,8 +1616,8 @@ class VideoGenerator:
                     bg_clip = self.create_background_clip(current_image_path, clip_duration)
                     black_top = ColorClip(size=(self.video_width, 220), color=(0,0,0)).set_duration(clip_duration).set_position((0, 0))
                     title_clip = ImageClip(title_image_path).set_duration(clip_duration).set_position((0, 0))
-                    
-                    text_image_path = self.create_text_image(content[body_key], self.video_width, self.video_height, text_position, text_style)
+
+                    text_image_path = self.create_text_image(content[body_key], self.video_width, self.video_height, text_position, text_style, is_title=False, title_font=title_font, body_font=body_font)
                     text_clip = ImageClip(text_image_path).set_duration(clip_duration).set_position((0, 0))
                     
                     # 클립 합성
@@ -1739,7 +1763,7 @@ class VideoGenerator:
         
         return scan_result
     
-    def create_video_from_uploads(self, output_folder, bgm_file_path=None, image_allocation_mode="2_per_image", text_position="bottom", text_style="outline", uploads_folder="uploads"):
+    def create_video_from_uploads(self, output_folder, bgm_file_path=None, image_allocation_mode="2_per_image", text_position="bottom", text_style="outline", title_font="BMYEONSUNG_otf.otf", body_font="BMYEONSUNG_otf.otf", uploads_folder="uploads"):
         """uploads 폴더의 파일들을 사용하여 영상 생성 (기존 메서드 재사용)"""
         try:
             print("🚀 uploads 폴더 기반 영상 생성 시작")
@@ -1771,8 +1795,8 @@ class VideoGenerator:
             # 스캔된 이미지 파일들로 로컬 이미지 리스트 대체
             self._temp_local_images = scan_result['image_files']
             
-            # 기존 메서드 호출 (이미지 할당 모드, 텍스트 위치, 텍스트 스타일 전달)
-            return self.create_video_with_local_images(content, music_path, output_folder, image_allocation_mode, text_position, text_style)
+            # 기존 메서드 호출 (이미지 할당 모드, 텍스트 위치, 텍스트 스타일, 폰트 설정 전달)
+            return self.create_video_with_local_images(content, music_path, output_folder, image_allocation_mode, text_position, text_style, title_font, body_font)
             
         except Exception as e:
             raise Exception(f"uploads 폴더 기반 영상 생성 실패: {str(e)}")
