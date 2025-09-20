@@ -744,5 +744,69 @@
     "error_message": null,
     "retry_count": 0,
     "max_retries": 2
+  },
+  "6ba21342-afaa-4129-8353-c5dd2cef7cc5": {
+    "job_id": "6ba21342-afaa-4129-8353-c5dd2cef7cc5",
+    "user_email": "xystus@gmail.com",
+    "status": "completed",
+    "created_at": "2025-09-20T16:50:25.370716",
+    "updated_at": "2025-09-20T16:52:09.500982",
+    "video_params": {
+      "content_data": "{\"title\":\"엄마의 돈관리 맏겨도 되나\",\"body1\":\"엄마가 돈관리 해준다 해서 맡겼는데, 다 써버렸다니 너무 황당해.\",\"body2\":\"엄마한테 돈 안모아줘도 괜찮으니 돈 돌려달라 했더니 못 준다는 거야.\",\"body3\":\"계속 모으고 있는 줄 알았더니 생활비로 쓰고 있었다는거지. 나도 모르게...\",\"body4\":\"다른 집 애들은 돈 벌면 생활비 주고 독립도 한다던데, 나도 그러는게 나을까.\",\"body5\":\"생활비로 120만원씩 가져가는 게 진짜 맞는 거야? 엄마를 못 믿겠어.\",\"body6\":\"자취해도 120만원까지 안 들 것 같은데 내가 뭔가 잘못 생각하고 있는거야?\",\"body7\":\"돈을 맡기기 싫으면 독립하라는데, 너라면 어떻게 할래?\",\"body8\":\"\"}",
+      "music_mood": "sad",
+      "image_allocation_mode": "2_per_image",
+      "text_position": "bottom",
+      "text_style": "background",
+      "selected_bgm_path": "Chase Waves - Karneef.mp3",
+      "use_test_files": false,
+      "uploaded_files": [
+        "1.png",
+        "2.png",
+        "3.png",
+        "4.png"
+      ],
+      "title_font": "NanumSquareEB.ttf",
+      "body_font": "BMYEONSUNG_otf.otf"
+    },
+    "result": {
+      "video_path": "/zstus/backend/output_videos/reels_3669df30.mp4",
+      "duration": "약 10-30초",
+      "completed_at": "2025-09-20T16:52:09.500066"
+    },
+    "error_message": null,
+    "retry_count": 0,
+    "max_retries": 2
+  },
+  "10adad94-8edf-4b92-9163-b9fd55a6b7de": {
+    "job_id": "10adad94-8edf-4b92-9163-b9fd55a6b7de",
+    "user_email": "xystus@gmail.com",
+    "status": "completed",
+    "created_at": "2025-09-20T17:03:25.194780",
+    "updated_at": "2025-09-20T17:05:16.924840",
+    "video_params": {
+      "content_data": "{\"title\":\"여친의 전재산 3천만원, 결혼 괜찮을까?\",\"body1\":\"여자친구가 6년 일해서 3천만원 모았다는데, 이게 결혼할 때 문제가 될까?\",\"body2\":\"나는 2억5천 모았고 집에서 2억 지원도 받아, 여친은 별도 지원도 없음.\",\"body3\":\"여친이 적게 모은 건 알고 있긴 했는데, 솔직히 생각할 수록 실망감이 들어.\",\"body4\":\"모은 돈 보면 그 사람 경제관념을 알 수 있잖아. 결혼하고 나서도 괜찮을까?\",\"body5\":\"솔직히 신혼집 구할 때 여친이 1억은 보태줬으면 좋겠다는 욕심이 있어.\",\"body6\":\"여자친구를 사랑하지만, 신혼집 문제로 트러블 나지 않을까 걱정돼.\",\"body7\":\"조건이 이렇게 다르면 그냥 다른 사람 만나는 게 맞는 걸까?\",\"body8\":\"\"}",
+      "music_mood": "sad",
+      "image_allocation_mode": "2_per_image",
+      "text_position": "bottom",
+      "text_style": "outline",
+      "selected_bgm_path": "Land of a Loss - Dan _Lebo_ Lebowitz, Tone Seeker.mp3",
+      "use_test_files": false,
+      "uploaded_files": [
+        "1.png",
+        "2.png",
+        "3.png",
+        "4.mp4"
+      ],
+      "title_font": "BMYEONSUNG_otf.otf",
+      "body_font": "NanumSquareEB.ttf"
+    },
+    "result": {
+      "video_path": "/zstus/backend/output_videos/reels_13f68171.mp4",
+      "duration": "약 10-30초",
+      "completed_at": "2025-09-20T17:05:16.923899"
+    },
+    "error_message": null,
+    "retry_count": 0,
+    "max_retries": 2
   }
 }

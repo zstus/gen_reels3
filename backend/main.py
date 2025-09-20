@@ -14,6 +14,7 @@ from video_generator import VideoGenerator
 import random
 import glob
 import re
+import asyncio
 from bs4 import BeautifulSoup
 try:
     from openai import OpenAI
@@ -1611,261 +1612,323 @@ async def generate_reels_with_chatgpt(
     return reels_content
 
 
+# 공통 프롬프트 빌더 -----------------------------------------------------------
+def build_illustration_prompt(source_text: str) -> str:
+    """
+    '실사 사진 같은(photorealistic), 톤다운' 이미지를 생성하기 위한 프롬프트.
+    입력 텍스트의 의미를 주제로 삼아 충실히 시각화하며,
+    과도한 채도/대비를 피하고 자연광과 영화적 톤으로 묘사하도록 지시합니다.
+    """
+    return f"""
+Create a photorealistic color photograph that faithfully visualizes the meaning and main subject of this sentence:
+
+"{source_text}"
+
+Output intent:
+- Show a believable real-world scene that clearly expresses the sentence's core idea.
+- Stay faithful to the content; do not introduce objects, characters, or events that are not implied.
+
+Look & grading:
+- Muted, toned-down palette with soft natural/ambient lighting.
+- Gentle contrast and highlights; subtle filmic grain; realistic materials and textures.
+- Cinematic color grading leaning warm neutrals; avoid neon or oversaturated colors.
+
+Camera & optics:
+- Full-frame aesthetic, 35–50mm equivalent, f/2.8–f/4 for shallow-to-moderate depth of field.
+- Physically plausible shadows/reflections and coherent global illumination.
+- Accurate perspective and scale; natural bokeh if applicable.
+
+Composition:
+- Clean and uncluttered; contemporary, minimal styling.
+- Square format (1024×1024) with balanced framing and negative space allowed.
+
+Strict rules:
+- Do NOT render any words, letters, numbers, captions, UI, logos, brands, watermarks, or signage.
+- Avoid illustration, vector art, cartoon/comic style, heavy outlines, flat primary colors, 3D render look, HDR/over-processed effects, or surreal elements.
+- People (if any) must be generic and anonymous (no celebrity likeness, no identifying details).
+
+Keywords: photorealistic, filmic, muted colors, natural light, soft shadows, depth of field, realistic textures, subtle grain, cinematic, refined.
+""".strip()
+
+
+
+def build_safe_retry_prompt(source_text: str) -> str:
+    """
+    콘텐츠 필터 재시도용: '실사(photorealistic), 톤다운' 이미지 지시문.
+    입력 문장의 의미를 보존하되, 식별 가능한 디테일을 줄이기 위해
+    '그림자/실루엣/반사' 위주로 안전하게 시각화한다.
+    """
+    return f"""
+Create a muted, photorealistic color photograph that conveys the core meaning of this sentence
+through silhouettes, soft shadows, or subtle reflections only (no readable details):
+
+"{source_text}"
+
+Output intent:
+- Depict a believable real-world scene that clearly relates to the sentence above.
+- Visualize the subject via silhouettes/shadows/reflections on simple surfaces (walls, floors, curtains, tables),
+  or through diffused light and occlusion; avoid identifiable details.
+- If the sentence implies people, show backlit figures or partial silhouettes only; otherwise, prefer object/environment shadows.
+
+Look & grading:
+- Muted, toned-down colors; soft ambient/natural light (overcast or late-afternoon backlight).
+- Gentle contrast; subtle filmic grain; realistic materials and textures.
+- Coherent global illumination and physically plausible shadows/reflections.
+
+Camera & optics:
+- 35–50mm full-frame equivalent, f/2.8–f/4 for shallow-to-moderate depth of field.
+- Accurate perspective and scale; natural bokeh if applicable.
+
+Composition:
+- Clean, uncluttered frame; negative space allowed.
+- Square format (1024×1024); balanced, minimal composition focused on silhouettes/shadows.
+
+Strict safety rules:
+- No readable text, letters, numbers, logos, brands, UI, or watermarks.
+- No identifiable faces or unique personal details (tattoos, plates, IDs).
+- Avoid violence, medical/graphic content, sexual/suggestive elements, minors.
+- Avoid illustration/vector/cartoon look, heavy outlines, HDR/over-processed effects, surreal/fantasy.
+
+Keywords: photorealistic, silhouette, shadow play, muted colors, natural light, subtle grain, cinematic calm, minimal, safe content.
+""".strip()
+
+# ---------------------------------------------------------------------------
+# 1) 병렬(비동기) 생성 함수
+# ---------------------------------------------------------------------------
 async def generate_images_with_dalle(texts: List[str]) -> List[str]:
     """DALL-E를 사용하여 이미지 생성하고 로컬에 저장 (병렬 처리로 60-80% 성능 향상)"""
     import requests
-    import os
-    import uuid
-    import asyncio
+    import aiohttp
+    from openai import OpenAI
     from urllib.parse import urlparse
-    
+
     # aiohttp 사용 가능 여부 확인
+    try:
+        _ = aiohttp.__version__
+        AIOHTTP_AVAILABLE = True
+    except Exception:
+        AIOHTTP_AVAILABLE = False
+
     if not AIOHTTP_AVAILABLE:
         logger.warning("aiohttp가 설치되지 않아 순차 처리로 대체합니다.")
         # 순차 처리 fallback 사용
         return await generate_images_with_dalle_sequential(texts)
-    
+
     try:
         if not OPENAI_API_KEY:
             raise ValueError("OpenAI API 키가 설정되지 않았습니다.")
-        
+
         logger.info(f"🚀 병렬 DALL-E 이미지 생성 시작: {len(texts)}개 (성능 최적화 모드)")
-        
+
         # OpenAI 클라이언트 초기화
         client = OpenAI(api_key=OPENAI_API_KEY, timeout=60.0)
-        
+
         # uploads 디렉토리 확인
         uploads_dir = os.path.join(os.path.dirname(__file__), "uploads")
         os.makedirs(uploads_dir, exist_ok=True)
-        
+
         async def generate_single_image(i: int, text: str) -> str:
             """단일 이미지 생성 함수 (비동기 처리)"""
             try:
                 logger.info(f"📸 이미지 {i+1}/{len(texts)} 생성 시작: {text[:30]}...")
-                
-                # DALL-E 실사풍 프롬프트 생성
-                prompt = f"""
-Create a photorealistic digital painting with soft, natural lighting and seamless blending representing this sentence: "{text}"
 
-The image should have:
-- No visible outlines or hard edges between objects
-- Natural shadows and highlights
-- Realistic textures and materials
-- Soft gradients and smooth color transitions
-- Professional photography-like composition
-- Warm, ambient lighting
-- High detail and depth
+                prompt = build_illustration_prompt(text)
+                logger.info(f"🎯 이미지 {i+1} DALL-E 프롬프트(요약): {prompt.splitlines()[0]} ...")
 
-Style: Digital painting, photorealistic, cinematic lighting, professional photography aesthetic
-Avoid: Vector graphics, line art, cartoon style, bold outlines, flat colors, text, letters, words, typography, captions, labels, any written content
-"""
-                
-                logger.info(f"🎯 이미지 {i+1} DALL-E 프롬프트: {prompt.strip()}")
-                
                 # DALL-E API 호출 (동기 함수를 비동기 래퍼로 처리)
                 loop = asyncio.get_event_loop()
-                response = await loop.run_in_executor(None, lambda: client.images.generate(
-                    model="dall-e-3",
-                    prompt=prompt,
-                    size="1024x1024",
-                    quality="standard",
-                    n=1
-                ))
-                
+                response = await loop.run_in_executor(
+                    None,
+                    lambda: client.images.generate(
+                        model="dall-e-3",
+                        prompt=prompt,
+                        size="1024x1024",
+                        quality="standard",
+                        n=1,
+                    ),
+                )
+
                 # 이미지 URL 추출
                 image_url = response.data[0].url
                 logger.info(f"✅ 이미지 {i+1} 생성 완료, 다운로드 중...")
-                
+
                 # 비동기 이미지 다운로드
                 async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=30)) as session:
                     async with session.get(image_url) as img_response:
                         if img_response.status == 200:
-                            # 고유한 파일명 생성
                             filename = f"generated_{uuid.uuid4().hex[:8]}_{i+1}.png"
                             file_path = os.path.join(uploads_dir, filename)
-                            
-                            # 이미지 파일 저장
-                            with open(file_path, 'wb') as f:
+                            with open(file_path, "wb") as f:
                                 f.write(await img_response.read())
-                            
-                            # 백엔드 이미지 서빙 엔드포인트 사용
+
                             image_url_path = f"/get-image/{filename}"
                             logger.info(f"💾 이미지 {i+1} 저장 완료: {filename}")
                             return image_url_path
                         else:
                             logger.error(f"❌ 이미지 {i+1} 다운로드 실패: HTTP {img_response.status}")
                             return ""
-                
+
             except Exception as e:
                 logger.error(f"💥 이미지 {i+1} 처리 실패: {e}")
-                
+
                 # 콘텐츠 필터링 에러인 경우 재시도
-                if "content_policy_violation" in str(e):
+                if "content_policy_violation" in str(e).lower():
                     logger.info(f"🔄 이미지 {i+1} 콘텐츠 필터링으로 인한 재시도 중...")
                     try:
-                        # 실사풍 안전 프롬프트로 재시도
-                        retry_prompt = """
-Create a photorealistic digital painting with soft, natural lighting and seamless blending of people in a peaceful, natural setting.
-
-The image should have:
-- No visible outlines or hard edges between objects
-- Natural shadows and highlights
-- Realistic textures and materials
-- Soft gradients and smooth color transitions
-- Professional photography-like composition
-- Warm, ambient lighting
-- High detail and depth
-
-Style: Digital painting, photorealistic, cinematic lighting, professional photography aesthetic
-Avoid: Vector graphics, line art, cartoon style, bold outlines, flat colors, text, letters, words, typography, captions, labels, any written content
-"""
-                        
-                        logger.info(f"🎯 이미지 {i+1} 재시도 프롬프트: {retry_prompt.strip()}")
-                        
-                        # 재시도 API 호출 (비동기)
+                        retry_prompt = build_safe_retry_prompt(text)
                         loop = asyncio.get_event_loop()
-                        retry_response = await loop.run_in_executor(None, lambda: client.images.generate(
-                            model="dall-e-3",
-                            prompt=retry_prompt,
-                            size="1024x1024",
-                            quality="standard",
-                            n=1
-                        ))
-                        
-                        # 재시도 성공 시 처리
+                        retry_response = await loop.run_in_executor(
+                            None,
+                            lambda: client.images.generate(
+                                model="dall-e-3",
+                                prompt=retry_prompt,
+                                size="1024x1024",
+                                quality="standard",
+                                n=1,
+                            ),
+                        )
+
                         retry_image_url = retry_response.data[0].url
                         logger.info(f"🔄 이미지 {i+1} 재시도 성공, 다운로드 중...")
-                        
-                        # 비동기 재시도 이미지 다운로드
+
                         async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=30)) as session:
                             async with session.get(retry_image_url) as retry_img_response:
                                 if retry_img_response.status == 200:
                                     retry_filename = f"generated_{uuid.uuid4().hex[:8]}_{i+1}_retry.png"
                                     retry_file_path = os.path.join(uploads_dir, retry_filename)
-                                    
-                                    with open(retry_file_path, 'wb') as f:
+                                    with open(retry_file_path, "wb") as f:
                                         f.write(await retry_img_response.read())
-                                    
+
                                     retry_image_url_path = f"/get-image/{retry_filename}"
                                     logger.info(f"💾 이미지 {i+1} 재시도 저장 완료: {retry_filename}")
                                     return retry_image_url_path
                                 else:
-                                    logger.error(f"❌ 이미지 {i+1} 재시도 다운로드 실패: HTTP {retry_img_response.status}")
+                                    logger.error(
+                                        f"❌ 이미지 {i+1} 재시도 다운로드 실패: HTTP {retry_img_response.status}"
+                                    )
                                     return ""
-                            
                     except Exception as retry_e:
                         logger.error(f"💥 이미지 {i+1} 재시도 실패: {retry_e}")
                         return ""
                 else:
-                    # 다른 에러인 경우 빈 문자열 반환
                     return ""
-        
+
         # 🚀 병렬 처리로 모든 이미지 동시 생성
         logger.info(f"⚡ {len(texts)}개 이미지를 병렬로 처리 시작... (기존 대비 60-80% 시간 단축)")
+        # (선택) 레이트리밋 대비 동시성 제한을 걸고 싶으면 아래 세마포어 사용
+        # sem = asyncio.Semaphore(5)
+        # tasks = [run_with_sem(sem, generate_single_image, i, text) for i, text in enumerate(texts)]
         tasks = [generate_single_image(i, text) for i, text in enumerate(texts)]
         generated_image_paths = await asyncio.gather(*tasks)
-        
-        # 결과 요약
+
         success_count = sum(1 for path in generated_image_paths if path)
         logger.info(f"🎉 병렬 DALL-E 이미지 생성 완료: {success_count}/{len(texts)}개 성공")
-        
+
         return generated_image_paths
-        
+
     except Exception as e:
         logger.error(f"DALL-E API 오류: {e}")
         raise ValueError(f"이미지 생성에 실패했습니다: {str(e)}")
 
+
+# ---------------------------------------------------------------------------
+# 2) 순차(동기) 폴백 함수
+# ---------------------------------------------------------------------------
 async def generate_images_with_dalle_sequential(texts: List[str]) -> List[str]:
     """DALL-E를 사용하여 이미지 생성하고 로컬에 저장 (순차 처리 fallback)"""
     import requests
-    import os
-    import uuid
+    from openai import OpenAI
     from urllib.parse import urlparse
-    
+
     try:
         if not OPENAI_API_KEY:
             raise ValueError("OpenAI API 키가 설정되지 않았습니다.")
-        
+
         logger.info(f"🔄 순차 DALL-E 이미지 생성 시작: {len(texts)}개 (fallback 모드)")
-        
+
         # OpenAI 클라이언트 초기화
         client = OpenAI(api_key=OPENAI_API_KEY, timeout=60.0)
-        
+
         # uploads 디렉토리 확인
         uploads_dir = os.path.join(os.path.dirname(__file__), "uploads")
         os.makedirs(uploads_dir, exist_ok=True)
-        
-        generated_image_paths = []
-        
+
+        generated_image_paths: List[str] = []
+
         for i, text in enumerate(texts):
             try:
                 logger.info(f"📸 이미지 {i+1}/{len(texts)} 생성 시작: {text[:30]}...")
-                
-                # DALL-E 실사풍 프롬프트 생성 (순차 처리용)
-                prompt = f"""
-Create a photorealistic digital painting with soft, natural lighting and seamless blending representing this sentence: "{text}"
 
-The image should have:
-- No visible outlines or hard edges between objects
-- Natural shadows and highlights
-- Realistic textures and materials
-- Soft gradients and smooth color transitions
-- Professional photography-like composition
-- Warm, ambient lighting
-- High detail and depth
-- Square format (1024x1024)
-- Clean, realistic background
+                prompt = build_illustration_prompt(text)
+                logger.info(f"🎯 이미지 {i+1} DALL-E 프롬프트(요약): {prompt.splitlines()[0]} ...")
 
-Style: Digital painting, photorealistic, cinematic lighting, professional photography aesthetic
-Quality: High resolution, sharp details, realistic depth of field
-Mood: Natural, engaging, positive visual metaphors
-Avoid: Vector graphics, line art, cartoon style, bold outlines, flat colors, text, letters, words, typography, captions, labels, any written content
-"""
-                
-                logger.info(f"🎯 이미지 {i+1} DALL-E 프롬프트: {prompt.strip()}")
-                
                 # DALL-E API 호출
                 response = client.images.generate(
                     model="dall-e-3",
                     prompt=prompt,
                     size="1024x1024",
                     quality="standard",
-                    n=1
+                    n=1,
                 )
-                
-                # 이미지 URL 추출
+
                 image_url = response.data[0].url
                 logger.info(f"✅ 이미지 {i+1} 생성 완료, 다운로드 중...")
-                
+
                 # 순차 이미지 다운로드 (requests 사용)
                 img_response = requests.get(image_url, timeout=30)
                 if img_response.status_code == 200:
-                    # 고유한 파일명 생성
                     filename = f"generated_{uuid.uuid4().hex[:8]}_{i+1}.png"
                     file_path = os.path.join(uploads_dir, filename)
-                    
-                    # 이미지 파일 저장
-                    with open(file_path, 'wb') as f:
+                    with open(file_path, "wb") as f:
                         f.write(img_response.content)
-                    
-                    # 백엔드 이미지 서빙 엔드포인트 사용
+
                     image_url_path = f"/get-image/{filename}"
                     logger.info(f"💾 이미지 {i+1} 저장 완료: {filename}")
                     generated_image_paths.append(image_url_path)
                 else:
                     logger.error(f"❌ 이미지 {i+1} 다운로드 실패: HTTP {img_response.status_code}")
                     generated_image_paths.append("")
-                
+
             except Exception as e:
                 logger.error(f"💥 이미지 {i+1} 처리 실패: {e}")
-                generated_image_paths.append("")
-        
-        # 결과 요약
+
+                # 콘텐츠 필터링 에러인 경우 재시도(순차)
+                if "content_policy_violation" in str(e).lower():
+                    try:
+                        retry_prompt = build_safe_retry_prompt(text)
+                        retry_response = client.images.generate(
+                            model="dall-e-3",
+                            prompt=retry_prompt,
+                            size="1024x1024",
+                            quality="standard",
+                            n=1,
+                        )
+                        retry_image_url = retry_response.data[0].url
+
+                        retry_img = requests.get(retry_image_url, timeout=30)
+                        if retry_img.status_code == 200:
+                            retry_filename = f"generated_{uuid.uuid4().hex[:8]}_{i+1}_retry.png"
+                            retry_file_path = os.path.join(uploads_dir, retry_filename)
+                            with open(retry_file_path, "wb") as f:
+                                f.write(retry_img.content)
+
+                            retry_image_url_path = f"/get-image/{retry_filename}"
+                            logger.info(f"💾 이미지 {i+1} 재시도 저장 완료: {retry_filename}")
+                            generated_image_paths.append(retry_image_url_path)
+                        else:
+                            logger.error(f"❌ 이미지 {i+1} 재시도 다운로드 실패: HTTP {retry_img.status_code}")
+                            generated_image_paths.append("")
+                    except Exception as retry_e:
+                        logger.error(f"💥 이미지 {i+1} 재시도 실패: {retry_e}")
+                        generated_image_paths.append("")
+                else:
+                    generated_image_paths.append("")
+
         success_count = sum(1 for path in generated_image_paths if path)
         logger.info(f"🎉 순차 DALL-E 이미지 생성 완료: {success_count}/{len(texts)}개 성공 (fallback 모드)")
-        
+
         return generated_image_paths
-        
+
     except Exception as e:
         logger.error(f"순차 DALL-E API 오류: {e}")
         raise ValueError(f"순차 이미지 생성에 실패했습니다: {str(e)}")
