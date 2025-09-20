@@ -1269,129 +1269,347 @@ def scrape_website_content(url: str) -> str:
         logger.error(f"스크래핑 오류: {e}")
         raise ValueError(f"웹페이지 내용을 추출할 수 없습니다: {str(e)}")
 
-async def generate_reels_with_chatgpt(content: str, is_youtube: bool = False) -> ReelsContent:
-    """ChatGPT를 사용하여 릴스 대본 생성"""
+async def generate_reels_with_chatgpt(
+    content: str,
+    is_youtube: bool = False,
+    *,
+    preserve_target: float = 0.60,        # 원문 보존 목표치(정성적 지시)
+    preserve_threshold: float = 0.22,     # 보존율 수치 임계치(이보다 낮으면 강화 재작성 시도)
+    max_critic_loops: int = 2,            # 비평/수정 자동 루프 횟수
+    line_len_min: int = 20,               # body 각 줄 최소 길이
+    line_len_max: int = 42,               # body 각 줄 최대 길이
+    title_len_max: int = 15               # 제목 최대 길이
+) -> ReelsContent:
+    """
+    원문충실 + 위트 + 강렬한 3초 후킹을 위한 다단계 생성기 (최신 모델 선호, 이전 호출 100% 호환)
+
+    - 기존 호출 방식 유지: generate_reels_with_chatgpt(content, is_youtube=False)
+    - pip 추가 설치 불필요(표준 re 사용)
+    - 네트워크 프록시 환경 안전장치 포함(기존 모듈 호환)
+    - 'OpenAI' import 오류 방지 및 친절한 예외 메시지
+    - 최신 모델 우선 시도 후 자동 폴백(가용 모델에 따라 순차 시도)
+    - 본문 길이 상/하한 모두 보정(짧은 문장 자연 확장)
+    """
+    # --- 안전한 OpenAI import (pip 추가 설치 없이, 미탑재 시 친절 메시지) ---
     try:
-        if not OPENAI_API_KEY:
-            raise ValueError("OpenAI API 키가 설정되지 않았습니다.")
-        
-        logger.info("ChatGPT API 호출 시작")
-        
-        if is_youtube:
-            prompt = f"""
-다음은 YouTube 영상의 스크립트입니다. 이 내용을 바탕으로 흥미롭고 매력적인 릴스(Reels) 대본을 작성해주세요.
+        from openai import OpenAI  # 최신 파이썬 SDK (Responses/Chat Completions 모두 지원)
+    except Exception:
+        OpenAI = None
 
-YouTube 스크립트:
-{content}
+    # FastAPI 사용 환경이 아닐 수도 있으므로, HTTPException은 옵션 취급
+    try:
+        from fastapi import HTTPException as _HTTPException  # noqa
+        _has_http_exc = True
+    except Exception:
+        _has_http_exc = False
 
-요구사항:
-1. 첫 3초가 중요하므로 해당 영상의 핵심 메시지로 강력하고 궁금한 물음으로 시작해줘.(예. 이 방법으로 정말 성공할 수 있을까?)
-2. 영상의 주요 포인트들을 순서대로 정리하되, 릴스에 맞게 간결하고 임팩트 있게 재구성해줘.
-3. 마지막 라인은 시청자에게 두 가지 선택지 중 하나를 고르게 하는 질문으로 끝내줘.
-   (예. 너라면 시도해볼래, 안 해볼래? 어떤 선택을 할래?)
-4. 이모지는 사용하지 말 것. 내용을 충실히 전달할 것. 처음부터 끝까지 친근한 반말을 쓸 것.
-5. 최대 7개의 대사로 구성 (body1~body7) body는 너무 짧지 않게 20자 내외로 구성해 줘.
-6. 제목은 클릭을 유도하는 매력적인 문구로 작성 (15자 이내)
-7. 한국어로 작성하고, 문장의 흐름 자체가 논리적이고 자연스러워야 해. 재미는 항상 기본이야. 잊지마.
-"""
-        else:
-            prompt = f"""
-다음 웹페이지 내용을 분석하여 메뉴/광고들을 제외하고 콘텐츠를 추출하여, 흥미롭고 매력적인 릴스(Reels) 대본을 작성해주세요.
+    # --- 환경/키 확인 (이전 모듈과 동일 동작) ---
+    OPENAI_API_KEY = os.getenv("OPENAI_API_KEY") or os.getenv("OPENAI_APIKEY") or os.getenv("OPENAI_KEY")
+    if not OPENAI_API_KEY:
+        raise ValueError("OpenAI API 키가 설정되지 않았습니다.")
 
-웹페이지 내용:
-{content}
+    if OpenAI is None:
+        # FastAPI 환경이면 HTTPException으로도 대응 가능하지만, ValueError 통일로 단순화
+        if _has_http_exc:
+            raise _HTTPException(status_code=500, detail="OpenAI 라이브러리를 import할 수 없습니다")
+        raise ValueError("OpenAI 라이브러리를 import할 수 없습니다")
 
-요구사항:
-1. 첫 3초가 중요하므로 해당 콘텐츠의 핵심에 해당하는 내용으로 강력하고 궁금한 물음으로 시작해줘.(예. 냉장고를 열어 에어컨을 대신할 수 있을까?) 
-2. 그리고, 그러한 상황의 원인, 그리고 마지막으로 해결이나 결말을 유도해줘. 마지막 라인은 두가지 선택지 중 너는 어떤 선택을 할지 물어봐줘.
-   (예. 너라면 짧은 바지를 입고 잔다, 안 입고 잔다. 어떤 선택을 할래?)
-3. 이모지는 사용하지 말 것. 내용을 충실히 전달할 것. 처음부터 끝까지 친근한 반말을 쓸 것.
-4. 최대 7개의 대사로 구성 (body1~body7) body는 너무 짧지 않게 20자 내외로 구성해 줘. 
-5. 제목은 클릭을 유도하는 매력적인 문구로 작성 (15자 이내)
-6. 한국어로 작성하고, 문장의 흐름 자체가 논리적이고 자연스러워야 해. 재미는 항상 기본이야. 잊지마.
+    # --- 네트워크 프록시 해제(기존 모듈과 동일한 안전장치) ---
+    os.environ.pop('HTTP_PROXY', None)
+    os.environ.pop('HTTPS_PROXY', None)
 
-다음 JSON 형식으로만 응답해주세요 (다른 텍스트 없이):
+    # --- OpenAI 클라이언트 생성 ---
+    client = OpenAI(api_key=OPENAI_API_KEY, timeout=60.0)
+
+    # ---------- 공통 규칙/가이드 ----------
+    RULES = rf"""
+[규칙 - 반드시 지켜]
+- 원문 충실도 최우선: 원문 문장을 그대로 또는 아주 가볍게 다듬어 사용(핵심 어휘/감정/말투 보존).
+- 날조/추측 금지(없는 사실 추가 금지), 과장 금지, 이모지 금지.
+- 톤: 끝까지 친근한 반말. 존댓말/반말 섞지 말 것.
+- 길이: 길이: body1~body7 각 {line_len_min}자 이상, 가능하면 {line_len_max}자 안팎. 제목 {title_len_max}자 이내.
+- 구조(7줄): ①후킹(강렬 의문/갈등) → ②상황 → ③감정 → ④규범/공정성 → ⑤갈등 가중 → ⑥자의문 → ⑦양자택일(+댓글 유도 가능).
+- 출력은 아래 JSON 스키마만. 여분 텍스트/설명/코드블록 절대 금지.
 {{
-  "title": "매력적인 제목",
-  "body1": "첫 번째 대사",
-  "body2": "두 번째 대사",
-  "body3": "세 번째 대사",
-  "body4": "네 번째 대사",
-  "body5": "다섯 번째 대사",
-  "body6": "여섯 번째 대사",
-  "body7": "일곱 번째 대사"
+  "title": "...",
+  "body1": "...",
+  "body2": "...",
+  "body3": "...",
+  "body4": "...",
+  "body5": "...",
+  "body6": "...",
+  "body7": "..."
 }}
 """
-        
-        # OpenAI API 호출
-        if not OpenAI:
-            raise HTTPException(status_code=500, detail="OpenAI 라이브러리를 import할 수 없습니다")
-        
-        if not OPENAI_API_KEY:
-            raise HTTPException(status_code=500, detail="OpenAI API 키가 설정되지 않았습니다")
-            
-        logger.info("OpenAI 클라이언트 초기화 시작")
-        try:
-            # 기본 설정으로 클라이언트 생성 (proxy 관련 설정 제외)
-            import os
-            os.environ.pop('HTTP_PROXY', None)
-            os.environ.pop('HTTPS_PROXY', None)
-            client = OpenAI(
-                api_key=OPENAI_API_KEY,
-                timeout=30.0
-            )
-            logger.info("OpenAI 클라이언트 초기화 성공")
-        except Exception as e:
-            logger.error(f"OpenAI 클라이언트 초기화 오류: {e}")
-            import traceback
-            logger.error(f"상세 오류: {traceback.format_exc()}")
-            raise HTTPException(status_code=500, detail=f"OpenAI 클라이언트 초기화 실패: {str(e)}")
-        response = client.chat.completions.create(
-            model="gpt-4o",
-            messages=[
-                {"role": "system", "content": "당신은 릴스(Reels) 콘텐츠 제작 전문가입니다. 웹 콘텐츠를 분석하여 매력적이고 바이럴될 가능성이 높은 릴스 대본을 작성해주세요."},
-                {"role": "user", "content": prompt}
-            ],
-            max_tokens=1000,
-            temperature=0.8
+
+    STYLE_HINT = ("YouTube 스크립트" if is_youtube else "웹 본문")
+
+    # ---------- 유틸 ----------
+    def _pick_json(s: str) -> str:
+        m = re.search(r'\{[\s\S]*\}', s)
+        return m.group(0) if m else s
+
+    def _len_ok(line: str) -> bool:
+        return line_len_min <= len(line.strip()) <= line_len_max
+
+    def _strip_emoji(s: str) -> str:
+        # 대부분의 이모지, 확장 기호 제거(표준 re 기반)
+        return re.sub(r'[\U00010000-\U0010FFFF]', '', s)
+
+    def _soft_shorten(line: str) -> str:
+        # 자연 축약 사전(말맛 유지)
+        repl = [
+            (" 것은", "건"), (" 인거야", "인 거야"),
+            (" 하는 거야", "하는 거야"), (" 것 같아", " 같아"),
+            (" 하는 것은", "하는 건"), (" 그런데", " 근데"),
+            (" 이렇게", " 이렇게"), (" 저렇게", " 저렇게"),
+            (" 정말", ""), (" 진짜", ""), (" 너무", ""),  # 추가 축약
+        ]
+        out = line.strip()
+        for _ in range(6):
+            if len(out) <= line_len_max:
+                break
+            for a, b in repl:
+                if len(out) <= line_len_max:
+                    break
+                out = out.replace(a, b)
+            # 여전히 길면 '문장 단위'로 부드럽게 잘라보기
+            if len(out) > line_len_max:
+                # 마침표/물음표/느낌표 기준으로 가장 가까운 이전 경계로 자르기
+                m = re.findall(r'^(.{,' + str(line_len_max) + r'}[.!?])', out)
+                if m:
+                    out = m[0].strip()
+                    break
+                # 그래도 없으면 '…' 없이 하드 컷 (말미 구두점 제거)
+                out = re.sub(r'[,.…!?]*$', '', out)
+                out = out[:line_len_max].rstrip()
+                break
+        return out
+
+    def _soft_lengthen(line: str, target_min: int) -> str:
+        # 짧은 문장을 자연스럽게 확장
+        s = line.strip()
+        fillers: List[str] = [
+            " 그래서 말이야.", " 근데 여기서 고민돼.", " 결국 이게 포인트야.",
+            " 네 생각은 어때?", " 솔직히 좀 묘하지?", " 인정하지?",
+            " 이 부분이 핵심이야.", " 다시 생각해보자."
+        ]
+        i = 0
+        # 과도 확장을 방지하기 위해 한 번에 한 문장씩만 붙여가며 target_min까지
+        while len(s) < target_min and i < len(fillers):
+            s = (s.rstrip("….,!?") + fillers[i]).strip()
+            i += 1
+        # 그래도 모자라면 말줄임표로 마무리
+        if len(s) < target_min:
+            s = s + "…"
+        return s
+
+    def _post_fix(data: dict) -> dict:
+        # 이모지 제거 + 길이 보정(길면 줄이고, 짧으면 늘리고) + 제목 길이 제한
+        for k in ["body1", "body2", "body3", "body4", "body5", "body6", "body7"]:
+            if k in data and isinstance(data[k], str):
+                s = _strip_emoji(data[k]).strip()
+                if not _len_ok(s):
+                    if len(s) > line_len_max:
+                        s = _soft_shorten(s)
+                    if len(s) < line_len_min:
+                        s = _soft_lengthen(s, line_len_min)
+                data[k] = s
+        if "title" in data and isinstance(data["title"], str):
+            t = _strip_emoji(data["title"]).strip()
+            if len(t) > title_len_max:
+                t = t[:title_len_max]
+            data["title"] = t
+        return data
+
+    def _preserve_score(original: str, draft_texts: str) -> float:
+        """
+        간단 토큰 보존율: 공백/구두점 기준 토큰화 후 교집합 비율
+        (한국어 한계는 있으나 과도 의역 감지용으로 충분)
+        """
+        def tok(s: str):
+            s = re.sub(r'[^0-9A-Za-z가-힣\s]', ' ', s)
+            s = re.sub(r'\s+', ' ', s).strip().lower()
+            return set(s.split()) if s else set()
+        a, b = tok(original), tok(draft_texts)
+        if not a or not b:
+            return 0.0
+        return len(a & b) / max(1, len(a))
+
+    # ---------- OpenAI 모델 선택(최신 선호 + 폴백) ----------
+    # chat.completions에서 흔히 사용 가능한 최신 계열 우선순위
+    PREFERRED_MODELS = [
+        "gpt-4.1",        # 최신 계열(가용 시 우선)
+        "gpt-4.1-mini",   # 경량 최신
+        "gpt-4o",         # 고성능 멀티모달(광범위 가용)
+        "gpt-4o-mini"     # 경량 4o
+    ]
+
+    def _chat_complete_or_raise(model: str, system: str, user: str, temperature: float, max_tokens: int):
+        return client.chat.completions.create(
+            model=model,
+            messages=[{"role": "system", "content": system},
+                      {"role": "user", "content": user}],
+            temperature=temperature,
+            max_tokens=max_tokens
         )
-        
-        # 응답에서 JSON 추출
-        gpt_response = response.choices[0].message.content.strip()
-        logger.info(f"ChatGPT 응답: {gpt_response}")
-        
-        # JSON 파싱
+
+    def _try_models(system: str, user: str, temperature: float, max_tokens: int):
+        last_err = None
+        for m in PREFERRED_MODELS:
+            try:
+                return _chat_complete_or_raise(m, system, user, temperature, max_tokens), m
+            except Exception as e:
+                last_err = e
+                continue
+        # 모든 모델 실패 시 원인 전달
+        raise ValueError(f"모델 호출에 실패했습니다: {str(last_err) if last_err else '알 수 없는 오류'}")
+
+    # ---------- 1) EXTRACT ----------
+    extract_prompt = f"""
+너는 카피라이터다. 다음 {STYLE_HINT}에서 '직접 인용 또는 보존할 만한 핵심 문장'을 뽑아라.
+- 훅/갈등/감정/규범(공정성)/양자택일 신호가 있는 문장을 우선.
+- 각 항목은 그대로 인용 가능한 문장 또는 가볍게 문장부호만 손본 형태.
+- 각 항목에 role=hook|situation|feeling|norms|conflict|self_doubt|choice 중 하나의 태그를 붙여라.
+- 10개 이내로 JSON 배열만 출력.
+
+[원문]
+{content}
+
+[출력 형식(JSON만)]
+[
+  {{ "role": "hook", "text": "..." }},
+  {{ "role": "situation", "text": "..." }}
+]
+"""
+    extract_resp, _ = _try_models(
+        system="문장 추출가이자 언어정제자.",
+        user=extract_prompt,
+        temperature=0.3,
+        max_tokens=1000
+    )
+    extract = extract_resp.choices[0].message.content
+
+    try:
+        cand_json = json.loads(re.findall(r'\[[\s\S]*\]', extract)[0])
+    except Exception:
+        cand_json = []
+
+    # ---------- 2) WRITE (초안) ----------
+    write_prompt = f"""
+다음은 원문에서 추출한 '보존 후보 문장들'이다. 이를 최대한 활용해 릴스 대사를 작성하라.
+- 직접 인용 또는 원문 어구 보존 비율을 높여라(목표: 약 {int(preserve_target*100)}% 이상).
+- 부족한 연결만 최소한으로 자연스럽게 보완.
+- [규칙]을 엄격히 준수.
+
+[보존 후보 문장들(JSON)]
+{json.dumps(cand_json, ensure_ascii=False, indent=2)}
+
+{RULES}
+"""
+    draft_resp, _ = _try_models(
+        system="릴스 카피라이팅 전문가.",
+        user=write_prompt,
+        temperature=0.6,
+        max_tokens=1000
+    )
+    draft = draft_resp.choices[0].message.content
+
+    # ---------- 3) CRITIC 루프 ----------
+    def _critic_fix(text: str) -> str:
+        critic_prompt = f"""
+너는 엄격한 에디터다. 아래 초안이 [규칙]을 위반하면 스스로 고쳐서 최종 JSON만 출력하라.
+특히 길이({line_len_min}~{line_len_max}자), 반말 통일, 이모지 제거, 날조 금지, 구조(7줄) 준수, 제목 {title_len_max}자 이내를 점검하라.
+
+[초안]
+{text}
+
+{RULES}
+"""
+        resp, _ = _try_models(
+            system="형식·제약 검수 전문가.",
+            user=critic_prompt,
+            temperature=0.2,
+            max_tokens=800
+        )
+        return resp.choices[0].message.content.strip()
+
+    final_out = draft
+    for _ in range(max(0, int(max_critic_loops))):
+        final_out = _critic_fix(final_out)
+
+    # ---------- 4) JSON 파싱 + POST ----------
+    try:
+        data = json.loads(_pick_json(final_out))
+    except Exception:
+        repair_prompt = f"""
+아래 텍스트에서 JSON만 추출해 유효한 JSON으로 정리해라. 필드 누락시 공백 문자열로 채워라.
+필드는 title, body1~body7 이다. 설명 금지. JSON만 출력.
+
+[텍스트]
+{final_out}
+"""
+        fixed_resp, _ = _try_models(
+            system="JSON 정리자",
+            user=repair_prompt,
+            temperature=0.0,
+            max_tokens=300
+        )
+        fixed = fixed_resp.choices[0].message.content
+        data = json.loads(_pick_json(fixed))
+
+    data = _post_fix(data)
+
+    # ---------- 5) 보존율 검사(낮으면 1회 재작성) ----------
+    joined_bodies = " ".join([data.get(k, "") for k in ["body1", "body2", "body3", "body4", "body5", "body6", "body7"]])
+    score = _preserve_score(content, joined_bodies)
+
+    if score < preserve_threshold:
+        reinforce_prompt = f"""
+보존율(원문 어구 보존)이 낮다. 아래 JSON을 참고하여 원문 표현을 더 직접적으로 살려 다시 써라.
+- 가능한 문장은 '거의 그대로' 사용하되 길이 규칙을 지켜라.
+- 특히 훅/갈등/감정 문장은 원문 직인용 우선.
+- JSON만 출력.
+
+[현재 결과(JSON)]
+{json.dumps(data, ensure_ascii=False, indent=2)}
+
+[원문]
+{content}
+
+{RULES}
+"""
+        reinforced_resp, _ = _try_models(
+            system="원문 보존 강화 리라이터",
+            user=reinforce_prompt,
+            temperature=0.4,
+            max_tokens=900
+        )
+        reinforced = reinforced_resp.choices[0].message.content
+
         try:
-            # JSON만 추출 (마크다운 코드블록 제거)
-            json_match = re.search(r'\{.*\}', gpt_response, re.DOTALL)
-            if json_match:
-                json_str = json_match.group(0)
-                reels_data = json.loads(json_str)
-            else:
-                reels_data = json.loads(gpt_response)
-            
-            # ReelsContent 객체로 변환
-            reels_content = ReelsContent(
-                title=reels_data.get("title", ""),
-                body1=reels_data.get("body1", ""),
-                body2=reels_data.get("body2", ""),
-                body3=reels_data.get("body3", ""),
-                body4=reels_data.get("body4", ""),
-                body5=reels_data.get("body5", ""),
-                body6=reels_data.get("body6", ""),
-                body7=reels_data.get("body7", "")
-            )
-            
-            logger.info("릴스 대본 생성 완료")
-            return reels_content
-            
-        except json.JSONDecodeError as e:
-            logger.error(f"JSON 파싱 실패: {e}")
-            raise ValueError("AI 응답을 해석할 수 없습니다. 다시 시도해주세요.")
-            
-    except Exception as e:
-        logger.error(f"ChatGPT API 오류: {e}")
-        raise ValueError(f"AI 대본 생성에 실패했습니다: {str(e)}")
+            data2 = json.loads(_pick_json(reinforced))
+            data2 = _post_fix(data2)
+            joined2 = " ".join([data2.get(k, "") for k in ["body1", "body2", "body3", "body4", "body5", "body6", "body7"]])
+            score2 = _preserve_score(content, joined2)
+            if score2 >= score:
+                data = data2
+        except Exception:
+            pass
+
+    # ---------- 모델 객체로 반환 (이전과 동일 ReelsContent) ----------
+    reels_content = ReelsContent(
+        title=data.get("title", ""),
+        body1=data.get("body1", ""),
+        body2=data.get("body2", ""),
+        body3=data.get("body3", ""),
+        body4=data.get("body4", ""),
+        body5=data.get("body5", ""),
+        body6=data.get("body6", ""),
+        body7=data.get("body7", "")
+    )
+    return reels_content
+
 
 async def generate_images_with_dalle(texts: List[str]) -> List[str]:
     """DALL-E를 사용하여 이미지 생성하고 로컬에 저장 (병렬 처리로 60-80% 성능 향상)"""

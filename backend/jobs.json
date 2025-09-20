@@ -584,5 +584,165 @@
     "error_message": null,
     "retry_count": 0,
     "max_retries": 2
+  },
+  "0b10b389-3e67-4ee5-88de-3ffd5c2e8f95": {
+    "job_id": "0b10b389-3e67-4ee5-88de-3ffd5c2e8f95",
+    "user_email": "xystus@gmail.com",
+    "status": "completed",
+    "created_at": "2025-09-19T07:18:54.268092",
+    "updated_at": "2025-09-19T07:20:54.829504",
+    "video_params": {
+      "content_data": "{\"title\":\"이중주차 때문에 내 인생이 이렇게 되다니..\",\"body1\":\"밤늦게 남편과 데이트를 하러 나가기로 했는데 이게 무슨 일이야?\",\"body2\":\"이중주차 때문에 우리 차를 꺼낼 수 없는거야. 남편은 늦은 시간이라 연락하는건 예의가 아니라며 들어가재.\",\"body3\":\"하지만 나는 놀러갈 생각에 열심히 집안 일 다 끝내고 한껏 들떠서 나왔는데.. 뭐냐고..\",\"body4\":\"늦은 시간은 맞지만, 주차자리가 아닌 곳에 주차해서 차를 막은 쪽이 감수해야 하는거 아냐?\",\"body5\":\"정작 같이 살고 있는 나는 배려받지 못하는 것 같아서 기분이 나쁘더라고.\",\"body6\":\"내가 투덜대니까 나보고 이기적이고 개념이 없대. 화나는 내가 이상한거야?\",\"body7\":\"너라면 전화할 것 같아? 아니면 남편처럼 그냥 돌아설 것 같아? 댓글로 남겨줘.\",\"body8\":\"\"}",
+      "music_mood": "romantic",
+      "image_allocation_mode": "2_per_image",
+      "text_position": "bottom",
+      "text_style": "outline",
+      "selected_bgm_path": "Miss U - Everet Almond.mp3",
+      "use_test_files": false,
+      "uploaded_files": [
+        "1.png",
+        "2.jpg",
+        "3.png",
+        "4.mp4"
+      ],
+      "title_font": "BMYEONSUNG_otf.otf",
+      "body_font": "IBMPlexSansKR-Bold.ttf"
+    },
+    "result": {
+      "video_path": "/zstus/backend/output_videos/reels_581c23b9.mp4",
+      "duration": "약 10-30초",
+      "completed_at": "2025-09-19T07:20:54.828742"
+    },
+    "error_message": null,
+    "retry_count": 0,
+    "max_retries": 2
+  },
+  "a3666a4f-6a7f-44a0-b291-c6bbf2950c6d": {
+    "job_id": "a3666a4f-6a7f-44a0-b291-c6bbf2950c6d",
+    "user_email": "xystus@gmail.com",
+    "status": "completed",
+    "created_at": "2025-09-19T07:40:53.559394",
+    "updated_at": "2025-09-19T07:44:15.004320",
+    "video_params": {
+      "content_data": "{\"title\":\"코카콜라를 이제 못 마신다고?\",\"body1\":\"이제 몇십년 후면 코카콜라를 더 이상 지구상에서 마실 수 없게 될지도 모른다는 걸 알아?\",\"body2\":\"코카콜라의 레시피를 아는 사람은 전 세계에서 단 두명 뿐이야\",\"body3\":\"원래는 일곱명 뿐이었는데 다섯명은 죽고 이제 두명만 남게 된거야.\",\"body4\":\"코카콜라의 원료는 설탕, 탄산수, 캐러멜, 인산, 카페인, 코카잎, 콜라콩을 혼합한 건데\",\"body5\":\"그 1%의 나머지 원료가 밝혀지지 않았어. 수많은 화학자가 80년 이상 노력했지만 헛수고였지.\",\"body6\":\"이 두사람도 죽게되면 조지아 신탁은행에 보관되어 있는 그 비밀 레시피 문서가 개봉 돼.\",\"body7\":\"하지만 미 약물관리국 규정상 주원료는 비공개 가능해서 공개 안 될 거란 생각이 지배적이야. 마실 수 있을 때 많이 마실래?\",\"body8\":\"마실 수 있을 때 빨리 많이 마셔두고 싶다는 생각 안 들어? 주문 고고! 광고 아님\"}",
+      "music_mood": "bright",
+      "image_allocation_mode": "2_per_image",
+      "text_position": "bottom",
+      "text_style": "outline",
+      "selected_bgm_path": "It's Definitely It - Freedom Trail Studio.mp3",
+      "use_test_files": false,
+      "uploaded_files": [
+        "1.mp4",
+        "2.png",
+        "3.mp4",
+        "4.mp4"
+      ],
+      "title_font": "IBMPlexSansKR-Bold.ttf",
+      "body_font": "BMYEONSUNG_otf.otf"
+    },
+    "result": {
+      "video_path": "/zstus/backend/output_videos/reels_a76bfba0.mp4",
+      "duration": "약 10-30초",
+      "completed_at": "2025-09-19T07:44:15.003470"
+    },
+    "error_message": null,
+    "retry_count": 0,
+    "max_retries": 2
+  },
+  "b7d44e20-d1b6-4139-a7ed-e8d250e11cb1": {
+    "job_id": "b7d44e20-d1b6-4139-a7ed-e8d250e11cb1",
+    "user_email": "xystus@gmail.com",
+    "status": "completed",
+    "created_at": "2025-09-19T09:14:37.238553",
+    "updated_at": "2025-09-19T09:18:01.102711",
+    "video_params": {
+      "content_data": "{\"title\":\"상처뿐인 나의 첫 직장 생활\",\"body1\":\"첫 직장을 그만두기로 했는데 이렇게 안 좋은 감정을 안고 그만두게 될 줄은 몰랐음. \",\"body2\":\"나는 22살에 처음 취업해서 정말 열심히 일했어. 직장을 좋아하기도 했고, 동료들도 좋았고, 내가 맡은 일도 정말 좋았어.\",\"body3\":\"출근은 항상 40~45분 일찍 했고, 퇴근도 다른 사람들 일을 도와주면서 2시간씩 늦게 하곤 했거든.\",\"body4\":\"근무 중에도 열심히 했고, 쉬는 시간이 생기면 구석구석 청소하거나 할 일을 찾았어. 그런데 상사들은 그걸 점점 당연하게 여기더라고.\",\"body5\":\"그렇게 일을 하다가 크게 다쳐 수술을 받았고, 신체 일부를 평생 못 움직이게 됐어. 이로 인해 나도 태도가 바뀌게 되었지. \",\"body6\":\"이제는 20분 정도만 일찍오고 퇴근도 정시에 했어. 상사들은 다친건 안타깝지만, 태도가 바뀐게 서운하다는거야. 상대적인 거라 티가 더 난다나?\",\"body7\":\"너무 분해서 퇴사하기로 마음을 먹었어. 그런데 같이 일하고 싶다면서 계속 태도를 고치라는거야. 내가 계속 일해야 해?\",\"body8\":\"\"}",
+      "music_mood": "calm",
+      "image_allocation_mode": "2_per_image",
+      "text_position": "bottom",
+      "text_style": "background",
+      "selected_bgm_path": "You and I - Telecasted.mp3",
+      "use_test_files": false,
+      "uploaded_files": [
+        "1.mp4",
+        "2.png",
+        "3.png",
+        "4.mp4"
+      ],
+      "title_font": "IBMPlexSansKR-Bold.ttf",
+      "body_font": "BMYEONSUNG_otf.otf"
+    },
+    "result": {
+      "video_path": "/zstus/backend/output_videos/reels_eda1d40c.mp4",
+      "duration": "약 10-30초",
+      "completed_at": "2025-09-19T09:18:01.101848"
+    },
+    "error_message": null,
+    "retry_count": 0,
+    "max_retries": 2
+  },
+  "b360a921-7e49-4bad-8214-cf845fe9aee9": {
+    "job_id": "b360a921-7e49-4bad-8214-cf845fe9aee9",
+    "user_email": "xystus@gmail.com",
+    "status": "completed",
+    "created_at": "2025-09-19T18:19:23.564124",
+    "updated_at": "2025-09-19T18:24:08.092962",
+    "video_params": {
+      "content_data": "{\"title\":\"아직도 출가외인 타령?\",\"body1\":\"아직도 출가외인 타령하는 시어머니 있냐고 진짜 궁금해서 물어본다.\",\"body2\":\"이번에 내 고모 딸 결혼식이랑 남편 큰아빠 딸 결혼식 날짜가 겹쳤거든.\",\"body3\":\"근데 여자는 출가외인이라며 무조건 남편 쪽 결혼식 오라고 난리였어.\",\"body4\":\"양쪽 다 가까운 친척인데 왜 여자만 남편 쪽으로 가야 하냐고.\",\"body5\":\"친척언니한텐 둘러대고, 잔소리 들으며 장거리 운전까지 해서 진짜 체력 다 소진됐어.\",\"body6\":\"결혼 때보다 살도 좀 쪘는데, 7키로 정도, 하루 종일 살 빼라고 귀에 피딱지 앉게 떠들어 대셔.\",\"body7\":\"이런 이야기 들으면서 사는게 당연한 거야? 그냥 참아야 돼? 네 생각 궁금해.\",\"body8\":\"\"}",
+      "music_mood": "calm",
+      "image_allocation_mode": "2_per_image",
+      "text_position": "bottom",
+      "text_style": "outline",
+      "selected_bgm_path": "Taking in The Changes - Everet Almond.mp3",
+      "use_test_files": false,
+      "uploaded_files": [
+        "1.mp4",
+        "2.mp4",
+        "3.mp4",
+        "4.mp4"
+      ],
+      "title_font": "IBMPlexSansKR-Bold.ttf",
+      "body_font": "PretendardVariable.ttf"
+    },
+    "result": {
+      "video_path": "/zstus/backend/output_videos/reels_59dafd9f.mp4",
+      "duration": "약 10-30초",
+      "completed_at": "2025-09-19T18:24:08.092049"
+    },
+    "error_message": null,
+    "retry_count": 0,
+    "max_retries": 2
+  },
+  "beebf960-5973-43ab-af22-cd5a1b077892": {
+    "job_id": "beebf960-5973-43ab-af22-cd5a1b077892",
+    "user_email": "xystus@gmail.com",
+    "status": "completed",
+    "created_at": "2025-09-20T02:49:51.053996",
+    "updated_at": "2025-09-20T02:52:20.666405",
+    "video_params": {
+      "content_data": "{\"title\":\"알파고의 '무브37'과 용기\",\"body1\":\"안전한, 경험적 진리에 복종하지 않고 새로운 창의적 결정을 내리는 용기에 대해 이야기해보자.\",\"body2\":\"2016년 3월, 알파고와 이세돌 9단의 2국은 완전히 다른 분위기에서 시작됐어.\",\"body3\":\"1국 때 이세돌의 패배 때문에 프로기사들도 충격에 휩싸였고, 이세돌은 절치부심하는 모습이었거든.\",\"body4\":\"그렇게 시작된 2국, 알파고의 37번째 수였던 어깨 짚기는 기존 바둑 이론으론 설명하기 어려운 수였어\",\"body5\":\"해설자들은 “실수 같다”, “이상하다” 했고, 이세돌도 다음 돌을 위해 10분 넘게 고민을 했지.\",\"body6\":\"결국은 그 수를 기점으로 이세돌은 2국도 패배를 해. 사실 알고리즘이 창의력에 의한 판단을 했다고 보긴 힘들거야.\",\"body7\":\"하지만 불확실한 상황에서 새로운 선택을 하고 밀고나가는 용기에 대해 다시 생각해보게 됐어. 너는 어떻게 생각해?\",\"body8\":\"\"}",
+      "music_mood": "suspense",
+      "image_allocation_mode": "2_per_image",
+      "text_position": "bottom",
+      "text_style": "outline",
+      "selected_bgm_path": "Conspiracy Theory - Rod Kim.mp3",
+      "use_test_files": false,
+      "uploaded_files": [
+        "1.jpg",
+        "2.png",
+        "3.jpg",
+        "4.mp4"
+      ],
+      "title_font": "IBMPlexSansKR-Bold.ttf",
+      "body_font": "BMYEONSUNG_otf.otf"
+    },
+    "result": {
+      "video_path": "/zstus/backend/output_videos/reels_f797cc1e.mp4",
+      "duration": "약 10-30초",
+      "completed_at": "2025-09-20T02:52:20.665429"
+    },
+    "error_message": null,
+    "retry_count": 0,
+    "max_retries": 2
   }
 }
