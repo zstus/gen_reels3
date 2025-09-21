@@ -36,6 +36,7 @@ interface MusicStepProps {
 
 // 음악 성격별 한국어 명칭과 설명
 const MOOD_CONFIG = {
+  none: { name: '음악 선택 안함', description: '이미지: 무음, 동영상: 원본 소리 사용', color: '#757575' },
   bright: { name: '밝은 음악', description: '활기차고 즐거운 분위기', color: '#ffeb3b' },
   calm: { name: '차분한 음악', description: '평온하고 릴랙스한 분위기', color: '#4caf50' },
   romantic: { name: '로맨틱한 음악', description: '감성적이고 따뜻한 분위기', color: '#e91e63' },
@@ -82,7 +83,7 @@ const MusicStep: React.FC<MusicStepProps> = ({
     
     try {
       const bgmList = await apiService.getBgmList();
-      const bgmData: { [key in MusicMood]: MusicFile[] } = {
+      const bgmData: { [key in Exclude<MusicMood, 'none'>]: MusicFile[] } = {
         bright: [],
         calm: [],
         romantic: [],
@@ -169,7 +170,7 @@ const MusicStep: React.FC<MusicStepProps> = ({
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
-  const canProceed = selectedMusic !== null;
+  const canProceed = selectedMusic !== null || musicMood === 'none';
 
   return (
     <Box>
@@ -269,18 +270,37 @@ const MusicStep: React.FC<MusicStepProps> = ({
           {/* 오른쪽: 음악 파일 목록 */}
           <Grid item xs={12} md={8}>
             <Paper sx={{ p: 3 }}>
-              <Box display="flex" alignItems="center" sx={{ mb: 2 }}>
-                <Typography variant="h6" sx={{ flexGrow: 1 }}>
-                  {MOOD_CONFIG[musicMood].name} 목록
-                </Typography>
-                <Chip
-                  label={`${musicFolders[musicMood].length}개 곡`}
-                  size="small"
+              {musicMood === 'none' ? (
+                // 음악 선택 안함일 때
+                <Box sx={{ textAlign: 'center', py: 4 }}>
+                  <Typography variant="h6" gutterBottom>
+                    🔇 음악 선택 안함
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary" gutterBottom>
+                    배경음악 없이 영상을 생성합니다
+                  </Typography>
+                  <Alert severity="info" sx={{ mt: 2 }}>
+                    <Typography variant="body2">
+                      • 이미지의 경우: 무음으로 처리됩니다<br/>
+                      • 동영상의 경우: 원본 영상의 소리가 사용됩니다
+                    </Typography>
+                  </Alert>
+                </Box>
+              ) : (
+                // 기존 음악 목록
+                <>
+                  <Box display="flex" alignItems="center" sx={{ mb: 2 }}>
+                    <Typography variant="h6" sx={{ flexGrow: 1 }}>
+                      {MOOD_CONFIG[musicMood].name} 목록
+                    </Typography>
+                    <Chip
+                      label={`${musicFolders[musicMood as Exclude<MusicMood, 'none'>]?.length || 0}개 곡`}
+                      size="small"
                   sx={{ bgcolor: `${MOOD_CONFIG[musicMood].color}20` }}
                 />
               </Box>
 
-              {musicFolders[musicMood].length === 0 ? (
+              {(musicFolders[musicMood as Exclude<MusicMood, 'none'>]?.length || 0) === 0 ? (
                 <Box sx={{ textAlign: 'center', py: 4, color: 'text.secondary' }}>
                   <MusicNote sx={{ fontSize: 48, mb: 2 }} />
                   <Typography variant="body2">
@@ -289,7 +309,7 @@ const MusicStep: React.FC<MusicStepProps> = ({
                 </Box>
               ) : (
                 <Grid container spacing={2}>
-                  {musicFolders[musicMood].map((musicFile) => (
+                  {(musicFolders[musicMood as Exclude<MusicMood, 'none'>] || []).map((musicFile) => (
                     <Grid item xs={12} sm={6} key={musicFile.filename}>
                       <Card
                         sx={{
@@ -358,6 +378,8 @@ const MusicStep: React.FC<MusicStepProps> = ({
                     <strong>{selectedMusic.displayName}</strong>이(가) 선택되었습니다.
                   </Typography>
                 </Alert>
+              )}
+                </>
               )}
             </Paper>
           </Grid>

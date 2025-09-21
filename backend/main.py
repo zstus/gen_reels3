@@ -94,6 +94,7 @@ class AsyncVideoRequest(BaseModel):
     image_allocation_mode: str = "2_per_image"
     text_position: str = "bottom"
     text_style: str = "outline"
+    title_area_mode: str = "keep"
     selected_bgm_path: str = ""
     use_test_files: bool = False
 
@@ -218,7 +219,7 @@ def copy_test_images():
     """test 폴더에서 uploads 폴더로 이미지 및 비디오 파일들 복사"""
     try:
         test_folder = "./test"
-        media_extensions = ["jpg", "jpeg", "png", "bmp", "gif", "webp", "mp4", "mov", "avi", "webm"]
+        media_extensions = ["jpg", "jpeg", "png", "bmp", "gif", "webp", "mp4", "mov", "avi", "webm", "mkv"]
         
         # 1, 2, 3, 4 순서로 미디어 파일 찾기
         copied_count = 0
@@ -237,7 +238,7 @@ def copy_test_images():
                 target_path = os.path.join(UPLOAD_FOLDER, target_name)
                 
                 shutil.copy2(found_file, target_path)
-                file_type = "비디오" if original_ext.lower() in ['.mp4', '.mov', '.avi', '.webm'] else "이미지"
+                file_type = "비디오" if original_ext.lower() in ['.mp4', '.mov', '.avi', '.webm', '.mkv'] else "이미지"
                 print(f"✅ test {file_type} 복사: {os.path.basename(found_file)} → {target_name}")
                 copied_count += 1
             else:
@@ -436,9 +437,15 @@ async def generate_video(
     # 텍스트 스타일 선택
     text_style: str = Form(default="outline"),  # "outline" (외곽선) 또는 "background" (반투명 배경)
 
+    # 타이틀 영역 모드 선택
+    title_area_mode: str = Form(default="keep"),  # "keep" (확보) 또는 "remove" (제거)
+
     # 폰트 설정
     title_font: str = Form(default="BMYEONSUNG_otf.otf"),  # 타이틀 폰트
     body_font: str = Form(default="BMYEONSUNG_otf.otf"),   # 본문 폰트
+
+    # 자막 읽어주기 설정
+    voice_narration: str = Form(default="enabled"),        # "enabled" (추가) 또는 "disabled" (제거)
 
     # 이미지 파일 업로드 (최대 8개)
     image_1: Optional[UploadFile] = File(None),
@@ -492,8 +499,18 @@ async def generate_video(
             bgm_file = None
             print("⚠️ BGM 파일이 설정되지 않았습니다")
         
+        # Frontend의 모드를 Backend 형식으로 변환
+        mode_mapping = {
+            "per-script": "1_per_image",
+            "per-two-scripts": "2_per_image",
+            "single-for-all": "single_for_all"
+        }
+
+        if image_allocation_mode in mode_mapping:
+            image_allocation_mode = mode_mapping[image_allocation_mode]
+
         # 이미지 할당 모드 검증
-        if image_allocation_mode not in ["2_per_image", "1_per_image"]:
+        if image_allocation_mode not in ["2_per_image", "1_per_image", "single_for_all"]:
             image_allocation_mode = "2_per_image"  # 기본값
             print(f"⚠️ 잘못된 이미지 할당 모드, 기본값 사용: {image_allocation_mode}")
         
@@ -510,8 +527,10 @@ async def generate_video(
         print(f"🖼️ 이미지 할당 모드: {image_allocation_mode}")
         print(f"📝 텍스트 위치: {text_position}")
         print(f"🎨 텍스트 스타일: {text_style}")
+        print(f"🏠 타이틀 영역 모드: {title_area_mode}")
         print(f"🔤 타이틀 폰트: {title_font}")
         print(f"📝 본문 폰트: {body_font}")
+        print(f"🎤 자막 읽어주기: {voice_narration}")
 
         output_path = video_gen.create_video_from_uploads(
             OUTPUT_FOLDER,
@@ -519,8 +538,12 @@ async def generate_video(
             image_allocation_mode,
             text_position,
             text_style,
+            title_area_mode,
             title_font,
-            body_font
+            body_font,
+            "uploads",
+            music_mood,
+            voice_narration
         )
         
         return JSONResponse(
@@ -915,6 +938,7 @@ async def preview_video(
     body1: str = Form(...),
     text_position: str = Form(default="bottom"),
     text_style: str = Form(default="outline"),
+    title_area_mode: str = Form(default="keep"),
     title_font: str = Form(default="BMYEONSUNG_otf.otf"),
     body_font: str = Form(default="BMYEONSUNG_otf.otf"),
     image_1: Optional[UploadFile] = File(None),
@@ -941,7 +965,7 @@ async def preview_video(
                 shutil.copyfileobj(image_1.file, buffer)
 
             # 비디오 파일인지 확인
-            video_extensions = ['.mp4', '.mov', '.avi', '.webm']
+            video_extensions = ['.mp4', '.mov', '.avi', '.webm', '.mkv']
             is_video = any(image_1.filename.lower().endswith(ext) for ext in video_extensions)
             
             if is_video:
@@ -995,15 +1019,44 @@ async def preview_video(
         if not preview_image_path or not os.path.exists(preview_image_path):
             raise HTTPException(status_code=400, detail="미리보기용 이미지를 찾을 수 없습니다")
 
-        # 타이틀 이미지 생성 (504x220)
-        title_image_path = video_generator.create_title_image(
-            title,
-            504,
-            220,
-            title_font
-        )
+        # PIL로 미리보기 이미지 합성
+        from PIL import Image
 
-        # 본문 텍스트 이미지 생성 (504x890)
+        # 배경 이미지 (504x890)
+        final_image = Image.new('RGB', (504, 890), color=(0, 0, 0))
+
+        title_image_path = None
+
+        if title_area_mode == "keep":
+            # 기존 방식: 타이틀 영역 + 미디어 영역
+            # 타이틀 이미지 생성 (504x220)
+            title_image_path = video_generator.create_title_image(
+                title,
+                504,
+                220,
+                title_font
+            )
+
+            # 배경 이미지 처리 (670px 영역)
+            if os.path.exists(preview_image_path):
+                bg_image = Image.open(preview_image_path)
+                work_area_height = 670  # 890 - 220
+                bg_image = bg_image.resize((504, work_area_height), Image.Resampling.LANCZOS)
+                final_image.paste(bg_image, (0, 220))  # 타이틀 아래에 배치
+
+            # 타이틀 이미지 합성 (상단)
+            if os.path.exists(title_image_path):
+                title_img = Image.open(title_image_path)
+                final_image.paste(title_img, (0, 0))
+        else:
+            # remove 모드: 전체 화면 미디어
+            # 배경 이미지 처리 (전체 890px)
+            if os.path.exists(preview_image_path):
+                bg_image = Image.open(preview_image_path)
+                bg_image = bg_image.resize((504, 890), Image.Resampling.LANCZOS)
+                final_image.paste(bg_image, (0, 0))  # 전체 화면
+
+        # 본문 텍스트 이미지 생성 (504x890) - 모든 모드 공통
         body_text_image_path = video_generator.create_text_image(
             body1,
             504,
@@ -1014,25 +1067,6 @@ async def preview_video(
             title_font=title_font,
             body_font=body_font
         )
-
-        # PIL로 미리보기 이미지 합성
-        from PIL import Image
-
-        # 배경 이미지 (504x890)
-        final_image = Image.new('RGB', (504, 890), color=(0, 0, 0))
-
-        # 배경 이미지 처리
-        if os.path.exists(preview_image_path):
-            bg_image = Image.open(preview_image_path)
-            # 504x670 작업 영역에 맞게 리사이즈
-            work_area_height = 670  # 890 - 220
-            bg_image = bg_image.resize((504, work_area_height), Image.Resampling.LANCZOS)
-            final_image.paste(bg_image, (0, 220))  # 타이틀 아래에 배치
-
-        # 타이틀 이미지 합성 (상단)
-        if os.path.exists(title_image_path):
-            title_img = Image.open(title_image_path)
-            final_image.paste(title_img, (0, 0))
 
         # 본문 텍스트 이미지 합성 (오버레이)
         if os.path.exists(body_text_image_path):
@@ -2109,12 +2143,16 @@ async def generate_video_async(
     image_allocation_mode: str = Form(default="2_per_image"),
     text_position: str = Form(default="bottom"),
     text_style: str = Form(default="outline"),
+    title_area_mode: str = Form(default="keep"),
     selected_bgm_path: str = Form(default=""),
     use_test_files: bool = Form(default=False),
     
     # 폰트 설정 추가
     title_font: str = Form(default="BMYEONSUNG_otf.otf"),  # 타이틀 폰트
     body_font: str = Form(default="BMYEONSUNG_otf.otf"),   # 본문 폰트
+
+    # 자막 읽어주기 설정
+    voice_narration: str = Form(default="enabled"),        # "enabled" (추가) 또는 "disabled" (제거)
 
     # 이미지 파일 업로드 (최대 8개)
     image_1: Optional[UploadFile] = File(None),
@@ -2169,12 +2207,15 @@ async def generate_video_async(
             'image_allocation_mode': image_allocation_mode,
             'text_position': text_position,
             'text_style': text_style,
+            'title_area_mode': title_area_mode,
             'selected_bgm_path': selected_bgm_path,
             'use_test_files': use_test_files,
             'uploaded_files': saved_files,
             # 폰트 파라미터 추가
             'title_font': title_font,
-            'body_font': body_font
+            'body_font': body_font,
+            # 자막 읽어주기 파라미터 추가
+            'voice_narration': voice_narration
         }
 
         # 3. 작업을 큐에 추가

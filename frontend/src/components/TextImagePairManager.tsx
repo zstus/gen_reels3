@@ -25,7 +25,9 @@ import {
   Download,
   Edit as EditIcon,
   ExpandMore,
-  ExpandLess
+  ExpandLess,
+  Movie as MovieIcon,
+  Warning
 } from '@mui/icons-material';
 import { useDropzone } from 'react-dropzone';
 import { ReelsContent, ImageUploadMode, TextImagePair, CustomPrompt } from '../types';
@@ -115,7 +117,7 @@ const TextImagePairManager: React.FC<TextImagePairManagerProps> = ({
           useCustomPrompt: customPrompt?.enabled || false,
         });
       });
-    } else {
+    } else if (imageUploadMode === 'per-two-scripts') {
       // 텍스트 2개당 이미지 1개
       for (let i = 0; i < bodyTexts.length; i += 2) {
         const imageIndex = Math.floor(i / 2);
@@ -138,6 +140,24 @@ const TextImagePairManager: React.FC<TextImagePairManagerProps> = ({
           });
         }
       }
+    } else if (imageUploadMode === 'single-for-all') {
+      // 모든 텍스트에 이미지 1개
+      const allTexts = bodyTexts.map(({ key, value }) => key.replace('body', '대사')).join(' + ');
+      const allContent = bodyTexts.map(({ value }) => value).join(' / ');
+      const foundImage = imageMap.get(0); // 첫 번째 (그리고 유일한) 이미지
+      const customPrompt = customPrompts[0];
+
+      console.log(`📋 single-for-all: 모든 대사, imageIndex=0, foundImage=${foundImage?.name || 'null'}`);
+      pairs.push({
+        textIndex: 0,
+        textKey: allTexts,
+        textContent: allContent,
+        image: foundImage || null,
+        imageIndex: 0, // 항상 첫 번째 이미지 인덱스 사용
+        isGenerating: false,
+        customPrompt: customPrompt?.prompt || '',
+        useCustomPrompt: customPrompt?.enabled || false,
+      });
     }
 
     console.log('🎯 최종 pairs 개수:', pairs.length);
@@ -162,9 +182,12 @@ const TextImagePairManager: React.FC<TextImagePairManagerProps> = ({
       return newErrors;
     });
     
-    // 파일 유효성 검증
-    if (file.size > 10 * 1024 * 1024) {
-      setUploadErrors(prev => ({ ...prev, [imageIndex]: '파일 크기가 10MB를 초과합니다' }));
+    // 파일 유효성 검증 (모드에 따라 다른 제한)
+    const maxSize = imageUploadMode === 'single-for-all' ? 40 * 1024 * 1024 : 10 * 1024 * 1024;
+    const maxSizeText = imageUploadMode === 'single-for-all' ? '40MB' : '10MB';
+
+    if (file.size > maxSize) {
+      setUploadErrors(prev => ({ ...prev, [imageIndex]: `파일 크기가 ${maxSizeText}를 초과합니다` }));
       return;
     }
 
@@ -330,6 +353,66 @@ const TextImagePairManager: React.FC<TextImagePairManagerProps> = ({
     }
   };
 
+  // 비디오 미리보기 컴포넌트 (브라우저 직접 재생)
+  const VideoPreview: React.FC<{ file: File }> = memo(({ file }) => {
+    const [videoUrl, setVideoUrl] = useState<string | null>(null);
+
+    useEffect(() => {
+      // 브라우저에서 직접 재생할 수 있도록 URL 생성
+      const url = URL.createObjectURL(file);
+      setVideoUrl(url);
+
+      return () => {
+        if (url) {
+          URL.revokeObjectURL(url);
+        }
+      };
+    }, [file]);
+
+    return (
+      <Box sx={{ position: 'relative' }}>
+        {videoUrl && (
+          <video
+            src={videoUrl}
+            style={{
+              width: '100%',
+              aspectRatio: '1/1',
+              objectFit: 'cover',
+              borderRadius: '8px'
+            }}
+            autoPlay
+            muted
+            loop
+            playsInline
+            controls={false}
+            onError={(e) => {
+              console.error('비디오 재생 오류:', e);
+            }}
+          />
+        )}
+
+        {/* 비디오 아이콘 오버레이 */}
+        <Box
+          sx={{
+            position: 'absolute',
+            top: 8,
+            left: 8,
+            bgcolor: 'rgba(0,0,0,0.7)',
+            borderRadius: 1,
+            p: 0.5,
+            display: 'flex',
+            alignItems: 'center'
+          }}
+        >
+          <MovieIcon sx={{ fontSize: 16, color: 'white' }} />
+          <Typography variant="caption" color="white" sx={{ ml: 0.5 }}>
+            영상
+          </Typography>
+        </Box>
+      </Box>
+    );
+  });
+
   // 개별 드래그앤드롭 컴포넌트 (React.memo로 최적화)
   const IndividualDropZone: React.FC<{
     imageIndex: number;
@@ -343,7 +426,7 @@ const TextImagePairManager: React.FC<TextImagePairManagerProps> = ({
       onDrop,
       accept: {
         'image/*': ['.jpeg', '.jpg', '.png', '.gif', '.webp', '.bmp'],
-        'video/*': ['.mp4', '.mov', '.avi', '.webm']
+        'video/*': ['.mp4', '.mov', '.avi', '.webm', '.mkv']
       },
       maxFiles: 1,
       multiple: false
@@ -496,18 +579,7 @@ const TextImagePairManager: React.FC<TextImagePairManagerProps> = ({
           {pair.image ? (
             <Box sx={{ position: 'relative', mb: 2 }}>
               {pair.image.type.startsWith('video/') ? (
-                <video
-                  src={URL.createObjectURL(pair.image)}
-                  style={{
-                    width: '100%',
-                    aspectRatio: '1/1',
-                    objectFit: 'cover',
-                    borderRadius: 8
-                  }}
-                  muted
-                  loop
-                  autoPlay
-                />
+                <VideoPreview file={pair.image} />
               ) : (
                 <Box
                   sx={{
@@ -618,6 +690,9 @@ const TextImagePairManager: React.FC<TextImagePairManagerProps> = ({
               <Typography variant="caption" color="text.secondary">
                 {isDragActive ? '파일을 놓으세요' : '미디어 드래그 또는 클릭'}
               </Typography>
+              <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.5, fontSize: '0.7rem' }}>
+                최대 {imageUploadMode === 'single-for-all' ? '40MB' : '10MB'}
+              </Typography>
             </Box>
           )}
 
@@ -690,8 +765,12 @@ const TextImagePairManager: React.FC<TextImagePairManagerProps> = ({
       </Typography>
       
       <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-        각 텍스트에 대응되는 이미지를 개별적으로 관리할 수 있습니다. 
+        각 텍스트에 대응되는 이미지를 개별적으로 관리할 수 있습니다.
         드래그앤드롭으로 이미지를 업로드하거나 AI로 자동 생성하세요.
+        <br />
+        <Typography component="span" variant="caption" color="text.secondary">
+          파일 크기 제한: {imageUploadMode === 'single-for-all' ? '최대 40MB' : '각 파일 최대 10MB'}
+        </Typography>
       </Typography>
 
       <Grid container spacing={2}>

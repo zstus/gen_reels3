@@ -20,7 +20,7 @@ export interface ReelsContent {
 }
 
 // 이미지 업로드 모드
-export type ImageUploadMode = 'per-script' | 'per-two-scripts';
+export type ImageUploadMode = 'per-script' | 'per-two-scripts' | 'single-for-all';
 
 // 텍스트 위치 타입 (2단계 시스템)
 export type TextPosition = 'top' | 'bottom';
@@ -28,8 +28,14 @@ export type TextPosition = 'top' | 'bottom';
 // 텍스트 스타일 타입
 export type TextStyle = 'outline' | 'background';
 
+// 자막 읽어주기 타입
+export type VoiceNarration = 'enabled' | 'disabled';
+
+// 타이틀 영역 모드 타입
+export type TitleAreaMode = 'keep' | 'remove';
+
 // 음악 성격 타입
-export type MusicMood = 'bright' | 'calm' | 'romantic' | 'sad' | 'suspense';
+export type MusicMood = 'bright' | 'calm' | 'romantic' | 'sad' | 'suspense' | 'none';
 
 // 음악 파일 타입
 export interface MusicFile {
@@ -68,9 +74,11 @@ export interface ProjectData {
   imageUploadMode: ImageUploadMode;
   textPosition: TextPosition;
   textStyle: TextStyle;
+  titleAreaMode: TitleAreaMode;
   selectedMusic: MusicFile | null;
   musicMood: MusicMood;
   fontSettings: FontSettings;
+  voiceNarration: VoiceNarration;
 }
 
 // API 응답 타입
@@ -92,8 +100,10 @@ export interface GenerateVideoRequest {
   image_allocation_mode: ImageUploadMode;
   text_position: TextPosition;
   text_style: TextStyle;
+  title_area_mode: TitleAreaMode;
   title_font?: string;
   body_font?: string;
+  voice_narration: VoiceNarration;
 }
 
 // 영상 생성 상태 타입
@@ -124,9 +134,11 @@ export interface AsyncVideoRequest {
   image_allocation_mode: ImageUploadMode;
   text_position: TextPosition;
   text_style: TextStyle;
+  title_area_mode: TitleAreaMode;
   selected_bgm_path?: string;
   use_test_files?: boolean;
   images?: File[];
+  voice_narration: VoiceNarration;
 }
 
 // 비동기 영상 생성 응답 타입

@@ -51,11 +51,13 @@ const ImageStep: React.FC<ImageStepProps> = ({
     const scriptCount = Object.values(content)
       .slice(1) // title 제외
       .filter(script => script?.trim()).length;
-    
+
     if (imageUploadMode === 'per-script') {
       return scriptCount;
-    } else {
+    } else if (imageUploadMode === 'per-two-scripts') {
       return Math.ceil(scriptCount / 2);
+    } else { // single-for-all
+      return 1;
     }
   };
 
@@ -66,9 +68,12 @@ const ImageStep: React.FC<ImageStepProps> = ({
     const newErrors: string[] = [];
 
     acceptedFiles.forEach((file, index) => {
-      // 파일 크기 검증 (10MB)
-      if (file.size > 10 * 1024 * 1024) {
-        newErrors.push(`${file.name}: 파일 크기가 10MB를 초과합니다`);
+      // 파일 크기 검증 (모드에 따라 다른 제한)
+      const maxSize = imageUploadMode === 'single-for-all' ? 40 * 1024 * 1024 : 10 * 1024 * 1024;
+      const maxSizeText = imageUploadMode === 'single-for-all' ? '40MB' : '10MB';
+
+      if (file.size > maxSize) {
+        newErrors.push(`${file.name}: 파일 크기가 ${maxSizeText}를 초과합니다`);
         return;
       }
 
@@ -139,7 +144,7 @@ const ImageStep: React.FC<ImageStepProps> = ({
     onDrop,
     accept: {
       'image/*': ['.jpeg', '.jpg', '.png', '.gif', '.webp', '.bmp'],
-      'video/*': ['.mp4', '.mov', '.avi', '.webm']
+      'video/*': ['.mp4', '.mov', '.avi', '.webm', '.mkv']
     },
     // 무제한 파일 업로드 허용 (빈 슬롯에 자동 할당)
     maxFiles: undefined,
@@ -154,10 +159,17 @@ const ImageStep: React.FC<ImageStepProps> = ({
 
   const handleModeChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const newMode = event.target.value as ImageUploadMode;
-    const newRequiredCount = newMode === 'per-script' 
-      ? Object.values(content).slice(1).filter(script => script?.trim()).length
-      : Math.ceil(Object.values(content).slice(1).filter(script => script?.trim()).length / 2);
-    
+    const scriptCount = Object.values(content).slice(1).filter(script => script?.trim()).length;
+
+    let newRequiredCount;
+    if (newMode === 'per-script') {
+      newRequiredCount = scriptCount;
+    } else if (newMode === 'per-two-scripts') {
+      newRequiredCount = Math.ceil(scriptCount / 2);
+    } else { // single-for-all
+      newRequiredCount = 1;
+    }
+
     // 기존 이미지가 새로운 요구사항보다 많으면 자르기
     const newImages = images.slice(0, newRequiredCount);
     onChange(newImages, newMode);
@@ -187,7 +199,7 @@ const ImageStep: React.FC<ImageStepProps> = ({
   const canProceed = getActualImageCount() === requiredImageCount;
 
   // 자동 이미지 생성 함수
-  const handleAutoGenerate = async (mode: 'per_script' | 'per_two_scripts') => {
+  const handleAutoGenerate = async (mode: 'per_script' | 'per_two_scripts' | 'single_for_all') => {
     setIsGenerating(true);
     setErrors([]);
     
@@ -298,7 +310,7 @@ const ImageStep: React.FC<ImageStepProps> = ({
         미디어 업로드
       </Typography>
       <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
-        릴스 영상의 배경으로 사용할 이미지 또는 영상을 업로드하세요. (이미지: JPG, PNG, GIF, WebP / 영상: MP4, MOV, AVI, WebM)
+        릴스 영상의 배경으로 사용할 이미지 또는 영상을 업로드하세요. (이미지: JPG, PNG, GIF, WebP / 영상: MP4, MOV, AVI, WebM, MKV)
       </Typography>
 
       {/* 업로드 모드 선택 */}
@@ -322,7 +334,7 @@ const ImageStep: React.FC<ImageStepProps> = ({
                       대사 2개마다 미디어 1개
                     </Typography>
                     <Typography variant="caption" color="text.secondary">
-                      필요 미디어: {Math.ceil(Object.values(content).slice(1).filter(script => script?.trim()).length / 2)}개
+                      필요 미디어: {Math.ceil(Object.values(content).slice(1).filter(script => script?.trim()).length / 2)}개 (각 최대 10MB)
                     </Typography>
                   </Box>
                 }
@@ -348,7 +360,7 @@ const ImageStep: React.FC<ImageStepProps> = ({
                       대사마다 미디어 1개
                     </Typography>
                     <Typography variant="caption" color="text.secondary">
-                      필요 미디어: {Object.values(content).slice(1).filter(script => script?.trim()).length}개
+                      필요 미디어: {Object.values(content).slice(1).filter(script => script?.trim()).length}개 (각 최대 10MB)
                     </Typography>
                   </Box>
                 }
@@ -358,6 +370,32 @@ const ImageStep: React.FC<ImageStepProps> = ({
                 size="small"
                 startIcon={<AutoFixHigh />}
                 onClick={() => handleAutoGenerate('per_script')}
+                disabled={isGenerating || Object.values(content).slice(1).filter(script => script?.trim()).length === 0}
+                sx={{ ml: 2, minWidth: 100 }}
+              >
+                자동생성
+              </Button>
+            </Box>
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+              <FormControlLabel
+                value="single-for-all"
+                control={<Radio />}
+                label={
+                  <Box>
+                    <Typography variant="body1">
+                      모든 대사에 미디어 1개
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      필요 미디어: 1개 (모든 대사에 동일한 미디어 사용, 최대 40MB)
+                    </Typography>
+                  </Box>
+                }
+              />
+              <Button
+                variant="outlined"
+                size="small"
+                startIcon={<AutoFixHigh />}
+                onClick={() => handleAutoGenerate('single_for_all')}
                 disabled={isGenerating || Object.values(content).slice(1).filter(script => script?.trim()).length === 0}
                 sx={{ ml: 2, minWidth: 100 }}
               >
@@ -417,7 +455,7 @@ const ImageStep: React.FC<ImageStepProps> = ({
             {isDragActive ? '여기에 파일을 놓으세요' : '미디어 파일을 드래그하거나 클릭하여 선택'}
           </Typography>
           <Typography variant="body2" color="text.secondary">
-            지원 형식: JPG, PNG, GIF, WebP, BMP, MP4, MOV, AVI, WebM (최대 10MB)
+            지원 형식: JPG, PNG, GIF, WebP, BMP, MP4, MOV, AVI, WebM, MKV (최대 {imageUploadMode === 'single-for-all' ? '40MB' : '10MB'})
           </Typography>
           <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
             현재 상태: {getActualImageCount()}/{requiredImageCount}개

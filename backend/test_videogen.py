@@ -30,7 +30,7 @@ def test_videogen():
         # 실제 uploads 폴더 테스트
         print("🚀 uploads 폴더 기반 영상 생성 테스트 시작...")
         
-        output_path = video_gen.create_video_from_uploads("output_videos", None, "uploads")
+        output_path = video_gen.create_video_from_uploads("output_videos", None, "2_per_image", "bottom", "outline", "BMYEONSUNG_otf.otf", "BMYEONSUNG_otf.otf", "uploads", "bright")
         print(f"✅ 영상 생성 성공: {output_path}")
         
         return True

@@ -73,12 +73,15 @@ class VideoWorker:
             image_allocation_mode = video_params.get('image_allocation_mode', '2_per_image')
             text_position = video_params.get('text_position', 'bottom')
             text_style = video_params.get('text_style', 'outline')
+            title_area_mode = video_params.get('title_area_mode', 'keep')
             selected_bgm_path = video_params.get('selected_bgm_path', '')
             # 폰트 파라미터 추출
             title_font = video_params.get('title_font', 'BMYEONSUNG_otf.otf')
             body_font = video_params.get('body_font', 'BMYEONSUNG_otf.otf')
+            # 자막 읽어주기 파라미터 추출
+            voice_narration = video_params.get('voice_narration', 'enabled')
 
-            logger.info(f"📋 영상 파라미터: 음악={music_mood}, 테스트파일={use_test_files}, 텍스트위치={text_position}, 타이틀폰트={title_font}, 본문폰트={body_font}")
+            logger.info(f"📋 영상 파라미터: 음악={music_mood}, 테스트파일={use_test_files}, 텍스트위치={text_position}, 타이틀폰트={title_font}, 본문폰트={body_font}, 자막음성={voice_narration}")
 
             # 콘텐츠 데이터 파싱
             try:
@@ -121,9 +124,12 @@ class VideoWorker:
                     image_allocation_mode=image_allocation_mode,
                     text_position=text_position,
                     text_style=text_style,
+                    title_area_mode=title_area_mode,
                     uploads_folder=uploads_folder,
                     title_font=title_font,
-                    body_font=body_font
+                    body_font=body_font,
+                    music_mood=music_mood,
+                    voice_narration=voice_narration
                 )
             else:
                 # 업로드된 파일 사용
@@ -134,9 +140,12 @@ class VideoWorker:
                     image_allocation_mode=image_allocation_mode,
                     text_position=text_position,
                     text_style=text_style,
+                    title_area_mode=title_area_mode,
                     uploads_folder=uploads_folder,
                     title_font=title_font,
-                    body_font=body_font
+                    body_font=body_font,
+                    music_mood=music_mood,
+                    voice_narration=voice_narration
                 )
 
             if result and isinstance(result, str):

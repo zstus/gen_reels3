@@ -50,7 +50,7 @@ import {
   Style,
   FormatColorText,
 } from '@mui/icons-material';
-import { ProjectData, GenerationStatus, AsyncVideoResponse, FontFile, TextPosition, TextStyle } from '../types';
+import { ProjectData, GenerationStatus, AsyncVideoResponse, FontFile, TextPosition, TextStyle, VoiceNarration, TitleAreaMode } from '../types';
 import apiService from '../services/api';
 
 interface GenerateStepProps {
@@ -98,6 +98,8 @@ const GenerateStep: React.FC<GenerateStepProps> = ({
   const [bodyFont, setBodyFont] = useState<string>('BMYEONSUNG_otf.otf');
   const [textPosition, setTextPosition] = useState<TextPosition>('bottom');
   const [textStyle, setTextStyle] = useState<TextStyle>('outline');
+  const [titleAreaMode, setTitleAreaMode] = useState<TitleAreaMode>('keep');
+  const [voiceNarration, setVoiceNarration] = useState<VoiceNarration>('enabled');
 
   // 미리보기 관련 상태
   const [previewImage, setPreviewImage] = useState<string | null>(null);
@@ -154,6 +156,7 @@ const GenerateStep: React.FC<GenerateStepProps> = ({
         body1: projectData.content.body1,
         textPosition: textPosition,
         textStyle: textStyle,
+        titleAreaMode: titleAreaMode,
         titleFont: titleFont,
         bodyFont: bodyFont,
         image: projectData.images[0] || undefined,
@@ -211,10 +214,12 @@ const GenerateStep: React.FC<GenerateStepProps> = ({
         imageUploadMode: projectData.imageUploadMode,
         textPosition: textPosition,
         textStyle: textStyle,
+        titleAreaMode: titleAreaMode,
         musicFile: projectData.selectedMusic || undefined,
         musicMood: projectData.musicMood,
         titleFont: titleFont,
         bodyFont: bodyFont,
+        voiceNarration: voiceNarration,
       });
 
       if (response.status === 'success') {
@@ -269,10 +274,12 @@ const GenerateStep: React.FC<GenerateStepProps> = ({
         imageUploadMode: projectData.imageUploadMode,
         textPosition: textPosition,
         textStyle: textStyle,
+        titleAreaMode: titleAreaMode,
         musicFile: projectData.selectedMusic || undefined,
         musicMood: projectData.musicMood,
         titleFont: titleFont,
         bodyFont: bodyFont,
+        voiceNarration: voiceNarration,
       });
 
       if (response.status === 'success') {
@@ -344,8 +351,13 @@ const GenerateStep: React.FC<GenerateStepProps> = ({
       totalChars,
       estimatedDuration,
       imageCount: projectData.images.length,
-      imageMode: projectData.imageUploadMode === 'per-script' ? '대사마다 이미지' : '2대사마다 이미지',
-      textPosition: projectData.textPosition === 'top' ? '상단 (340-520px 영역)' : '하단 (520-700px 영역)',
+      imageMode: projectData.imageUploadMode === 'per-script'
+        ? '대사마다 이미지'
+        : projectData.imageUploadMode === 'per-two-scripts'
+          ? '2대사마다 이미지'
+          : '모든 대사에 미디어 1개',
+      titleAreaMode: titleAreaMode === 'keep' ? '확보 (타이틀 + 미디어 영역)' : '제거 (전체 미디어)',
+      textPosition: titleAreaMode === 'keep' ? (textPosition === 'top' ? '상단 (340-520px 영역)' : '하단 (520-700px 영역)') : '미디어 위 오버레이',
       textStyle: projectData.textStyle === 'outline' ? '외곽선 (배경 투명)' : '반투명 검은 배경',
       musicName: projectData.selectedMusic?.displayName || '기본 음악',
       musicMood: projectData.musicMood,
@@ -402,6 +414,9 @@ const GenerateStep: React.FC<GenerateStepProps> = ({
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
                   모드: {summary.imageMode}
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  타이틀 영역: {summary.titleAreaMode}
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
                   텍스트 위치: {summary.textPosition}
@@ -512,6 +527,32 @@ const GenerateStep: React.FC<GenerateStepProps> = ({
               <AccordionDetails>
                 <Box sx={{ mb: 2 }}>
                   <FormControl component="fieldset">
+                    <FormLabel component="legend">타이틀 영역</FormLabel>
+                    <RadioGroup
+                      row
+                      value={titleAreaMode}
+                      onChange={(e) => setTitleAreaMode(e.target.value as TitleAreaMode)}
+                    >
+                      <FormControlLabel
+                        value="keep"
+                        control={<Radio size="small" />}
+                        label="확보"
+                      />
+                      <FormControlLabel
+                        value="remove"
+                        control={<Radio size="small" />}
+                        label="제거"
+                      />
+                    </RadioGroup>
+                  </FormControl>
+                  <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
+                    - 확보: 타이틀 영역(220px)과 미디어 영역(670px)으로 구분<br/>
+                    - 제거: 타이틀 제거하고 전체 화면(890px)을 미디어로 채움
+                  </Typography>
+                </Box>
+
+                <Box sx={{ mb: 2 }}>
+                  <FormControl component="fieldset">
                     <FormLabel component="legend">텍스트 위치</FormLabel>
                     <RadioGroup
                       row
@@ -529,6 +570,12 @@ const GenerateStep: React.FC<GenerateStepProps> = ({
                         label="하단"
                       />
                     </RadioGroup>
+                    <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
+                      {titleAreaMode === 'keep'
+                        ? "타이틀 영역 아래 미디어 영역에서의 텍스트 위치"
+                        : "전체 화면에서의 텍스트 위치 (기존 위치 유지)"
+                      }
+                    </Typography>
                   </FormControl>
                 </Box>
 
@@ -552,6 +599,32 @@ const GenerateStep: React.FC<GenerateStepProps> = ({
                       />
                     </RadioGroup>
                   </FormControl>
+                </Box>
+
+                <Box>
+                  <FormControl component="fieldset">
+                    <FormLabel component="legend">자막 읽어주기</FormLabel>
+                    <RadioGroup
+                      row
+                      value={voiceNarration}
+                      onChange={(e) => setVoiceNarration(e.target.value as VoiceNarration)}
+                    >
+                      <FormControlLabel
+                        value="enabled"
+                        control={<Radio size="small" />}
+                        label="추가"
+                      />
+                      <FormControlLabel
+                        value="disabled"
+                        control={<Radio size="small" />}
+                        label="제거"
+                      />
+                    </RadioGroup>
+                  </FormControl>
+                  <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
+                    - 추가: 자막 음성이 포함된 영상 생성<br/>
+                    - 제거: 자막 표시는 유지하되 음성은 무음으로 처리 (배경음악이나 원본 비디오 소리만 재생)
+                  </Typography>
                 </Box>
               </AccordionDetails>
             </Accordion>

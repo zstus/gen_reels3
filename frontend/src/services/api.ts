@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { ApiResponse, GenerateVideoRequest, MusicFolder, MusicFile, MusicMood, ImageUploadMode, TextPosition, TextStyle, AsyncVideoRequest, AsyncVideoResponse, JobInfo } from '../types';
+import { ApiResponse, GenerateVideoRequest, MusicFolder, MusicFile, MusicMood, ImageUploadMode, TextPosition, TextStyle, AsyncVideoRequest, AsyncVideoResponse, JobInfo, VoiceNarration, TitleAreaMode } from '../types';
 
 // API 베이스 URL 설정
 const API_BASE_URL = '/api';
@@ -86,11 +86,13 @@ export const apiService = {
     imageUploadMode: ImageUploadMode;
     textPosition: TextPosition;
     textStyle: TextStyle;
+    titleAreaMode: TitleAreaMode;
     musicFile?: MusicFile;
     musicMood: MusicMood;
     useTestFiles?: boolean;
     titleFont?: string;
     bodyFont?: string;
+    voiceNarration: VoiceNarration;
   }): Promise<ApiResponse> {
     const formData = new FormData();
     
@@ -98,9 +100,13 @@ export const apiService = {
     formData.append('content_data', data.content);
     formData.append('music_mood', data.musicMood);
     formData.append('use_test_files', String(data.useTestFiles || false));
-    
+
     // 이미지 할당 모드 추가 (백엔드 형식에 맞게 변환)
-    const backendImageMode = data.imageUploadMode === 'per-script' ? '1_per_image' : '2_per_image';
+    const backendImageMode = data.imageUploadMode === 'per-script'
+      ? '1_per_image'
+      : data.imageUploadMode === 'per-two-scripts'
+        ? '2_per_image'
+        : 'single_for_all';
     formData.append('image_allocation_mode', backendImageMode);
 
     // 텍스트 위치 추가
@@ -108,6 +114,12 @@ export const apiService = {
 
     // 텍스트 스타일 추가
     formData.append('text_style', data.textStyle);
+
+    // 타이틀 영역 모드 추가
+    formData.append('title_area_mode', data.titleAreaMode);
+
+    // 자막 읽어주기 설정 추가
+    formData.append('voice_narration', data.voiceNarration);
 
     // 폰트 설정 추가
     if (data.titleFont) {
@@ -170,11 +182,13 @@ export const apiService = {
     imageUploadMode: ImageUploadMode;
     textPosition: TextPosition;
     textStyle: TextStyle;
+    titleAreaMode: TitleAreaMode;
     musicFile?: MusicFile;
     musicMood: MusicMood;
     useTestFiles?: boolean;
     titleFont?: string;
     bodyFont?: string;
+    voiceNarration: VoiceNarration;
   }): Promise<AsyncVideoResponse> {
     const formData = new FormData();
 
@@ -185,12 +199,22 @@ export const apiService = {
     formData.append('use_test_files', String(data.useTestFiles || false));
 
     // 이미지 할당 모드 추가 (백엔드 형식에 맞게 변환)
-    const backendImageMode = data.imageUploadMode === 'per-script' ? '1_per_image' : '2_per_image';
+    const backendImageMode = data.imageUploadMode === 'per-script'
+      ? '1_per_image'
+      : data.imageUploadMode === 'per-two-scripts'
+        ? '2_per_image'
+        : 'single_for_all';
     formData.append('image_allocation_mode', backendImageMode);
 
     // 텍스트 위치 및 스타일 추가
     formData.append('text_position', data.textPosition);
     formData.append('text_style', data.textStyle);
+
+    // 타이틀 영역 모드 추가
+    formData.append('title_area_mode', data.titleAreaMode);
+
+    // 자막 읽어주기 설정 추가
+    formData.append('voice_narration', data.voiceNarration);
 
     // 폰트 설정 추가
     if (data.titleFont) {
@@ -259,6 +283,7 @@ export const apiService = {
     body1: string;
     textPosition: TextPosition;
     textStyle: TextStyle;
+    titleAreaMode: TitleAreaMode;
     titleFont: string;
     bodyFont: string;
     image?: File;
@@ -269,6 +294,7 @@ export const apiService = {
     formData.append('body1', data.body1);
     formData.append('text_position', data.textPosition);
     formData.append('text_style', data.textStyle);
+    formData.append('title_area_mode', data.titleAreaMode);
     formData.append('title_font', data.titleFont);
     formData.append('body_font', data.bodyFont);
 
