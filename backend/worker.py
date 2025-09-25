@@ -21,6 +21,16 @@ from job_queue import job_queue, JobStatus
 from email_service import email_service
 from video_generator import VideoGenerator
 
+# Job 로깅 시스템 import
+try:
+    from job_logger import job_logger
+    JOB_LOGGER_AVAILABLE = True
+    print("✅ Worker: Job 로깅 시스템 로드 성공")
+except ImportError as e:
+    print(f"⚠️ Worker: Job 로깅 시스템 로드 실패: {e}")
+    job_logger = None
+    JOB_LOGGER_AVAILABLE = False
+
 # 로깅 설정
 logging.basicConfig(
     level=logging.INFO,
@@ -61,6 +71,14 @@ class VideoWorker:
                 return False
 
             self.current_job = job_id
+
+            # Job 로거 상태 업데이트 (처리 시작)
+            if JOB_LOGGER_AVAILABLE:
+                try:
+                    job_logger.update_job_status(job_id, "processing")
+                    logger.info(f"✅ Job 로그 상태 업데이트: {job_id} -> processing")
+                except Exception as log_error:
+                    logger.warning(f"⚠️ Job 로그 상태 업데이트 실패: {log_error}")
 
             # 영상 생성 파라미터 준비
             output_folder = os.path.join(current_dir, "output_videos")
@@ -155,6 +173,15 @@ class VideoWorker:
 
                 logger.info(f"✅ 영상 생성 완료: {video_path}")
 
+                # Job 로거에 출력 비디오 경로 설정
+                if JOB_LOGGER_AVAILABLE:
+                    try:
+                        job_logger.set_output_video_path(job_id, video_path)
+                        job_logger.update_job_status(job_id, "completed")
+                        logger.info(f"✅ Job 로그 완료 업데이트: {job_id} -> completed")
+                    except Exception as log_error:
+                        logger.warning(f"⚠️ Job 로그 완료 업데이트 실패: {log_error}")
+
                 # 작업 완료 상태로 업데이트
                 job_queue.update_job_status(
                     job_id=job_id,
@@ -187,6 +214,14 @@ class VideoWorker:
                 error_msg = f"예상하지 못한 결과 형태: {type(result)} - {str(result)}" if result else '영상 생성 실패'
                 logger.error(f"❌ 영상 생성 실패: {error_msg}")
 
+                # Job 로거 상태 업데이트 (실패)
+                if JOB_LOGGER_AVAILABLE:
+                    try:
+                        job_logger.update_job_status(job_id, "failed", error_msg)
+                        logger.info(f"✅ Job 로그 실패 업데이트: {job_id} -> failed")
+                    except Exception as log_error:
+                        logger.warning(f"⚠️ Job 로그 실패 업데이트 실패: {log_error}")
+
                 # 작업 실패 상태로 업데이트
                 job_queue.update_job_status(
                     job_id=job_id,
@@ -205,6 +240,14 @@ class VideoWorker:
 
         except Exception as e:
             logger.error(f"❌ 작업 처리 중 예외 발생: {e}")
+
+            # Job 로거 상태 업데이트 (예외로 인한 실패)
+            if JOB_LOGGER_AVAILABLE:
+                try:
+                    job_logger.update_job_status(job_id, "failed", str(e))
+                    logger.info(f"✅ Job 로그 예외 실패 업데이트: {job_id} -> failed")
+                except Exception as log_error:
+                    logger.warning(f"⚠️ Job 로그 예외 실패 업데이트 실패: {log_error}")
 
             # 작업 실패 상태로 업데이트
             job_queue.update_job_status(

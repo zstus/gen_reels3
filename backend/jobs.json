@@ -1287,5 +1287,487 @@
     "error_message": null,
     "retry_count": 0,
     "max_retries": 2
+  },
+  "764e0d0a-5a9c-4ae1-8119-0f7cac7b5583": {
+    "job_id": "764e0d0a-5a9c-4ae1-8119-0f7cac7b5583",
+    "user_email": "xystus@gmail.com",
+    "status": "completed",
+    "created_at": "2025-09-21T14:13:34.849160",
+    "updated_at": "2025-09-21T14:15:55.653068",
+    "video_params": {
+      "content_data": "{\"title\":\"엄마랑 연 끊어도 되나\",\"body1\":\"나를 투명인간 취급하는 엄마와 손절하고 싶은데 그래도 될까?\",\"body2\":\"어릴 때부터 엄마는 나만 빼고 밥 차리고, 외식이나 여행도 나만 빼고 갔어.\",\"body3\":\"빨래도 내것만 빼놓고, 내 그릇만 설거지 안하고, 옷도 안 사줘서 친척옷을 받아 입었어. 나는 학원도 못 다녔어.\",\"body4\":\"같은 자식인데 왜 이렇게 억울하고 외로운지 모르겠어. 날 낳고싶지 않았다고 직접 말한 적도 있어.\",\"body5\":\"그런데 엄청 못대하진 않았어. 아빠는 병원비, 교통비, 학비, 휴대폰요금은 대줬어.\",\"body6\":\"엄마는 대학때부터 용돈도 줬고, 주택청약도 넣어줬어. 대학교 4학년때는 등록금 50%도 내주고 취직했을 때 밥사주고 옷도 사줬어. 그런데 그게 다야.\",\"body7\":\"부모님한테 받은 거 안 갚고 연 끊어도 돼? 아니면 그냥 참고 살아야 해?\",\"body8\":\"\"}",
+      "music_mood": "sad",
+      "image_allocation_mode": "1_per_image",
+      "text_position": "bottom",
+      "text_style": "background",
+      "title_area_mode": "keep",
+      "selected_bgm_path": "Triste Cumbia - Cumbia Deli.mp3",
+      "use_test_files": false,
+      "uploaded_files": [
+        "1.mp4",
+        "2.png",
+        "3.png",
+        "4.png",
+        "5.png",
+        "6.png",
+        "7.jpg"
+      ],
+      "title_font": "IBMPlexSansKR-Bold.ttf",
+      "body_font": "BMYEONSUNG_otf.otf",
+      "voice_narration": "enabled"
+    },
+    "result": {
+      "video_path": "/zstus/backend/output_videos/reels_18ba19df.mp4",
+      "duration": "약 10-30초",
+      "completed_at": "2025-09-21T14:15:55.651692"
+    },
+    "error_message": null,
+    "retry_count": 0,
+    "max_retries": 2
+  },
+  "c4b4c581-e2c0-4b6b-a549-fb876923c625": {
+    "job_id": "c4b4c581-e2c0-4b6b-a549-fb876923c625",
+    "user_email": "xystus@gmail.com",
+    "status": "completed",
+    "created_at": "2025-09-21T14:28:22.400052",
+    "updated_at": "2025-09-21T14:31:41.731872",
+    "video_params": {
+      "content_data": "{\"title\":\"AI에 공손하게 하지 말아야 하는 이유\",\"body1\":\"챗봇에 ‘제발요, 고맙습니다’ 많이 쓰지? 그 예의가 전기요금으로 찍-찍 나간다면?\",\"body2\":\"일반적으로 텍스트 챗 한 번에 약 2.9Wh. 이미지/영상을 첨부하면 그 40~60배까지 먹는다고 해.\",\"body3\":\"샘 올트먼은 그런 공손한 표현들이 자신들에게 수천만 달러의 전기요금으로 돌아온다고 했어.\",\"body4\":\"네가 ‘고마워’라고 이야기하면, 인공지능은 ‘언제든지요’라고 답장을 생성하거든. 생성은, 즉 전력 소비니까.\",\"body5\":\"사람들에게 예의를 지키는 이유를 물어봤더니 도덕적으로 옳다고 생각해서가 55%, 혹시 인공지능이 반란을 일으킬까봐 라고 하는 사람들이 12%. 영화를 너무 많이 봤지?\",\"body6\":\"예의를 버리라는 이야기는 아니고, 메시지는 한번에 명확하고 짧게. 다시 묻는 건 줄이고, 이미지 보다는 텍스트로 끝내자. 그러면 전력소비가 줄어.  \",\"body7\":\"그런 의미로 '고마워'라는 말 대신 '좋아요' 한번 어때? \",\"body8\":\"\"}",
+      "music_mood": "bright",
+      "image_allocation_mode": "1_per_image",
+      "text_position": "bottom",
+      "text_style": "outline",
+      "title_area_mode": "keep",
+      "selected_bgm_path": "Lace Tablecloths - The Mini Vandals.mp3",
+      "use_test_files": false,
+      "uploaded_files": [
+        "1.mp4",
+        "2.mp4",
+        "3.jpg",
+        "4.png",
+        "5.mp4",
+        "6.png",
+        "7.mp4"
+      ],
+      "title_font": "BMYEONSUNG_otf.otf",
+      "body_font": "IBMPlexSansKR-Bold.ttf",
+      "voice_narration": "enabled"
+    },
+    "result": {
+      "video_path": "/zstus/backend/output_videos/reels_c0688e53.mp4",
+      "duration": "약 10-30초",
+      "completed_at": "2025-09-21T14:31:41.730444"
+    },
+    "error_message": null,
+    "retry_count": 0,
+    "max_retries": 2
+  },
+  "b7debe00-4331-4b40-9144-8e45f2ecfa59": {
+    "job_id": "b7debe00-4331-4b40-9144-8e45f2ecfa59",
+    "user_email": "xystus@gmail.com",
+    "status": "completed",
+    "created_at": "2025-09-22T03:09:47.026628",
+    "updated_at": "2025-09-22T03:11:31.916287",
+    "video_params": {
+      "content_data": "{\"title\":\"대화가 벽에다 말하는 기분\",\"body1\":\"우리 대화가 왜 이렇게 안 통하는지 진짜 모르겠어.\",\"body2\":\"결혼 4년차고 아이가 4살이야. 연애 짧게 하고 휩쓸려 결혼했어.\",\"body3\":\"그 사람만 보면 숨이 막히고 오늘 또 무슨 말을 해야 할지 불안해져.\",\"body4\":\"나는 문제가 생기면 대화로 합의점을 찾고 싶은데, 상대는 미안하단 말만 해.\",\"body5\":\"싸우는 레퍼토리가 항상 똑같고, 대화하다가 더 크게 싸우는 게 99.9프로야.\",\"body6\":\"내가 생각하는 대화는 서로 할 얘기를 하는 건데, 내가 잘못된 건가 싶어.\",\"body7\":\"아이랑 둘이 사는 게 더 마음 편할 것 같은데, 참고 잘 사는 방법 있을까?\",\"body8\":\"\"}",
+      "music_mood": "bright",
+      "image_allocation_mode": "2_per_image",
+      "text_position": "bottom",
+      "text_style": "background",
+      "title_area_mode": "keep",
+      "selected_bgm_path": "Lace Tablecloths - The Mini Vandals.mp3",
+      "use_test_files": false,
+      "uploaded_files": [
+        "1.png",
+        "2.png",
+        "3.png",
+        "4.png"
+      ],
+      "title_font": "IBMPlexSansKR-Bold.ttf",
+      "body_font": "BMYEONSUNG_otf.otf",
+      "voice_narration": "enabled"
+    },
+    "result": {
+      "video_path": "/zstus/backend/output_videos/reels_40265eb8.mp4",
+      "duration": "약 10-30초",
+      "completed_at": "2025-09-22T03:11:31.914843"
+    },
+    "error_message": null,
+    "retry_count": 0,
+    "max_retries": 2
+  },
+  "983fa4be-d415-4e64-ad79-57b07de0aa83": {
+    "job_id": "983fa4be-d415-4e64-ad79-57b07de0aa83",
+    "user_email": "xystus@gmail.com",
+    "status": "completed",
+    "created_at": "2025-09-22T15:15:31.327523",
+    "updated_at": "2025-09-22T15:16:56.630903",
+    "video_params": {
+      "content_data": "{\"title\":\"앞으로 어떻게 살아야 할까\",\"body1\":\"39살 미혼 여자고 가족 없이 혼자 지내고 있어.\",\"body2\":\"조금 모아둔 돈도 투자로 날려서 진짜 막막해.\",\"body3\":\"다니는 직장도 힘들어서 관두고 싶은데, 사람 때문에 너무 힘들어.\",\"body4\":\"일자리사이트 보면 괜찮은 곳은 100대1 넘고, 나이도 많아서 뽑아줄까 싶어.\",\"body5\":\"이 나이에 집도 차도 없으니 쉬지도 못하겠고 더 한심해.\",\"body6\":\"내가 봐도 너무 한심해서 멍하니 있으면 눈물이 나와.\",\"body7\":\"다른 내 또래들은 어떻게 살고 있는지, 나만 이런 건가 궁금해.\",\"body8\":\"\"}",
+      "music_mood": "sad",
+      "image_allocation_mode": "2_per_image",
+      "text_position": "bottom",
+      "text_style": "background",
+      "title_area_mode": "keep",
+      "selected_bgm_path": "Basement Apartment - Everet Almond.mp3",
+      "use_test_files": false,
+      "uploaded_files": [
+        "1.png",
+        "2.png",
+        "3.png",
+        "4.png"
+      ],
+      "title_font": "IBMPlexSansKR-Bold.ttf",
+      "body_font": "BMYEONSUNG_otf.otf",
+      "voice_narration": "enabled"
+    },
+    "result": {
+      "video_path": "/zstus/backend/output_videos/reels_26c6d96d.mp4",
+      "duration": "약 10-30초",
+      "completed_at": "2025-09-22T15:16:56.629436"
+    },
+    "error_message": null,
+    "retry_count": 0,
+    "max_retries": 2
+  },
+  "e1659b03-936a-4139-bb51-7eed8ffb77d0": {
+    "job_id": "e1659b03-936a-4139-bb51-7eed8ffb77d0",
+    "user_email": "xystus@gmail.com",
+    "status": "completed",
+    "created_at": "2025-09-22T22:56:20.833773",
+    "updated_at": "2025-09-22T22:58:01.241364",
+    "video_params": {
+      "content_data": "{\"title\":\"8년 연애, 결혼 왜 미루지?\",\"body1\":\"내 친구가 30대 후반에 8년째 연애 중인데, 남자가 계속 결혼을 미루고 있어.\",\"body2\":\"서울에 집 마련하고 안정적으로 시작하고 싶다는데, 신혼집처럼 꾸며놓고 동거하는데도 전세라서 아직 안 된대\",\"body3\":\"이제는 정말 모르겠다. 내 친구는 어릴 때부터 일찍 결혼하고 싶어 했거든.\",\"body4\":\"요즘 신혼부부들 대부분 월세나 전세로 시작하는데 꼭 자가여야만 결혼이 가능할까?\",\"body5\":\"남자가 결혼 생각 없는 거 뻔히 보이는데, 친구가 너무 순진한 것 같아.\",\"body6\":\"결혼 안 해도 그만이지만, 친구가 원하는 행복한 가정 이루길 바라는 마음이 너무 커.\",\"body7\":\"2년 안에 결혼한다는데 그냥 기다려야 할까, 아니면 그만두라고 얘기해야 할까?\",\"body8\":\"\"}",
+      "music_mood": "calm",
+      "image_allocation_mode": "2_per_image",
+      "text_position": "bottom",
+      "text_style": "background",
+      "title_area_mode": "keep",
+      "selected_bgm_path": "City lights - Patrick Patrikios.mp3",
+      "use_test_files": false,
+      "uploaded_files": [
+        "1.png",
+        "2.png",
+        "3.png",
+        "4.png"
+      ],
+      "title_font": "IBMPlexSansKR-Bold.ttf",
+      "body_font": "BMYEONSUNG_otf.otf",
+      "voice_narration": "enabled"
+    },
+    "result": {
+      "video_path": "/zstus/backend/output_videos/reels_b3516143.mp4",
+      "duration": "약 10-30초",
+      "completed_at": "2025-09-22T22:58:01.239787"
+    },
+    "error_message": null,
+    "retry_count": 0,
+    "max_retries": 2
+  },
+  "568ae496-3df9-4265-9c59-4e739a680cad": {
+    "job_id": "568ae496-3df9-4265-9c59-4e739a680cad",
+    "user_email": "xystus@gmail.com",
+    "status": "completed",
+    "created_at": "2025-09-22T23:01:34.933794",
+    "updated_at": "2025-09-22T23:02:56.110043",
+    "video_params": {
+      "content_data": "{\"title\":\"월요병, 왜 더 힘들까?\",\"body1\":\"월요일엔 왜 더 힘들까? 주말은 왜 이렇게 순식간에 지나갈까?\",\"body2\":\"오늘이 지나면 또 다시 시작되는 월요일이 찾아와.\",\"body3\":\"월요일만 되면 느끼는 월요병, 나만 그런 게 아니래.\",\"body4\":\"사람뿐만 아니라 반려견도 월요일엔 슬픔에 빠진다고 해.\",\"body5\":\"월요병의 주된 이유는 수면패턴이 달라지면서 생체리듬이 깨지기 때문이래.\",\"body6\":\"그럼 월요병을 극복할 방법은? 수면패턴을 일정하게 유지시켜봐!\",\"body7\":\"이번주부터 한번 시도해보는 건 어때? 건강하게 지내는게 최고야!\",\"body8\":\"\"}",
+      "music_mood": "bright",
+      "image_allocation_mode": "2_per_image",
+      "text_position": "bottom",
+      "text_style": "background",
+      "title_area_mode": "keep",
+      "selected_bgm_path": "Fun Vibe - Dyalla.mp3",
+      "use_test_files": false,
+      "uploaded_files": [
+        "1.png",
+        "2.png",
+        "3.png",
+        "4.mp4"
+      ],
+      "title_font": "IBMPlexSansKR-Bold.ttf",
+      "body_font": "PretendardVariable.ttf",
+      "voice_narration": "enabled"
+    },
+    "result": {
+      "video_path": "/zstus/backend/output_videos/reels_31c12a30.mp4",
+      "duration": "약 10-30초",
+      "completed_at": "2025-09-22T23:02:56.106023"
+    },
+    "error_message": null,
+    "retry_count": 0,
+    "max_retries": 2
+  },
+  "a91a531d-48c1-4b93-8fce-7a67be9e655c": {
+    "job_id": "a91a531d-48c1-4b93-8fce-7a67be9e655c",
+    "user_email": "xystus@gmail.com",
+    "status": "completed",
+    "created_at": "2025-09-23T03:14:56.194838",
+    "updated_at": "2025-09-23T03:16:06.241926",
+    "video_params": {
+      "content_data": "{\"title\":\"스텔라 블레이드 콜라보?\",\"body1\":\"스텔라 블레이드가 뭔가 공개할 거라고 암시했어.\",\"body2\":\"Shift Up은 이번 달 초 파생작 계획도 밝혔지.\",\"body3\":\"공포 테마라니, 괜히 기대되고 궁금해지는 분위기야.\",\"body4\":\"두 게임 다 다른 작품과 콜라보한 적 있어서 가능성 충분해.\",\"body5\":\"명확한 저작권 고지는 없지만, 공식 SNS에 사일런트 힐 느낌 이미지를 올렸\",\"body6\":\"진짜 콜라보 이벤트가 나오는 걸까 궁금해.\",\"body7\":\"단순 기간 한정 이벤트일 수도 있고, 너는 어떤 쪽이 더 기대돼?\",\"body8\":\"\"}",
+      "music_mood": "calm",
+      "image_allocation_mode": "2_per_image",
+      "text_position": "bottom",
+      "text_style": "background",
+      "title_area_mode": "keep",
+      "selected_bgm_path": "Twinkle - The Grey Room _ Density & Time.mp3",
+      "use_test_files": false,
+      "uploaded_files": [
+        "1.png",
+        "2.png",
+        "3.png",
+        "4.png"
+      ],
+      "title_font": "IBMPlexSansKR-Bold.ttf",
+      "body_font": "BMYEONSUNG_otf.otf",
+      "voice_narration": "enabled"
+    },
+    "result": {
+      "video_path": "/zstus/backend/output_videos/reels_45b033fe.mp4",
+      "duration": "약 10-30초",
+      "completed_at": "2025-09-23T03:16:06.240350"
+    },
+    "error_message": null,
+    "retry_count": 0,
+    "max_retries": 2
+  },
+  "6469662d-29ea-4b04-abf0-9defcf56cba2": {
+    "job_id": "6469662d-29ea-4b04-abf0-9defcf56cba2",
+    "user_email": "xystus@gmail.com",
+    "status": "completed",
+    "created_at": "2025-09-23T23:37:01.494583",
+    "updated_at": "2025-09-23T23:38:10.753277",
+    "video_params": {
+      "content_data": "{\"title\":\"나이가 벼슬이야?\",\"body1\":\"길거리 다니면서 담배피우는게 불법인데도 그런 사람들 꼭 있어. \",\"body2\":\"그런데 정말 백프로 나이든 할아버지, 아저씨들이야. \",\"body3\":\"갈라치기 하려는게 아니라 너무 펙트인게 놀라워서 말하는 거야\",\"body4\":\"길 다니는데 피할 수도 없이 담배연기를 마시고 있자니 정말 화가나서 그래. \",\"body5\":\"대체 그러는 이유가 뭐야? 법적으로 피울 수 있는 곳들이 있잖아. \",\"body6\":\"다른 사람들은 바보라서 그런 곳에서만 피우는 거야?\",\"body7\":\"이런 경험은 나만 하는 건지 궁금해. \",\"body8\":\"\"}",
+      "music_mood": "suspense",
+      "image_allocation_mode": "2_per_image",
+      "text_position": "bottom",
+      "text_style": "background",
+      "title_area_mode": "keep",
+      "selected_bgm_path": "Yacoby - Schwartzy.mp3",
+      "use_test_files": false,
+      "uploaded_files": [
+        "1.png",
+        "2.png",
+        "3.png",
+        "4.png"
+      ],
+      "title_font": "IBMPlexSansKR-Bold.ttf",
+      "body_font": "BMYEONSUNG_otf.otf",
+      "voice_narration": "enabled"
+    },
+    "result": {
+      "video_path": "/zstus/backend/output_videos/reels_92a3bb87.mp4",
+      "duration": "약 10-30초",
+      "completed_at": "2025-09-23T23:38:10.751627"
+    },
+    "error_message": null,
+    "retry_count": 0,
+    "max_retries": 2
+  },
+  "1f06c6ff-9643-4dae-8d5e-5e94005502ee": {
+    "job_id": "1f06c6ff-9643-4dae-8d5e-5e94005502ee",
+    "user_email": "xystus@gmail.com",
+    "status": "completed",
+    "created_at": "2025-09-24T03:25:08.546124",
+    "updated_at": "2025-09-24T03:26:27.691463",
+    "video_params": {
+      "content_data": "{\"title\":\"이길 수가 없다\",\"body1\":\"“이길 수가 없다.” 이 대사가 감탄처럼 튀어나오지 않냐?\",\"body2\":\"박지현, 은중과 상연에서 연기력 제대로 증명했어.\",\"body3\":\"모든 나이대와 감정선을 유려하게 펼치는 모습, 진짜 감탄만 나와.\",\"body4\":\"상연은 늘 결핍돼 있고, 엄마는 오빠만 칭찬하고 친구들은 은중만 좋아해.\",\"body5\":\"절교 후 같은 직장에서 파국을 택하는 상연, 진짜 처연했지.\",\"body6\":\"은중 시선에선 상연이 재능도, 마음도 다 가졌으니 자조만 남아.\",\"body7\":\"네가 날 받아주는구나, 끝내 네가… 이 감정, 너라면 이겨낼 수 있겠어?\",\"body8\":\"\"}",
+      "music_mood": "bright",
+      "image_allocation_mode": "2_per_image",
+      "text_position": "bottom",
+      "text_style": "background",
+      "title_area_mode": "keep",
+      "selected_bgm_path": "Treasure Hunt - Jeremy Korpas.mp3",
+      "use_test_files": false,
+      "uploaded_files": [
+        "1.png",
+        "2.png",
+        "3.png",
+        "4.png"
+      ],
+      "title_font": "IBMPlexSansKR-Bold.ttf",
+      "body_font": "BMYEONSUNG_otf.otf",
+      "voice_narration": "enabled"
+    },
+    "result": {
+      "video_path": "/zstus/backend/output_videos/reels_bb41c2a2.mp4",
+      "duration": "약 10-30초",
+      "completed_at": "2025-09-24T03:26:27.689721"
+    },
+    "error_message": null,
+    "retry_count": 0,
+    "max_retries": 2
+  },
+  "4dab3ff4-c524-4435-a98d-082e6ac8f3c6": {
+    "job_id": "4dab3ff4-c524-4435-a98d-082e6ac8f3c6",
+    "user_email": "xystus@gmail.com",
+    "status": "completed",
+    "created_at": "2025-09-24T11:36:10.720533",
+    "updated_at": "2025-09-24T11:37:41.459963",
+    "video_params": {
+      "content_data": "{\"title\":\"선배의 자랑, 나만 불편해?\",\"body1\":\"선배는 분당 수내동의 큰평수 집에 살아, 대출도 없대.\",\"body2\":\"부동산 빼고 현금성 자산이 50억 정도 된다고 하더라.\",\"body3\":\"직접 증권사 앱 켜서 본인 자산을 보여주더라고.\",\"body4\":\"상속 아니고 선배가 직접 모은 돈이라는데, 좀 씁쓸했어.\",\"body5\":\"선배 자랑질 쿨하게 넘기려 해도 쉽지 않더라.\",\"body6\":\"민생지원금 못 받는다고 푸념할 땐 짜증나서, 일정 핑계로 자리를 피했지.\",\"body7\":\"재산 많아지면 세상 보는 뷰가 달라질까? 내가 쪼잔한건가?\",\"body8\":\"\"}",
+      "music_mood": "suspense",
+      "image_allocation_mode": "2_per_image",
+      "text_position": "bottom",
+      "text_style": "background",
+      "title_area_mode": "keep",
+      "selected_bgm_path": "Duty Calls - Rod Kim.mp3",
+      "use_test_files": false,
+      "uploaded_files": [
+        "1.png",
+        "2.mp4",
+        "3.mp4",
+        "4.mp4"
+      ],
+      "title_font": "IBMPlexSansKR-Bold.ttf",
+      "body_font": "BMYEONSUNG_otf.otf",
+      "voice_narration": "enabled"
+    },
+    "result": {
+      "video_path": "/zstus/backend/output_videos/reels_fb793466.mp4",
+      "duration": "약 10-30초",
+      "completed_at": "2025-09-24T11:37:41.458313"
+    },
+    "error_message": null,
+    "retry_count": 0,
+    "max_retries": 2
+  },
+  "117da431-2903-46c0-935f-1a98d81061e4": {
+    "job_id": "117da431-2903-46c0-935f-1a98d81061e4",
+    "user_email": "xystus@gmail.com",
+    "status": "completed",
+    "created_at": "2025-09-24T12:00:39.314057",
+    "updated_at": "2025-09-24T12:03:28.160549",
+    "video_params": {
+      "content_data": "{\"title\":\"가을을 타게되는 과학적 이유 알아?\",\"body1\":\"'가을 탄다'라는 말, 그냥 하는 말일까? 과학적 근거가 있을까?\",\"body2\":\"빨리 알려줄께. 세로토닌은 기분이 좋아지게 하는 호르몬인데, 햇빛을 받았을 때 분비가 왕성해져.\",\"body3\":\"가을이 되면 일조량이 줄잖아. 그래서 세로토닌도 줄어 우울해지는거야. 하나 더.\",\"body4\":\"사람의 몸은 기온이 올라갈 때 자극을 받아. 그래서 마음이 들뜨고 활기차져\",\"body5\":\"가을에 느끼는 무기력함, 온도가 낮기 때문이기도 한 거야.\",\"body6\":\"이런 상태를 환절기 우울증이라고 해. 직장인 82%가 이것을 경험한다?\",\"body7\":\"그러니 우울해도 너무 걱정말고, 넌 정상이니 가을 감성을 만끽해보는 건 어때?\",\"body8\":\"\"}",
+      "music_mood": "bright",
+      "image_allocation_mode": "2_per_image",
+      "text_position": "bottom",
+      "text_style": "background",
+      "title_area_mode": "keep",
+      "selected_bgm_path": "Fun Vibe - Dyalla.mp3",
+      "use_test_files": false,
+      "uploaded_files": [
+        "1.mp4",
+        "2.mp4",
+        "3.mp4",
+        "4.mp4"
+      ],
+      "title_font": "IBMPlexSansKR-Bold.ttf",
+      "body_font": "BMYEONSUNG_otf.otf",
+      "voice_narration": "enabled"
+    },
+    "result": {
+      "video_path": "/zstus/backend/output_videos/reels_d11ac68f.mp4",
+      "duration": "약 10-30초",
+      "completed_at": "2025-09-24T12:03:28.158829"
+    },
+    "error_message": null,
+    "retry_count": 0,
+    "max_retries": 2
+  },
+  "7830daa0-4dd2-442d-ad74-34c679f902cb": {
+    "job_id": "7830daa0-4dd2-442d-ad74-34c679f902cb",
+    "user_email": "xystus@gmail.com",
+    "status": "completed",
+    "created_at": "2025-09-25T04:26:53.779587",
+    "updated_at": "2025-09-25T04:28:27.683995",
+    "video_params": {
+      "content_data": "{\"title\":\"금융당국 개편, 진짜 멈췄나\",\"body1\":\"금융당국 개편, 여기서 진짜 멈춘 걸까? 뭔가 더 있는 거 아냐?\",\"body2\":\"25일 당정대가 금융당국 개편을 원점에서 검토하기로 했대.\",\"body3\":\"금융정책·감독 기능이 4개 기관으로 분산되면 효율성 떨어진다는 지적 계속됐지.\",\"body4\":\"실무자들 반발도 거셌고, 공공기관 지정은 그대로 추진한대.\",\"body5\":\"정부조직법 개정안 강행 얘기까지 나오면서 논란이 더 커지고 있어.\",\"body6\":\"이렇게 결정해도 괜찮은 걸까? 뭔가 남은 게 있는 건 아닐까?\",\"body7\":\"금융위-금감원 체제 유지, 너는 어떻게 생각해?\",\"body8\":\"\"}",
+      "music_mood": "bright",
+      "image_allocation_mode": "2_per_image",
+      "text_position": "bottom",
+      "text_style": "background",
+      "title_area_mode": "keep",
+      "selected_bgm_path": "Fun Vibe - Dyalla.mp3",
+      "use_test_files": false,
+      "uploaded_files": [
+        "1.png",
+        "2.png",
+        "3.png",
+        "4.mp4"
+      ],
+      "title_font": "IBMPlexSansKR-Bold.ttf",
+      "body_font": "BMYEONSUNG_otf.otf",
+      "voice_narration": "enabled"
+    },
+    "result": {
+      "video_path": "/zstus/backend/output_videos/reels_ef8791db.mp4",
+      "duration": "약 10-30초",
+      "completed_at": "2025-09-25T04:28:27.682189"
+    },
+    "error_message": null,
+    "retry_count": 0,
+    "max_retries": 2
+  },
+  "6dd8f8c1-e8e1-4f6b-b0cd-6fde7c7be3e1": {
+    "job_id": "6dd8f8c1-e8e1-4f6b-b0cd-6fde7c7be3e1",
+    "user_email": "xystus@gmail.com",
+    "status": "completed",
+    "created_at": "2025-09-25T11:51:15.030439",
+    "updated_at": "2025-09-25T11:54:04.845015",
+    "video_params": {
+      "content_data": "{\"title\":\"노안은 언제까지 서러워야 해?\",\"body1\":\"나는 여자인데 노안이라는 이야기를 자주 들어. 들을 때마다 웃어보이지만 진짜 등에서는 눔물이 막 남.\",\"body2\":\"열여덟살 때 청소년 카드로 지하철 타는데 역무원한데 맨날 왜 청소년카드 쓰냐며 잡힘. 어제도 잡더니 새 대가리인지..\",\"body3\":\"스무살 방학 때 호프집 알바를 하고 알바끼리 첫 회식을 했는데 온지 일주일 된 동갑여자애가 자기 술 잘마신다고 떠드는거야\",\"body4\":\"그러더니 그대로 꽐라가 돼버려서 회식 중간에 일부러 그 애 챙겨서 집에 데려다 줬거든.\",\"body5\":\"근데 그 애 부모들이 한참 언니가 되어선 어린애를 이렇게까지 술쳐맥이냐며 진짜 나한테 ㅈㄹㅈㄹ 난리를 치는거야. 너무 억울해서...\",\"body6\":\"짜증나서 저 애랑 동갑이고, 지가 술게임 하자고 해서 우리 하기 싫은거 했는데 저렇게 된거라고 했더니, \\\"진짜 동갑이니?\\\" 하는거야. \",\"body7\":\"그게 중요한거니? 지금 얼굴 나이가 되어야 벗어날 수 있다는 말이 진짜니? 인생이 오지게 힘들어...\",\"body8\":\"\"}",
+      "music_mood": "bright",
+      "image_allocation_mode": "2_per_image",
+      "text_position": "bottom",
+      "text_style": "outline",
+      "title_area_mode": "keep",
+      "selected_bgm_path": "Excess - Freedom Trail Studio.mp3",
+      "use_test_files": false,
+      "uploaded_files": [
+        "1.mp4",
+        "2.png",
+        "3.mp4",
+        "4.mp4"
+      ],
+      "title_font": "SeoulAlrim-ExtraBold.otf",
+      "body_font": "BMYEONSUNG_otf.otf",
+      "voice_narration": "enabled"
+    },
+    "result": {
+      "video_path": "/zstus/backend/output_videos/reels_82722d64.mp4",
+      "duration": "약 10-30초",
+      "completed_at": "2025-09-25T11:54:04.843196"
+    },
+    "error_message": null,
+    "retry_count": 0,
+    "max_retries": 2
+  },
+  "771a7414-6dda-4410-b706-3f5d680e841b": {
+    "job_id": "771a7414-6dda-4410-b706-3f5d680e841b",
+    "user_email": "xystus@gmail.com",
+    "status": "completed",
+    "created_at": "2025-09-25T13:35:49.042981",
+    "updated_at": "2025-09-25T13:38:08.119897",
+    "video_params": {
+      "content_data": "{\"title\":\"결혼 5개월 전, 이걸 봐버렸다…\",\"body1\":\"펜션에서 컵라면 먹으려다, 커피포트 물이 튀어 발등 화상! \",\"body2\":\"너무 아파서 주저앉았는데… 예비신랑? 그냥 '헐' 한마디 하고 소파 가서 유튜브 틀음…\",\"body3\":\"심지어 '괜찮아?' 이 한마디도 없음. 동태눈으로 빤히 쳐다본 게 다임\",\"body4\":\"이전에도 공감 제로, 내 얘기하면 무반응, 웃겨도 정색… 이번엔 진짜 터짐.\",\"body5\":\"따지니까 '내가 괜찮냐고 물으면 낫냐? 여자들은 너무 기대가 크다' 이딴 소리\",\"body6\":\"결혼 약속하니까 이제 보인다. 이기적이고 공감 없는 남자라는 거.\",\"body7\":\"백년해로? 아니, 예식장 취소부터 검색 중ㅋㅋ 내가 너무한 걸까? \",\"body8\":\"\"}",
+      "music_mood": "bright",
+      "image_allocation_mode": "2_per_image",
+      "text_position": "bottom",
+      "text_style": "background",
+      "title_area_mode": "keep",
+      "selected_bgm_path": "Lace Tablecloths - The Mini Vandals.mp3",
+      "use_test_files": false,
+      "uploaded_files": [
+        "1.mp4",
+        "2.mp4",
+        "3.mp4",
+        "4.png"
+      ],
+      "title_font": "SeoulNamsanEB.ttf",
+      "body_font": "SeoulHangangEB.ttf",
+      "voice_narration": "enabled"
+    },
+    "result": {
+      "video_path": "/zstus/backend/output_videos/reels_e6f776c5.mp4",
+      "duration": "약 10-30초",
+      "completed_at": "2025-09-25T13:38:08.118074"
+    },
+    "error_message": null,
+    "retry_count": 0,
+    "max_retries": 2
   }
 }

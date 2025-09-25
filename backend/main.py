@@ -59,6 +59,16 @@ except ImportError as e:
     email_service = None
     JOB_QUEUE_AVAILABLE = False
 
+# Job 로깅 시스템 import
+try:
+    from job_logger import job_logger
+    JOB_LOGGER_AVAILABLE = True
+    print("✅ Job 로깅 시스템 로드 성공")
+except ImportError as e:
+    print(f"⚠️ Job 로깅 시스템 로드 실패: {e}")
+    job_logger = None
+    JOB_LOGGER_AVAILABLE = False
+
 # .env 파일 로드
 load_dotenv()
 
@@ -2221,6 +2231,67 @@ async def generate_video_async(
         # 3. 작업을 큐에 추가
         job_id = job_queue.add_job(user_email, video_params)
 
+        # 4. Job 로깅 시스템에 로그 생성
+        if JOB_LOGGER_AVAILABLE:
+            try:
+                # JSON 파싱
+                reels_content_dict = json.loads(content_data)
+
+                # 먼저 Job 로그 생성 (uploaded_files는 나중에 업데이트)
+                job_logger.create_job_log(
+                    job_id=job_id,
+                    user_email=user_email,
+                    reels_content=reels_content_dict,
+                    music_mood=music_mood,
+                    text_position=text_position,
+                    image_allocation_mode=image_allocation_mode,
+                    metadata={}  # 일단 빈 metadata로 생성
+                )
+
+                # 미디어 파일들을 assets 폴더에 저장하면서 정보 수집
+                saved_assets_info = []
+                for i, filename in enumerate(saved_files, 1):
+                    upload_file_path = os.path.join(UPLOAD_FOLDER, filename)
+                    if os.path.exists(upload_file_path):
+                        # 파일 타입 확인 (확장자 기반)
+                        file_ext = filename.split('.')[-1].lower()
+                        video_extensions = ['mp4', 'mov', 'avi', 'webm']
+                        file_type = 'video' if file_ext in video_extensions else 'image'
+
+                        # assets 폴더에 저장
+                        asset_path = job_logger.save_media_file(
+                            job_id=job_id,
+                            original_file_path=upload_file_path,
+                            original_filename=filename,
+                            file_type=file_type,
+                            sequence_number=i
+                        )
+
+                        # assets 정보 수집
+                        saved_assets_info.append({
+                            'sequence': i,
+                            'original_filename': filename,
+                            'asset_path': asset_path,
+                            'file_type': file_type,
+                            'file_size': os.path.getsize(asset_path) if os.path.exists(asset_path) else 0
+                        })
+
+                # metadata에 assets 정보와 기타 설정 포함
+                metadata = {
+                    'uploaded_files': saved_assets_info,  # assets 저장 후 정보
+                    'title_font': title_font,
+                    'body_font': body_font,
+                    'voice_narration': voice_narration,
+                    'title_area_mode': title_area_mode
+                }
+
+                # metadata 업데이트
+                job_logger.update_job_metadata(job_id, metadata)
+
+                logger.info(f"✅ Job 로깅 시스템에 기록 완료: {job_id}")
+            except Exception as log_error:
+                logger.error(f"⚠️ Job 로깅 실패 (작업은 계속 진행): {log_error}")
+
         logger.info(f"✅ 작업 큐에 추가 완료: {job_id}")
 
         return JSONResponse(
@@ -2248,14 +2319,30 @@ async def get_job_status(job_id: str):
         if not job_data:
             raise HTTPException(status_code=404, detail="작업을 찾을 수 없습니다.")
 
-        return JobStatusResponse(
-            job_id=job_data['job_id'],
-            status=job_data['status'],
-            created_at=job_data['created_at'],
-            updated_at=job_data['updated_at'],
-            result=job_data.get('result'),
-            error_message=job_data.get('error_message')
-        )
+        # Job 로깅 정보도 함께 반환
+        response_data = {
+            "job_id": job_data['job_id'],
+            "status": job_data['status'],
+            "created_at": job_data['created_at'],
+            "updated_at": job_data['updated_at'],
+            "result": job_data.get('result'),
+            "error_message": job_data.get('error_message')
+        }
+
+        # 로깅 시스템에서 추가 정보 조회 (가능한 경우)
+        if JOB_LOGGER_AVAILABLE:
+            try:
+                job_log_info = job_logger.get_job_info(job_id)
+                if job_log_info:
+                    response_data["detailed_info"] = {
+                        "media_files": job_log_info.get('media_files', []),
+                        "reels_content": job_log_info.get('reels_content', {}),
+                        "metadata": job_log_info.get('metadata', {})
+                    }
+            except Exception as log_error:
+                logger.warning(f"Job 로깅 정보 조회 실패: {log_error}")
+
+        return JobStatusResponse(**response_data)
 
     except HTTPException:
         raise
@@ -2419,6 +2506,54 @@ async def get_queue_stats():
     except Exception as e:
         logger.error(f"❌ 큐 통계 조회 실패: {e}")
         raise HTTPException(status_code=500, detail="큐 통계 조회 중 오류가 발생했습니다.")
+
+# Job 로깅 시스템 API 엔드포인트들
+@app.get("/job-logs/{job_id}")
+async def get_job_logs(job_id: str):
+    """특정 Job의 상세 로그 조회"""
+    try:
+        if not JOB_LOGGER_AVAILABLE:
+            raise HTTPException(status_code=500, detail="Job 로깅 시스템이 사용 불가능합니다.")
+
+        job_info = job_logger.get_job_info(job_id)
+        if not job_info:
+            raise HTTPException(status_code=404, detail="Job 로그를 찾을 수 없습니다.")
+
+        return {"status": "success", "job_info": job_info}
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"❌ Job 로그 조회 실패: {e}")
+        raise HTTPException(status_code=500, detail="Job 로그 조회 중 오류가 발생했습니다.")
+
+@app.get("/user-jobs/{user_email}")
+async def get_user_jobs(user_email: str, limit: int = 20):
+    """사용자별 Job 로그 목록 조회"""
+    try:
+        if not JOB_LOGGER_AVAILABLE:
+            raise HTTPException(status_code=500, detail="Job 로깅 시스템이 사용 불가능합니다.")
+
+        jobs = job_logger.get_user_jobs(user_email, limit)
+        return {"status": "success", "jobs": jobs, "total": len(jobs)}
+
+    except Exception as e:
+        logger.error(f"❌ 사용자 Job 목록 조회 실패: {e}")
+        raise HTTPException(status_code=500, detail="사용자 Job 목록 조회 중 오류가 발생했습니다.")
+
+@app.get("/job-statistics")
+async def get_job_statistics():
+    """Job 로그 통계 정보 조회 (관리용)"""
+    try:
+        if not JOB_LOGGER_AVAILABLE:
+            raise HTTPException(status_code=500, detail="Job 로깅 시스템이 사용 불가능합니다.")
+
+        stats = job_logger.get_job_statistics()
+        return {"status": "success", "statistics": stats}
+
+    except Exception as e:
+        logger.error(f"❌ Job 통계 조회 실패: {e}")
+        raise HTTPException(status_code=500, detail="Job 통계 조회 중 오류가 발생했습니다.")
 
 # 정적 파일 서빙
 app.mount("/bgm", StaticFiles(directory=BGM_FOLDER), name="bgm")
