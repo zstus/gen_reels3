@@ -50,6 +50,14 @@ const TextImagePairManager: React.FC<TextImagePairManagerProps> = ({
   const [customPrompts, setCustomPrompts] = useState<{ [key: number]: CustomPrompt }>({});
   const [promptsExpanded, setPromptsExpanded] = useState<{ [key: number]: boolean }>({});
 
+  // 최신 images 상태를 추적하기 위한 ref
+  const imagesRef = useRef<File[]>(images);
+
+  // images prop이 변경될 때마다 ref 업데이트
+  useEffect(() => {
+    imagesRef.current = images;
+  }, [images]);
+
   // 커스텀 프롬프트 관리 함수들 (useCallback으로 최적화)
   const updateCustomPrompt = useCallback((imageIndex: number, prompt: string, enabled: boolean) => {
     setCustomPrompts(prev => {
@@ -174,14 +182,14 @@ const TextImagePairManager: React.FC<TextImagePairManagerProps> = ({
     if (acceptedFiles.length === 0) return;
 
     const file = acceptedFiles[0];
-    
+
     // 기존 에러 상태 제거
     setUploadErrors(prev => {
       const newErrors = { ...prev };
       delete newErrors[imageIndex];
       return newErrors;
     });
-    
+
     // 파일 유효성 검증 (모드에 따라 다른 제한)
     const maxSize = imageUploadMode === 'single-for-all' ? 40 * 1024 * 1024 : 10 * 1024 * 1024;
     const maxSizeText = imageUploadMode === 'single-for-all' ? '40MB' : '10MB';
@@ -193,7 +201,7 @@ const TextImagePairManager: React.FC<TextImagePairManagerProps> = ({
 
     const isImage = file.type.startsWith('image/');
     const isVideo = file.type.startsWith('video/');
-    
+
     if (!isImage && !isVideo) {
       setUploadErrors(prev => ({ ...prev, [imageIndex]: '이미지 또는 비디오 파일만 업로드 가능합니다' }));
       return;
@@ -205,21 +213,25 @@ const TextImagePairManager: React.FC<TextImagePairManagerProps> = ({
     (file as any).__imageIndex = imageIndex;
     console.log('🏷️ 파일에 __imageIndex 설정:', imageIndex);
 
+    // 최신 images 상태를 가져와서 업데이트
+    const currentImages = imagesRef.current;
+    console.log('🔄 업데이트 전 currentImages (ref):', currentImages.map(img => `${img.name}(index:${(img as any).__imageIndex})`));
+
     // 현재 images에서 해당 imageIndex를 가진 파일 제거하고 새 파일 추가
-    const newImages = images.filter(img => (img as any).__imageIndex !== imageIndex);
+    const newImages = currentImages.filter(img => (img as any).__imageIndex !== imageIndex);
     newImages.push(file);
-    
+
     // imageIndex 순으로 정렬
     newImages.sort((a, b) => {
       const indexA = (a as any).__imageIndex ?? 0;
       const indexB = (b as any).__imageIndex ?? 0;
       return indexA - indexB;
     });
-    
+
     console.log('📊 업데이트된 images 배열:', newImages.map(img => `${img.name}(index:${(img as any).__imageIndex})`));
-    
+
     onChange(newImages, imageUploadMode);
-  }, [images, imageUploadMode, content, onChange]);
+  }, [imageUploadMode, onChange]); // images 의존성 제거
 
   // 개별 이미지 자동 생성
   const handleIndividualGenerate = async (imageIndex: number, textContent: string, customPrompt?: string, useCustomPrompt?: boolean) => {
@@ -300,9 +312,10 @@ const TextImagePairManager: React.FC<TextImagePairManagerProps> = ({
   // 개별 이미지 삭제 (개선됨)
   const handleRemoveImage = (imageIndex: number) => {
     console.log('🗑️ 이미지 삭제 요청 - imageIndex:', imageIndex);
-    
-    // 지정된 imageIndex를 가진 파일을 제거
-    const newImages = images.filter(img => (img as any).__imageIndex !== imageIndex);
+
+    // 최신 images 상태를 가져와서 삭제
+    const currentImages = imagesRef.current;
+    const newImages = currentImages.filter(img => (img as any).__imageIndex !== imageIndex);
     
     // 해당 인덱스의 에러 상태도 함께 제거
     setUploadErrors(prev => {

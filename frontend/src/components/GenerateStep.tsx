@@ -178,8 +178,35 @@ const GenerateStep: React.FC<GenerateStepProps> = ({
     }
   };
 
-  // 자동 미리보기 생성은 제거하고, 수동으로만 미리보기 생성하도록 변경
-  // useEffect로 인한 무한 루프 방지
+  // 자동 미리보기 생성
+  useEffect(() => {
+    // 필수 조건 확인: 제목, 첫 번째 대사, 이미지가 있을 때만 자동 생성
+    // 폰트 로딩이 완료된 후에만 실행
+    if (projectData.content.title &&
+        projectData.content.body1 &&
+        projectData.images.length > 0 &&
+        !loadingFonts &&
+        availableFonts.length > 0) {
+
+      // 약간의 지연을 두어 컴포넌트가 완전히 마운트된 후 실행
+      const timer = setTimeout(() => {
+        generatePreview();
+      }, 500);
+
+      return () => clearTimeout(timer);
+    }
+  }, [
+    projectData.content.title,
+    projectData.content.body1,
+    projectData.images,
+    textPosition,
+    textStyle,
+    titleAreaMode,
+    titleFont,
+    bodyFont,
+    loadingFonts,
+    availableFonts
+  ]);
 
   // 배치 영상 생성 시작 (비동기)
   const startAsyncGeneration = async () => {
@@ -388,17 +415,39 @@ const GenerateStep: React.FC<GenerateStepProps> = ({
               <CardContent>
                 <Box display="flex" alignItems="center" sx={{ mb: 1 }}>
                   <TextFields color="primary" sx={{ mr: 1 }} />
-                  <Typography variant="subtitle2">콘텐츠</Typography>
+                  <Typography variant="subtitle2">제목/대사</Typography>
                 </Box>
-                <Typography variant="body2" color="text.secondary">
-                  제목: {projectData.content.title}
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                  {summary.scriptCount}개 대사 ({summary.totalChars}자) • 예상 길이: 약 {summary.estimatedDuration}초
                 </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  대사: {summary.scriptCount}개 ({summary.totalChars}자)
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  예상 길이: 약 {summary.estimatedDuration}초
-                </Typography>
+                <Box sx={{
+                  mt: 1,
+                  p: 1,
+                  bgcolor: 'grey.50',
+                  borderRadius: 1,
+                  border: '1px solid',
+                  borderColor: 'grey.200',
+                  maxHeight: 120,
+                  overflow: 'auto'
+                }}>
+                  <Typography variant="caption" component="pre" sx={{
+                    fontFamily: 'monospace',
+                    whiteSpace: 'pre-wrap',
+                    wordBreak: 'break-word',
+                    fontSize: '0.7rem',
+                    lineHeight: 1.3
+                  }}>
+                    {JSON.stringify(
+                      Object.fromEntries(
+                        Object.entries(projectData.content).filter(([key, value]) =>
+                          key === 'title' || (typeof value === 'string' && value.trim() !== '')
+                        )
+                      ),
+                      null,
+                      2
+                    )}
+                  </Typography>
+                </Box>
               </CardContent>
             </Card>
 
@@ -455,7 +504,7 @@ const GenerateStep: React.FC<GenerateStepProps> = ({
             </Typography>
 
             {/* 폰트 설정 */}
-            <Accordion sx={{ mb: 2 }}>
+            <Accordion defaultExpanded sx={{ mb: 2 }}>
               <AccordionSummary expandIcon={<ExpandMore />}>
                 <Typography variant="subtitle2">
                   <Style sx={{ mr: 1, verticalAlign: 'middle' }} />
@@ -517,7 +566,7 @@ const GenerateStep: React.FC<GenerateStepProps> = ({
             </Accordion>
 
             {/* 텍스트 위치 및 스타일 설정 */}
-            <Accordion sx={{ mb: 2 }}>
+            <Accordion defaultExpanded sx={{ mb: 2 }}>
               <AccordionSummary expandIcon={<ExpandMore />}>
                 <Typography variant="subtitle2">
                   <FormatColorText sx={{ mr: 1, verticalAlign: 'middle' }} />
@@ -595,7 +644,17 @@ const GenerateStep: React.FC<GenerateStepProps> = ({
                       <FormControlLabel
                         value="background"
                         control={<Radio size="small" />}
-                        label="반투명 배경"
+                        label="검은색 반투명 배경"
+                      />
+                      <FormControlLabel
+                        value="white_background"
+                        control={<Radio size="small" />}
+                        label="흰색 반투명 배경"
+                      />
+                      <FormControlLabel
+                        value="black_text_white_outline"
+                        control={<Radio size="small" />}
+                        label="검은색 글씨 + 흰색 외곽선"
                       />
                     </RadioGroup>
                   </FormControl>
@@ -634,38 +693,60 @@ const GenerateStep: React.FC<GenerateStepProps> = ({
               <Button
                 variant="outlined"
                 size="small"
-                startIcon={loadingPreview ? <CircularProgress size={16} /> : <Visibility />}
+                startIcon={loadingPreview ? <CircularProgress size={16} /> : <Refresh />}
                 onClick={generatePreview}
                 disabled={loadingPreview || !projectData.content.title || !projectData.content.body1 || projectData.images.length === 0}
                 sx={{ mb: 2 }}
               >
-                {loadingPreview ? '생성 중...' : '미리보기 생성'}
+                {loadingPreview ? '생성 중...' : '미리보기 새로고침'}
               </Button>
 
-              {previewImage && (
-                <Box sx={{
-                  mt: 2,
-                  border: '1px solid',
-                  borderColor: 'divider',
-                  borderRadius: 1,
-                  overflow: 'hidden',
-                  maxWidth: 200,
-                  mx: 'auto'
-                }}>
-                  <img
-                    src={previewImage}
-                    alt="미리보기"
-                    style={{
-                      width: '100%',
-                      height: 'auto',
-                      display: 'block'
-                    }}
-                  />
-                  <Typography variant="caption" color="text.secondary" sx={{ p: 1, display: 'block' }}>
-                    미리보기 (타이틀 + 첫 번째 대사)
-                  </Typography>
-                </Box>
-              )}
+              {/* 미리보기 이미지 또는 플레이스홀더 */}
+              <Box sx={{
+                mt: 2,
+                border: '1px solid',
+                borderColor: 'divider',
+                borderRadius: 1,
+                overflow: 'hidden',
+                maxWidth: 200,
+                mx: 'auto',
+                minHeight: 150,
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'center',
+                alignItems: 'center'
+              }}>
+                {loadingPreview ? (
+                  <>
+                    <CircularProgress size={40} sx={{ mb: 2 }} />
+                    <Typography variant="caption" color="text.secondary">
+                      미리보기 생성 중...
+                    </Typography>
+                  </>
+                ) : previewImage ? (
+                  <>
+                    <img
+                      src={previewImage}
+                      alt="미리보기"
+                      style={{
+                        width: '100%',
+                        height: 'auto',
+                        display: 'block'
+                      }}
+                    />
+                    <Typography variant="caption" color="text.secondary" sx={{ p: 1, display: 'block' }}>
+                      미리보기 (타이틀 + 첫 번째 대사)
+                    </Typography>
+                  </>
+                ) : (
+                  <>
+                    <Visibility sx={{ fontSize: 40, color: 'text.secondary', mb: 1 }} />
+                    <Typography variant="caption" color="text.secondary" align="center">
+                      미리보기 이미지가<br/>자동으로 생성됩니다
+                    </Typography>
+                  </>
+                )}
+              </Box>
             </Box>
           </Paper>
 

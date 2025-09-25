@@ -510,14 +510,20 @@ async def generate_video(
             print("⚠️ BGM 파일이 설정되지 않았습니다")
         
         # Frontend의 모드를 Backend 형식으로 변환
+        # 🎯 미디어 업로드 모드 3가지 옵션:
+        # 1. per-script: 대사마다 미디어 1개 (1:1 매핑)
+        # 2. per-two-scripts: 대사 2개마다 미디어 1개 (2:1 매핑)
+        # 3. single-for-all: 모든 대사에 미디어 1개 (1:ALL 매핑)
         mode_mapping = {
-            "per-script": "1_per_image",
-            "per-two-scripts": "2_per_image",
-            "single-for-all": "single_for_all"
+            "per-script": "1_per_image",           # 대사마다 미디어 1개
+            "per-two-scripts": "2_per_image",      # 대사 2개마다 미디어 1개
+            "single-for-all": "single_for_all"     # 모든 대사에 미디어 1개
         }
 
         if image_allocation_mode in mode_mapping:
+            original_mode = image_allocation_mode
             image_allocation_mode = mode_mapping[image_allocation_mode]
+            print(f"🎯 미디어 모드 변환: {original_mode} → {image_allocation_mode}")
 
         # 이미지 할당 모드 검증
         if image_allocation_mode not in ["2_per_image", "1_per_image", "single_for_all"]:
@@ -1254,12 +1260,167 @@ def get_youtube_transcript(video_id: str) -> str:
 def scrape_website_content(url: str) -> str:
     """웹사이트에서 텍스트 내용을 스크래핑"""
     try:
-        # 웹페이지 요청
-        headers = {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-        }
-        
         logger.info(f"웹페이지 스크래핑 시작: {url}")
+
+        # 네이버 블로그인지 확인
+        if 'blog.naver.com' in url:
+            return scrape_naver_blog(url)
+        else:
+            return scrape_general_website(url)
+
+    except Exception as e:
+        logger.error(f"스크래핑 오류: {e}")
+        raise ValueError(f"웹페이지 내용을 추출할 수 없습니다: {str(e)}")
+
+def scrape_naver_blog(url: str) -> str:
+    """네이버 블로그 전용 스크래핑 (재시도 로직 포함)"""
+    import time
+
+    max_retries = 3
+    retry_delay = 2.0  # 2초 간격
+
+    for attempt in range(max_retries):
+        try:
+            logger.info(f"네이버 블로그 스크래핑 시도 {attempt + 1}/{max_retries}: {url}")
+
+            # 세션 생성 및 초기화
+            session = requests.Session()
+
+            # 네이버 블로그 전용 헤더 (더 상세하게)
+            headers = {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
+                'Accept-Language': 'ko-KR,ko;q=0.9,en-US;q=0.8,en;q=0.7',
+                'Accept-Encoding': 'gzip, deflate, br',
+                'Referer': 'https://www.naver.com/',
+                'Connection': 'keep-alive',
+                'Upgrade-Insecure-Requests': '1',
+                'Sec-Fetch-Dest': 'document',
+                'Sec-Fetch-Mode': 'navigate',
+                'Sec-Fetch-Site': 'cross-site',
+                'Sec-Fetch-User': '?1',
+                'Cache-Control': 'max-age=0',
+                'DNT': '1'
+            }
+
+            # 먼저 네이버 메인 페이지 방문 (쿠키 및 세션 설정)
+            try:
+                time.sleep(0.5)  # 짧은 딜레이
+                session.get('https://www.naver.com/', headers=headers, timeout=8)
+                logger.info("네이버 메인 페이지 방문 완료")
+
+                # 블로그 메인 페이지도 방문
+                time.sleep(0.5)
+                headers['Referer'] = 'https://www.naver.com/'
+                session.get('https://blog.naver.com/', headers=headers, timeout=8)
+                logger.info("네이버 블로그 메인 페이지 방문 완료")
+            except Exception as e:
+                logger.warning(f"네이버 선행 방문 실패: {e}")
+
+            # 실제 블로그 포스트 요청
+            time.sleep(1.0)  # 요청 전 1초 대기
+            headers['Referer'] = 'https://blog.naver.com/'
+            response = session.get(url, headers=headers, timeout=20)
+
+            # 상태 코드 체크
+            if response.status_code == 403:
+                logger.warning(f"접근 차단 (403) - 시도 {attempt + 1}")
+                if attempt < max_retries - 1:
+                    time.sleep(retry_delay * (attempt + 1))  # 점진적 증가
+                    continue
+                else:
+                    raise requests.exceptions.RequestException(f"네이버 블로그 접근이 차단되었습니다 (403)")
+
+            elif response.status_code == 400:
+                logger.warning(f"잘못된 요청 (400) - 시도 {attempt + 1}")
+                if attempt < max_retries - 1:
+                    time.sleep(retry_delay * (attempt + 1))
+                    continue
+                else:
+                    raise requests.exceptions.RequestException(f"잘못된 요청입니다. URL을 확인해주세요 (400)")
+
+            response.raise_for_status()
+            logger.info(f"네이버 블로그 요청 성공: {response.status_code}")
+            break  # 성공시 루프 종료
+
+        except requests.exceptions.Timeout as e:
+            logger.warning(f"네이버 블로그 타임아웃 - 시도 {attempt + 1}: {e}")
+            if attempt < max_retries - 1:
+                time.sleep(retry_delay)
+                continue
+            else:
+                raise ValueError(f"네이버 블로그 응답 시간이 초과되었습니다. 잠시 후 다시 시도해주세요.")
+
+        except requests.exceptions.RequestException as e:
+            logger.warning(f"네이버 블로그 요청 실패 - 시도 {attempt + 1}: {e}")
+            if attempt < max_retries - 1:
+                time.sleep(retry_delay * (attempt + 1))
+                continue
+            else:
+                raise ValueError(f"네이버 블로그에 접근할 수 없습니다: {str(e)}")
+
+    # 여기까지 오면 response가 성공적으로 받아진 상태
+    try:
+        # BeautifulSoup으로 HTML 파싱
+        soup = BeautifulSoup(response.content, 'html.parser')
+
+        # 불필요한 태그 제거
+        for script in soup(["script", "style", "nav", "header", "footer", "aside", "form", "button", "iframe"]):
+            script.decompose()
+
+        # 네이버 블로그 전용 콘텐츠 셀렉터
+        naver_selectors = [
+            '.se-main-container',           # 스마트에디터 3.0 메인 컨테이너
+            '.post-view',                   # 구 에디터 포스트 뷰
+            '#postViewArea',                # 포스트 뷰 영역
+            '.se-component-content',        # 스마트에디터 콘텐츠
+            '.post_ct',                     # 포스트 내용
+            '.se-text-paragraph',           # 스마트에디터 텍스트 단락
+            '.blog-post-content',           # 블로그 포스트 콘텐츠
+            '.post_body',                   # 포스트 본문
+            '.se-section-text',             # 스마트에디터 텍스트 섹션
+        ]
+
+        text_content = ""
+
+        # 네이버 블로그 전용 셀렉터로 텍스트 추출
+        for selector in naver_selectors:
+            elements = soup.select(selector)
+            if elements:
+                logger.info(f"네이버 블로그 콘텐츠 발견: {selector}")
+                for element in elements:
+                    text = element.get_text(strip=True, separator=' ')
+                    if text and len(text) > 50:  # 의미있는 텍스트만
+                        text_content += text + " "
+                if text_content:
+                    break
+
+        # 네이버 전용 셀렉터로 찾지 못한 경우 일반적인 방법 시도
+        if not text_content:
+            logger.warning("네이버 전용 셀렉터로 콘텐츠를 찾지 못함, 일반 방법 시도")
+            body = soup.find('body')
+            if body:
+                text_content = body.get_text(strip=True, separator=' ')
+
+        return process_extracted_text(text_content, url)
+
+    except Exception as e:
+        logger.error(f"네이버 블로그 파싱 오류: {e}")
+        raise ValueError(f"네이버 블로그 내용을 분석할 수 없습니다: {str(e)}")
+
+def scrape_general_website(url: str) -> str:
+    """일반 웹사이트 스크래핑"""
+    try:
+        # 일반 웹사이트용 헤더 (기존 방식 개선)
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+            'Accept-Language': 'ko-KR,ko;q=0.9,en;q=0.8',
+            'Accept-Encoding': 'gzip, deflate, br',
+            'Connection': 'keep-alive',
+            'Upgrade-Insecure-Requests': '1'
+        }
+
         response = requests.get(url, headers=headers, timeout=10)
         response.raise_for_status()
         
@@ -1293,26 +1454,39 @@ def scrape_website_content(url: str) -> str:
             if body:
                 text_content = body.get_text(strip=True, separator=' ')
         
-        # 텍스트 정제
-        text_content = re.sub(r'\s+', ' ', text_content).strip()
-        
-        # 너무 짧은 경우 에러
-        if len(text_content) < 100:
-            raise ValueError("추출된 텍스트가 너무 짧습니다. 다른 URL을 시도해보세요.")
-        
-        # 너무 긴 경우 앞부분만 사용 (ChatGPT 토큰 제한 고려)
-        if len(text_content) > 8000:
-            text_content = text_content[:8000] + "..."
-        
-        logger.info(f"텍스트 추출 완료: {len(text_content)}자")
-        return text_content
-        
+        return process_extracted_text(text_content, url)
+
     except requests.exceptions.RequestException as e:
         logger.error(f"웹페이지 요청 실패: {e}")
         raise ValueError(f"웹페이지에 접근할 수 없습니다: {str(e)}")
+
+def process_extracted_text(text_content: str, url: str) -> str:
+    """추출된 텍스트 공통 처리"""
+    try:
+        # 텍스트 정제
+        text_content = re.sub(r'\s+', ' ', text_content).strip()
+
+        # 빈 내용 체크
+        if not text_content:
+            raise ValueError("추출된 텍스트가 비어있습니다.")
+
+        # 너무 짧은 경우 에러
+        if len(text_content) < 100:
+            logger.warning(f"짧은 텍스트 추출: {len(text_content)}자")
+            raise ValueError("추출된 텍스트가 너무 짧습니다. 다른 URL을 시도해보세요.")
+
+        # 너무 긴 경우 앞부분만 사용 (ChatGPT 토큰 제한 고려)
+        original_length = len(text_content)
+        if original_length > 8000:
+            text_content = text_content[:8000] + "..."
+            logger.info(f"텍스트 길이 조정: {original_length}자 → 8000자")
+
+        logger.info(f"텍스트 추출 완료: {len(text_content)}자")
+        return text_content
+
     except Exception as e:
-        logger.error(f"스크래핑 오류: {e}")
-        raise ValueError(f"웹페이지 내용을 추출할 수 없습니다: {str(e)}")
+        logger.error(f"텍스트 처리 오류: {e}")
+        raise
 
 async def generate_reels_with_chatgpt(
     content: str,

@@ -26,7 +26,7 @@ export type ImageUploadMode = 'per-script' | 'per-two-scripts' | 'single-for-all
 export type TextPosition = 'top' | 'bottom';
 
 // 텍스트 스타일 타입
-export type TextStyle = 'outline' | 'background';
+export type TextStyle = 'outline' | 'background' | 'white_background' | 'black_text_white_outline';
 
 // 자막 읽어주기 타입
 export type VoiceNarration = 'enabled' | 'disabled';

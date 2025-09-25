@@ -2,6 +2,7 @@ import os
 import requests
 from PIL import Image, ImageDraw, ImageFont
 from moviepy.editor import *
+import numpy as np
 import uuid
 import tempfile
 from gtts import gTTS
@@ -394,8 +395,11 @@ class VideoGenerator:
         selected_font = title_font if is_title else body_font
         font_path = os.path.join(os.path.dirname(__file__), "font", selected_font)
 
-        # 폰트 크기 설정 (타이틀은 더 크게)
-        font_size = 42 if is_title else 36
+        # 폰트 크기 설정 (타이틀은 더 크게, white_background는 2pt 작게)
+        if text_style == "white_background":
+            font_size = 40 if is_title else 34  # 2포인트 작게
+        else:
+            font_size = 42 if is_title else 36  # 기본 크기
 
         # 한글 폰트 설정
         try:
@@ -467,8 +471,14 @@ class VideoGenerator:
         
         # text_style에 따른 텍스트 렌더링
         if text_style == "background":
-            # 반투명 배경 스타일
+            # 반투명 배경 스타일 (기존)
             self._render_text_with_background(draw, lines, font, emoji_font, width, start_y, line_height)
+        elif text_style == "white_background":
+            # 흰색 반투명 배경 + 검은색 글자 + 둥근 모서리 (신규)
+            self._render_text_with_white_background(draw, lines, font, emoji_font, width, start_y, line_height)
+        elif text_style == "black_text_white_outline":
+            # 검은색 글씨 + 흰색 외곽선 (신규)
+            self._render_text_with_black_text_white_outline(draw, lines, font, emoji_font, width, start_y, line_height)
         else:
             # 외곽선 스타일 (기본값)
             self._render_text_with_outline(draw, lines, font, emoji_font, width, start_y, line_height)
@@ -546,12 +556,108 @@ class VideoGenerator:
         for i, line in enumerate(lines):
             bbox = draw.textbbox((0, 0), line, font=font)
             text_width = bbox[2] - bbox[0]
-            x = (width - text_width) // 2
+            # 배경 박스 내부 중앙 정렬
+            x = background_x + (background_width - text_width) // 2
             y = start_y + i * line_height
-            
+
             # 흰색 텍스트 (배경이 있으므로 외곽선 불필요)
             draw.text((x, y), line, font=font, fill='white')
-    
+
+    def _render_text_with_white_background(self, draw, lines, font, emoji_font, width, start_y, line_height):
+        """흰색 반투명 배경 + 검은색 글자 + 둥근 모서리 스타일로 텍스트 렌더링"""
+        # 전체 텍스트 영역 크기 계산
+        max_text_width = 0
+        for line in lines:
+            bbox = draw.textbbox((0, 0), line, font=font)
+            text_width = bbox[2] - bbox[0]
+            if text_width > max_text_width:
+                max_text_width = text_width
+
+        # 배경 박스 크기와 위치 계산
+        padding_x = 20  # 좌우 패딩
+        padding_y = 10  # 상하 패딩
+        background_width = max_text_width + padding_x * 2
+        background_height = len(lines) * line_height + padding_y * 2
+
+        background_x = (width - background_width) // 2
+        background_y = start_y - padding_y
+
+        # 둥근 모서리 흰색 반투명 배경 그리기
+        from PIL import ImageDraw
+
+        # 둥근 모서리 반지름
+        corner_radius = 12
+
+        # 반투명 흰색 배경 (투명도 80%)
+        # PIL에서 둥근 사각형을 그리는 함수
+        def draw_rounded_rectangle(draw, xy, radius, fill):
+            x1, y1, x2, y2 = xy
+            # 네 모서리의 원 그리기
+            draw.ellipse([x1, y1, x1 + radius*2, y1 + radius*2], fill=fill)  # 왼쪽 위
+            draw.ellipse([x2 - radius*2, y1, x2, y1 + radius*2], fill=fill)  # 오른쪽 위
+            draw.ellipse([x1, y2 - radius*2, x1 + radius*2, y2], fill=fill)  # 왼쪽 아래
+            draw.ellipse([x2 - radius*2, y2 - radius*2, x2, y2], fill=fill)  # 오른쪽 아래
+
+            # 중앙 사각형들 그리기
+            draw.rectangle([x1 + radius, y1, x2 - radius, y2], fill=fill)  # 가로 중앙
+            draw.rectangle([x1, y1 + radius, x2, y2 - radius], fill=fill)  # 세로 중앙
+
+        # 둥근 모서리 흰색 반투명 배경 그리기
+        draw_rounded_rectangle(
+            draw,
+            [background_x, background_y, background_x + background_width, background_y + background_height],
+            corner_radius,
+            (255, 255, 255, 204)  # 흰색 80% 투명도
+        )
+
+        # 텍스트 렌더링 (배경 박스 내부에 검은색 텍스트)
+        for i, line in enumerate(lines):
+            bbox = draw.textbbox((0, 0), line, font=font)
+            text_width = bbox[2] - bbox[0]
+            # 배경 박스 내부 중앙 정렬
+            x = background_x + (background_width - text_width) // 2
+            y = start_y + i * line_height
+
+            # 검은색 텍스트 (배경이 있으므로 외곽선 불필요)
+            draw.text((x, y), line, font=font, fill='black')
+
+    def _render_text_with_black_text_white_outline(self, draw, lines, font, emoji_font, width, start_y, line_height):
+        """검은색 글씨 + 흰색 외곽선 스타일로 텍스트 렌더링"""
+        # 각 줄별로 텍스트 렌더링
+        for i, line in enumerate(lines):
+            bbox = draw.textbbox((0, 0), line, font=font)
+            text_width = bbox[2] - bbox[0]
+            x = (width - text_width) // 2
+            y = start_y + i * line_height
+
+            try:
+                # 더 부드러운 흰색 외곽선 (3px 두께)
+                outline_positions = [
+                    (-3, -3), (-3, -2), (-3, -1), (-3, 0), (-3, 1), (-3, 2), (-3, 3),
+                    (-2, -3), (-2, -2), (-2, -1), (-2, 0), (-2, 1), (-2, 2), (-2, 3),
+                    (-1, -3), (-1, -2), (-1, -1), (-1, 0), (-1, 1), (-1, 2), (-1, 3),
+                    (0, -3), (0, -2), (0, -1),            (0, 1), (0, 2), (0, 3),
+                    (1, -3), (1, -2), (1, -1), (1, 0), (1, 1), (1, 2), (1, 3),
+                    (2, -3), (2, -2), (2, -1), (2, 0), (2, 1), (2, 2), (2, 3),
+                    (3, -3), (3, -2), (3, -1), (3, 0), (3, 1), (3, 2), (3, 3)
+                ]
+
+                # 흰색 외곽선 그리기
+                for dx, dy in outline_positions:
+                    draw.text((x + dx, y + dy), line, font=font, fill='white')
+
+                # 검은색 텍스트 (중앙)
+                draw.text((x, y), line, font=font, fill='black')
+
+            except Exception as e:
+                print(f"본문 텍스트 렌더링 오류: {e}")
+                # 폴백: 기본 외곽선
+                for dx in [-1, 0, 1]:
+                    for dy in [-1, 0, 1]:
+                        if dx != 0 or dy != 0:
+                            draw.text((x + dx, y + dy), line, font=font, fill='white')
+                draw.text((x, y), line, font=font, fill='black')
+
     def crop_to_square(self, image_path):
         """이미지를 중앙 기준 정사각형으로 크롭하여 716x716으로 리사이즈"""
         try:
@@ -1390,17 +1496,21 @@ class VideoGenerator:
                 # remove 모드: 타이틀 제거, 전체 화면 미디어
                 print("✅ 타이틀 영역 제거: 전체 890px 미디어")
             
-            # 각 body별로 개별 TTS 생성 (빈 값 제외)
+            # 각 body별로 개별 TTS 생성 (빈 값 제외, 순서 보장)
             body_keys = [key for key in content.keys() if key.startswith('body') and content[key].strip()]
+            body_keys.sort(key=lambda x: int(x.replace('body', '')))  # body1, body2, ... 순서로 정렬
+            print(f"🎯 body 순서 확인: {body_keys}")
             tts_files = []
             
             for body_key in body_keys:
-                print(f"{body_key} TTS 생성 중...")
+                print(f"🎙️ {body_key} TTS 생성 중... 내용: '{content[body_key][:50]}...'")
                 body_tts = self.create_tts_audio(content[body_key])
                 if body_tts:
                     body_duration = self.get_audio_duration(body_tts)
                     tts_files.append((body_key, body_tts, body_duration))
-                    print(f"{body_key} TTS 완료: {body_duration:.1f}초")
+                    print(f"✅ {body_key} TTS 완료: {body_duration:.1f}초")
+                else:
+                    print(f"❌ {body_key} TTS 생성 실패")
             
             # 이미지 할당 모드에 따른 처리 분기
             print(f"🎬 이미지 할당 모드: {image_allocation_mode}")
@@ -1416,6 +1526,7 @@ class VideoGenerator:
                     # body별로 개별 이미지 할당 (이미지가 부족하면 마지막 이미지 사용)
                     image_index = min(i, len(local_images) - 1)
                     current_image_path = local_images[image_index]
+                    print(f"🎯 매칭 디버그: i={i}, body_key={body_key}, image_index={image_index}, image={os.path.basename(current_image_path)}")
                     
                     # 해당 body의 TTS 정보 찾기
                     body_tts_info = None
@@ -1632,7 +1743,8 @@ class VideoGenerator:
                         if tts_path:
                             audio_segments.append(AudioFileClip(tts_path))
 
-            # 그룹들 연결
+            # 그룹들 단순 연결
+            print(f"🎬 영상 클립들 연결: {len(group_clips)}개 클립")
             final_video = concatenate_videoclips(group_clips, method="compose")
             
             # 8. TTS 오디오들 연결
@@ -1705,7 +1817,7 @@ class VideoGenerator:
                         print("🔇 자막 읽어주기 제거: 배경음악 100%")
                     else:
                         # 자막 읽어주기 추가: TTS + 배경음악 합성
-                        background_music = background_music.volumex(0.25)  # 볼륨 25%
+                        background_music = background_music.volumex(0.17)  # 볼륨 17%
                         final_audio = CompositeAudioClip([final_audio, background_music])
                         print("🎵 TTS + 배경음악 합성 완료")
 
@@ -1750,8 +1862,10 @@ class VideoGenerator:
                 title_font
             )
             
-            # 각 body별로 개별 TTS 생성 (빈 값 제외)
+            # 각 body별로 개별 TTS 생성 (빈 값 제외, 순서 보장)
             body_keys = [key for key in content.keys() if key.startswith('body') and content[key].strip()]
+            body_keys.sort(key=lambda x: int(x.replace('body', '')))  # body1, body2, ... 순서로 정렬
+            print(f"🎯 body 순서 확인: {body_keys}")
             tts_files = []
             
             # 제목 TTS 생성
@@ -1764,12 +1878,14 @@ class VideoGenerator:
             
             # 각 body TTS 생성
             for body_key in body_keys:
-                print(f"{body_key} TTS 생성 중...")
+                print(f"🎙️ {body_key} TTS 생성 중... 내용: '{content[body_key][:50]}...'")
                 body_tts = self.create_tts_audio(content[body_key])
                 if body_tts:
                     body_duration = self.get_audio_duration(body_tts)
                     tts_files.append((body_key, body_tts, body_duration))
-                    print(f"{body_key} TTS 완료: {body_duration:.1f}초")
+                    print(f"✅ {body_key} TTS 완료: {body_duration:.1f}초")
+                else:
+                    print(f"❌ {body_key} TTS 생성 실패")
             
             # 이미지 할당 모드에 따른 처리 분기
             print(f"🎬 이미지 할당 모드: {image_allocation_mode}")
@@ -1779,8 +1895,9 @@ class VideoGenerator:
             if image_allocation_mode == "1_per_image":
                 # Mode 2: body 1개당 이미지 1개 (1:1 매칭)
                 print("🖼️ 1:1 매칭 모드: body별로 각각 다른 이미지 사용")
-                
+
                 for i, body_key in enumerate(body_keys):
+                    print(f"🎯 디버그 2: i={i}, body_key={body_key} (create_video_with_local_images)")
                     # 해당 body의 TTS 정보 찾기
                     body_tts_info = None
                     for tts_key, tts_path, tts_duration in tts_files:
@@ -1822,8 +1939,9 @@ class VideoGenerator:
             elif image_allocation_mode == "2_per_image":
                 # Mode 1: body 2개당 이미지 1개 (그룹 방식)
                 print("🖼️ 2:1 매칭 모드: body 2개당 이미지 1개 사용")
-                
+
                 for i, body_key in enumerate(body_keys):
+                    print(f"🎯 디버그 3: i={i}, body_key={body_key} (2_per_image mode)")
                     # 해당 body의 TTS 정보 찾기
                     body_tts_info = None
                     for tts_key, tts_path, tts_duration in tts_files:
@@ -1924,8 +2042,9 @@ class VideoGenerator:
 
                     print(f"    ✅ 모든 대사 완료: 단일 이미지 연속 적용 ({total_duration:.1f}초)")
 
-            # 전체 영상 합치기
-            final_video = concatenate_videoclips(body_clips)
+            # 전체 영상 단순 연결
+            print(f"🎬 본문 클립들 연결: {len(body_clips)}개 클립")
+            final_video = concatenate_videoclips(body_clips, method="compose")
             print(f"최종 비디오 길이: {final_video.duration:.1f}초")
             
             # TTS 오디오 세그먼트들을 순서대로 연결
@@ -1983,9 +2102,9 @@ class VideoGenerator:
                         bg_music = AudioFileClip(music_path).volumex(1.0)
                         print("🎵 자막 읽어주기 꺼짐 - 배경음악 100%")
                     else:
-                        # TTS가 더 잘 들리도록 20%로 낮춤
-                        bg_music = AudioFileClip(music_path).volumex(0.2)
-                        print("🎵 자막 읽어주기 켜짐 - 배경음악 20%")
+                        # TTS가 더 잘 들리도록 17%로 낮춤
+                        bg_music = AudioFileClip(music_path).volumex(0.17)
+                        print("🎵 자막 읽어주기 켜짐 - 배경음악 17%")
                     if bg_music.duration < combined_tts.duration:
                         bg_music = bg_music.loop(duration=combined_tts.duration)
                     else:
@@ -2405,4 +2524,248 @@ class VideoGenerator:
             # 폴백: 검은 배경
             return ColorClip(size=(self.video_width, self.video_height),
                            color=(0,0,0), duration=duration)
+
+    # ==================== 전환 효과 메소드들 ====================
+
+
+    def apply_random_transitions(self, clips, transition_duration=0.4):
+        """클립들 사이에 랜덤 전환 효과 적용"""
+        if len(clips) <= 1:
+            return concatenate_videoclips(clips, method="compose") if clips else None
+
+        # 원래 총 길이 계산 (TTS와 맞춰야 할 기준)
+        original_total_duration = sum(clip.duration for clip in clips)
+        print(f"🎬 랜덤 전환 효과 적용: {len(clips)}개 클립, 원본 총 길이 {original_total_duration:.2f}초")
+
+        # 디졸브 전환 효과만 사용 (테스트용)
+        print("🎬 디졸브 전환 효과 테스트: 모든 전환을 디졸브로 고정")
+
+        # 모든 클립들을 처리할 리스트
+        processed_clips = []
+
+        for i in range(len(clips)):
+            if i == 0:
+                # 첫 번째 클립은 그대로 추가
+                processed_clips.append(clips[i])
+                print(f"  📹 클립 {i+1}: 첫 번째 클립 (전환 없음)")
+            else:
+                # 디졸브 전환 적용
+                print(f"  🔄 클립 {i+1}: 디졸브 전환 적용")
+
+                try:
+                    # 이전 클립과 현재 클립 사이에 디졸브 적용
+                    prev_clip = processed_clips[-1]
+                    curr_clip = clips[i]
+
+                    # 안전한 전환 시간 계산 (0.5초)
+                    transition_duration = 0.5
+                    safe_duration = min(transition_duration, prev_clip.duration * 0.3, curr_clip.duration * 0.3)
+                    safe_duration = max(0.2, safe_duration)  # 최소 0.2초
+
+                    # 현재 클립을 이전 클립 끝에서 겹치도록 시작 시간 설정
+                    curr_clip_overlapped = curr_clip.set_start(prev_clip.duration - safe_duration)
+
+                    # fadein 효과 적용 (디졸브)
+                    from moviepy.video.fx.fadein import fadein
+                    curr_clip_faded = curr_clip_overlapped.fx(fadein, safe_duration)
+                    processed_clips.append(curr_clip_faded)
+
+                    print(f"    ✨ 디졸브 적용: {safe_duration:.2f}초 블렌딩")
+
+                except Exception as e:
+                    print(f"    ⚠️ 디졸브 실패, cut으로 대체: {e}")
+                    processed_clips.append(clips[i])
+
+        # CompositeVideoClip으로 처리 (겹치는 클립들 때문에)
+        try:
+            final_video = CompositeVideoClip(processed_clips)
+            print(f"✅ 디졸브 전환 적용 완료: 최종 길이 {final_video.duration:.2f}초")
+        except Exception as e:
+            print(f"⚠️ Composite 실패, concatenate로 대체: {e}")
+            final_video = concatenate_videoclips([clip for clip in processed_clips if hasattr(clip, 'duration')], method="compose")
+            print(f"✅ 디졸브 전환 적용 완료 (Fallback): 최종 길이 {final_video.duration:.2f}초")
+
+        return final_video
+
+        # 기존 전환 효과 코드 (일시적으로 비활성화)
+        """
+        transitions = ['cut', 'dissolve', 'wipe']
+
+        # 모든 클립들을 처리할 리스트
+        processed_clips = []
+
+        for i in range(len(clips)):
+            if i == 0:
+                # 첫 번째 클립은 그대로 추가
+                processed_clips.append(clips[i])
+            else:
+                # 이전 클립과 현재 클립 사이에 전환 효과 적용
+                transition_type = random.choice(transitions)
+                print(f"  🔄 클립 {i}: {transition_type} 전환")
+
+                if transition_type == 'cut':
+                    # 단순 연결 (기존 방식)
+                    processed_clips.append(clips[i])
+
+                elif transition_type == 'dissolve':
+                    # 크로스 디졸브 - 더 간단한 방식
+                    try:
+                        # 이전 클립의 끝 부분과 현재 클립의 시작 부분을 오버랩
+                        prev_clip = processed_clips[-1]
+                        curr_clip = clips[i]
+
+                        # 안전한 전환 시간 계산
+                        safe_duration = min(transition_duration, prev_clip.duration * 0.2, curr_clip.duration * 0.2)
+                        safe_duration = max(0.1, safe_duration)
+
+                        # 현재 클립을 이전 클립 끝에서 겹치도록 시작 시간 설정
+                        curr_clip_overlapped = curr_clip.set_start(prev_clip.duration - safe_duration)
+
+                        # fadein 효과 적용
+                        curr_clip_faded = curr_clip_overlapped.fx(fadein, safe_duration)
+                        processed_clips.append(curr_clip_faded)
+
+                        print(f"    ✨ Cross dissolve: {safe_duration:.2f}초 블렌딩")
+
+                    except Exception as e:
+                        print(f"    ⚠️ Dissolve 실패, cut으로 대체: {e}")
+                        processed_clips.append(clips[i])
+
+                elif transition_type == 'wipe':
+                    # 와이프 전환
+                    try:
+                        processed_clip = self._apply_wipe_transition(
+                            processed_clips[-1], clips[i], transition_duration * 0.7
+                        )
+                        # 전체 composite를 리스트의 마지막 요소로 교체
+                        processed_clips[-1] = processed_clip
+                    except Exception as e:
+                        print(f"    ⚠️ Wipe 실패, cut으로 대체: {e}")
+                        processed_clips.append(clips[i])
+
+        # dissolve나 wipe에 의해 겹친 클립들은 CompositeVideoClip으로 처리하고
+        # 나머지는 concatenate로 처리
+        try:
+            final_video = CompositeVideoClip(processed_clips)
+            print(f"✅ 랜덤 전환 적용 완료 (Composite): 최종 길이 {final_video.duration:.2f}초")
+        except:
+            # 실패 시 기본 concatenate 사용
+            final_video = concatenate_videoclips([clip for clip in processed_clips if hasattr(clip, 'duration')], method="compose")
+            print(f"✅ 랜덤 전환 적용 완료 (Fallback): 최종 길이 {final_video.duration:.2f}초")
+
+        return final_video
+        """
+
+    def _apply_cross_dissolve(self, clip1, clip2, duration=0.4):
+        """크로스 디졸브 효과 적용 (진짜 크로스 디졸브 - 검은 화면 없음)"""
+        try:
+            # 안전한 duration 계산
+            safe_duration = min(duration, clip1.duration * 0.3, clip2.duration * 0.3)
+            safe_duration = max(0.1, safe_duration)  # 최소 0.1초
+
+            # clip1을 그대로 유지
+            clip1_part = clip1
+
+            # clip2를 clip1 끝에서 safe_duration만큼 앞당겨 시작
+            # clip2의 시작 부분에 transparency 애니메이션 적용
+            def make_mask(t):
+                # 0초에서 safe_duration까지 opacity가 0에서 1로 변화
+                if t < safe_duration:
+                    opacity = t / safe_duration  # 0 → 1
+                    return opacity
+                else:
+                    return 1.0
+
+            # clip2를 투명도 애니메이션과 함께 오버랩
+            clip2_with_alpha = clip2.set_start(clip1.duration - safe_duration)
+
+            # 간단한 linear fade-in 적용 (검은색 페이드가 아닌 투명도 변화)
+            try:
+                # MoviePy의 crossfadein 사용 시도
+                clip2_crossfade = clip2_with_alpha.fx(fadein, safe_duration)
+                print(f"    ✨ Cross dissolve: {safe_duration:.2f}초 블렌딩")
+                return clip1_part, clip2_crossfade
+            except:
+                # 실패 시 간단한 composite 적용
+                print(f"    ✨ Cross dissolve (simple): {safe_duration:.2f}초 블렌딩")
+                return clip1_part, clip2_with_alpha
+
+        except Exception as e:
+            print(f"    ⚠️ Cross dissolve 실패, cut으로 대체: {e}")
+            return clip1, clip2
+
+    def _apply_wipe_transition(self, clip1, clip2, duration=0.3):
+        """와이프 전환 효과 적용 (4방향 랜덤)"""
+        try:
+            wipe_directions = ['left_to_right', 'right_to_left', 'top_to_bottom', 'bottom_to_top']
+            direction = random.choice(wipe_directions)
+
+            # 안전한 duration 계산
+            safe_duration = min(duration, clip1.duration * 0.2)
+            safe_duration = max(0.1, safe_duration)
+
+            print(f"    🌊 Wipe {direction}: {safe_duration:.2f}초")
+
+            # 와이프 마스크 생성
+            mask_clip = self._create_wipe_mask(direction, safe_duration)
+
+            # clip1의 마지막 부분과 clip2의 시작 부분을 오버랩
+            clip1_end = clip1.duration
+
+            # clip2를 clip1 끝에서 시작하되, 와이프 duration만큼 앞당김
+            clip2_with_wipe = clip2.set_start(clip1_end - safe_duration)
+            clip2_with_mask = clip2_with_wipe.set_mask(mask_clip.set_start(clip1_end - safe_duration))
+
+            # 두 클립을 합성
+            composite = CompositeVideoClip([clip1, clip2_with_mask])
+
+            return composite
+
+        except Exception as e:
+            print(f"    ⚠️ Wipe 전환 실패, cut으로 대체: {e}")
+            # 실패 시 단순 연결
+            return concatenate_videoclips([clip1, clip2], method="compose")
+
+    def _create_wipe_mask(self, direction, duration):
+        """와이프 전환용 마스크 클립 생성"""
+        def make_frame(t):
+            # 진행 비율 (0 → 1)
+            progress = t / duration
+
+            # 마스크 배열 생성 (0=투명, 255=불투명)
+            mask = np.zeros((self.video_height, self.video_width))
+
+            if direction == 'left_to_right':
+                # 좌에서 우로
+                cutoff = int(self.video_width * progress)
+                mask[:, :cutoff] = 255
+
+            elif direction == 'right_to_left':
+                # 우에서 좌로
+                cutoff = int(self.video_width * (1 - progress))
+                mask[:, cutoff:] = 255
+
+            elif direction == 'top_to_bottom':
+                # 상에서 하로
+                cutoff = int(self.video_height * progress)
+                mask[:cutoff, :] = 255
+
+            elif direction == 'bottom_to_top':
+                # 하에서 상으로
+                cutoff = int(self.video_height * (1 - progress))
+                mask[cutoff:, :] = 255
+
+            return mask
+
+        # numpy import가 필요할 수 있음
+        try:
+            import numpy as np
+        except ImportError:
+            print("    ⚠️ numpy 없음, 간단한 마스크 사용")
+            # numpy 없을 경우 간단한 페이드 마스크
+            return ColorClip(size=(self.video_width, self.video_height),
+                           color=(255, 255, 255)).set_duration(duration).fx(fadein, duration)
+
+        mask_clip = VideoClip(make_frame, duration=duration)
+        return mask_clip
 
