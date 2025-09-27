@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { ApiResponse, GenerateVideoRequest, MusicFolder, MusicFile, MusicMood, ImageUploadMode, TextPosition, TextStyle, AsyncVideoRequest, AsyncVideoResponse, JobInfo, VoiceNarration, TitleAreaMode } from '../types';
+import { ApiResponse, GenerateVideoRequest, MusicFolder, MusicFile, MusicMood, ImageUploadMode, TextPosition, TextStyle, AsyncVideoRequest, AsyncVideoResponse, JobInfo, VoiceNarration, TitleAreaMode, CrossDissolve } from '../types';
 
 // API 베이스 URL 설정
 const API_BASE_URL = '/api';
@@ -93,6 +93,7 @@ export const apiService = {
     titleFont?: string;
     bodyFont?: string;
     voiceNarration: VoiceNarration;
+    crossDissolve: CrossDissolve;
   }): Promise<ApiResponse> {
     const formData = new FormData();
     
@@ -120,6 +121,9 @@ export const apiService = {
 
     // 자막 읽어주기 설정 추가
     formData.append('voice_narration', data.voiceNarration);
+
+    // 크로스 디졸브 설정 추가
+    formData.append('cross_dissolve', data.crossDissolve);
 
     // 폰트 설정 추가
     if (data.titleFont) {
@@ -189,6 +193,7 @@ export const apiService = {
     titleFont?: string;
     bodyFont?: string;
     voiceNarration: VoiceNarration;
+    crossDissolve: CrossDissolve;
   }): Promise<AsyncVideoResponse> {
     const formData = new FormData();
 
@@ -215,6 +220,9 @@ export const apiService = {
 
     // 자막 읽어주기 설정 추가
     formData.append('voice_narration', data.voiceNarration);
+
+    // 크로스 디졸브 설정 추가
+    formData.append('cross_dissolve', data.crossDissolve);
 
     // 폰트 설정 추가
     if (data.titleFont) {

@@ -34,6 +34,9 @@ export type VoiceNarration = 'enabled' | 'disabled';
 // 타이틀 영역 모드 타입
 export type TitleAreaMode = 'keep' | 'remove';
 
+// 크로스 디졸브 타입
+export type CrossDissolve = 'enabled' | 'disabled';
+
 // 음악 성격 타입
 export type MusicMood = 'bright' | 'calm' | 'romantic' | 'sad' | 'suspense' | 'none';
 
@@ -79,6 +82,7 @@ export interface ProjectData {
   musicMood: MusicMood;
   fontSettings: FontSettings;
   voiceNarration: VoiceNarration;
+  crossDissolve: CrossDissolve;
 }
 
 // API 응답 타입
@@ -104,6 +108,7 @@ export interface GenerateVideoRequest {
   title_font?: string;
   body_font?: string;
   voice_narration: VoiceNarration;
+  cross_dissolve: CrossDissolve;
 }
 
 // 영상 생성 상태 타입
@@ -139,6 +144,7 @@ export interface AsyncVideoRequest {
   use_test_files?: boolean;
   images?: File[];
   voice_narration: VoiceNarration;
+  cross_dissolve: CrossDissolve;
 }
 
 // 비동기 영상 생성 응답 타입

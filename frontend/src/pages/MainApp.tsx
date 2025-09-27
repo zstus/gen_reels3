@@ -20,7 +20,7 @@ import ContentStep from '../components/ContentStep';
 import ImageStep from '../components/ImageStep';
 import MusicStep from '../components/MusicStep';
 import GenerateStep from '../components/GenerateStep';
-import { ProjectData, ReelsContent, MusicMood, ImageUploadMode, MusicFile, TextPosition, TextStyle, TitleAreaMode } from '../types';
+import { ProjectData, ReelsContent, MusicMood, ImageUploadMode, MusicFile, TextPosition, TextStyle, TitleAreaMode, CrossDissolve } from '../types';
 
 const steps = [
   '릴스 대본 작성',
@@ -59,6 +59,7 @@ const MainApp: React.FC = () => {
       bodyFont: 'BMYEONSUNG_otf.otf',
     },
     voiceNarration: 'enabled',
+    crossDissolve: 'enabled',
   });
 
   const handleNext = () => {
@@ -95,6 +96,7 @@ const MainApp: React.FC = () => {
         bodyFont: 'BMYEONSUNG_otf.otf',
       },
       voiceNarration: 'enabled',
+      crossDissolve: 'enabled',
     });
   };
 

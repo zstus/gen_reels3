@@ -457,6 +457,9 @@ async def generate_video(
     # 자막 읽어주기 설정
     voice_narration: str = Form(default="enabled"),        # "enabled" (추가) 또는 "disabled" (제거)
 
+    # 크로스 디졸브 설정
+    cross_dissolve: str = Form(default="enabled"),          # "enabled" (적용) 또는 "disabled" (미적용)
+
     # 이미지 파일 업로드 (최대 8개)
     image_1: Optional[UploadFile] = File(None),
     image_2: Optional[UploadFile] = File(None),
@@ -547,6 +550,7 @@ async def generate_video(
         print(f"🔤 타이틀 폰트: {title_font}")
         print(f"📝 본문 폰트: {body_font}")
         print(f"🎤 자막 읽어주기: {voice_narration}")
+        print(f"🎬 크로스 디졸브: {cross_dissolve}")
 
         output_path = video_gen.create_video_from_uploads(
             OUTPUT_FOLDER,
@@ -559,7 +563,8 @@ async def generate_video(
             body_font,
             "uploads",
             music_mood,
-            voice_narration
+            voice_narration,
+            cross_dissolve
         )
         
         return JSONResponse(
@@ -2337,6 +2342,9 @@ async def generate_video_async(
 
     # 자막 읽어주기 설정
     voice_narration: str = Form(default="enabled"),        # "enabled" (추가) 또는 "disabled" (제거)
+
+    # 크로스 디졸브 설정
+    cross_dissolve: str = Form(default="enabled"),          # "enabled" (적용) 또는 "disabled" (미적용)
 
     # 이미지 파일 업로드 (최대 8개)
     image_1: Optional[UploadFile] = File(None),

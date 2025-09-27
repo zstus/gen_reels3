@@ -50,7 +50,7 @@ import {
   Style,
   FormatColorText,
 } from '@mui/icons-material';
-import { ProjectData, GenerationStatus, AsyncVideoResponse, FontFile, TextPosition, TextStyle, VoiceNarration, TitleAreaMode } from '../types';
+import { ProjectData, GenerationStatus, AsyncVideoResponse, FontFile, TextPosition, TextStyle, VoiceNarration, TitleAreaMode, CrossDissolve } from '../types';
 import apiService from '../services/api';
 
 interface GenerateStepProps {
@@ -100,10 +100,22 @@ const GenerateStep: React.FC<GenerateStepProps> = ({
   const [textStyle, setTextStyle] = useState<TextStyle>('outline');
   const [titleAreaMode, setTitleAreaMode] = useState<TitleAreaMode>('keep');
   const [voiceNarration, setVoiceNarration] = useState<VoiceNarration>('enabled');
+  const [crossDissolve, setCrossDissolve] = useState<CrossDissolve>('enabled');
 
   // 미리보기 관련 상태
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [loadingPreview, setLoadingPreview] = useState(false);
+
+  // projectData 값으로 초기화
+  useEffect(() => {
+    setTitleFont(projectData.fontSettings.titleFont);
+    setBodyFont(projectData.fontSettings.bodyFont);
+    setTextPosition(projectData.textPosition);
+    setTextStyle(projectData.textStyle);
+    setTitleAreaMode(projectData.titleAreaMode);
+    setVoiceNarration(projectData.voiceNarration);
+    setCrossDissolve(projectData.crossDissolve);
+  }, [projectData]);
 
   // 예상 생성 시간 계산
   const calculateEstimatedTime = () => {
@@ -247,6 +259,7 @@ const GenerateStep: React.FC<GenerateStepProps> = ({
         titleFont: titleFont,
         bodyFont: bodyFont,
         voiceNarration: voiceNarration,
+        crossDissolve: crossDissolve,
       });
 
       if (response.status === 'success') {
@@ -307,6 +320,7 @@ const GenerateStep: React.FC<GenerateStepProps> = ({
         titleFont: titleFont,
         bodyFont: bodyFont,
         voiceNarration: voiceNarration,
+        crossDissolve: crossDissolve,
       });
 
       if (response.status === 'success') {
@@ -683,6 +697,32 @@ const GenerateStep: React.FC<GenerateStepProps> = ({
                   <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
                     - 추가: 자막 음성이 포함된 영상 생성<br/>
                     - 제거: 자막 표시는 유지하되 음성은 무음으로 처리 (배경음악이나 원본 비디오 소리만 재생)
+                  </Typography>
+                </Box>
+
+                <Box>
+                  <FormControl component="fieldset">
+                    <FormLabel component="legend">크로스 디졸브 전환효과</FormLabel>
+                    <RadioGroup
+                      row
+                      value={crossDissolve}
+                      onChange={(e) => setCrossDissolve(e.target.value as CrossDissolve)}
+                    >
+                      <FormControlLabel
+                        value="enabled"
+                        control={<Radio size="small" />}
+                        label="적용"
+                      />
+                      <FormControlLabel
+                        value="disabled"
+                        control={<Radio size="small" />}
+                        label="미적용"
+                      />
+                    </RadioGroup>
+                  </FormControl>
+                  <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
+                    - 적용: 이미지 간 전환 시 0.5초 부드러운 크로스 디졸브 효과<br/>
+                    - 미적용: 기존 방식대로 바로 전환
                   </Typography>
                 </Box>
               </AccordionDetails>

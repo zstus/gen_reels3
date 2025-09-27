@@ -11,9 +11,36 @@ import base64
 import json
 import random
 import math
+import logging
+from datetime import datetime
+
+# 로깅 설정 - 파일에만 저장
+def setup_crossfade_logging():
+    """크로스 디졸브 전용 로깅 설정"""
+    log_filename = f"crossfade_debug_{datetime.now().strftime('%Y%m%d_%H%M%S')}.log"
+
+    logging.basicConfig(
+        level=logging.INFO,
+        format='%(asctime)s - %(levelname)s - %(message)s',
+        handlers=[
+            logging.FileHandler(log_filename, encoding='utf-8'),
+            logging.StreamHandler()  # 콘솔에도 출력
+        ]
+    )
+
+    print(f"🔍 크로스 디졸브 디버깅 로그 파일: {log_filename}")
+    return log_filename
+
+# 전역 로그 파일명 저장
+CROSSFADE_LOG_FILE = None
 
 class VideoGenerator:
     def __init__(self):
+        # 로깅 초기화
+        global CROSSFADE_LOG_FILE
+        if CROSSFADE_LOG_FILE is None:
+            CROSSFADE_LOG_FILE = setup_crossfade_logging()
+
         self.video_width = 504
         self.video_height = 890  # 쇼츠/릴스 해상도 (504x890)
         self.fps = 30
@@ -1469,16 +1496,43 @@ class VideoGenerator:
         
         return image_files
     
-    def create_video_with_local_images(self, content, music_path, output_folder, image_allocation_mode="2_per_image", text_position="bottom", text_style="outline", title_area_mode="keep", title_font="BMYEONSUNG_otf.otf", body_font="BMYEONSUNG_otf.otf", music_mood="bright", media_files=None, voice_narration="enabled"):
+    def create_video_with_local_images(self, content, music_path, output_folder, image_allocation_mode="2_per_image", text_position="bottom", text_style="outline", title_area_mode="keep", title_font="BMYEONSUNG_otf.otf", body_font="BMYEONSUNG_otf.otf", music_mood="bright", media_files=None, voice_narration="enabled", cross_dissolve="enabled"):
         """로컬 이미지 파일들을 사용한 릴스 영상 생성"""
         try:
             # 로컬 이미지 파일들 가져오기
             local_images = self.get_local_images()
-            
+
             if not local_images:
                 raise Exception("test 폴더에 이미지 파일이 없습니다")
-            
+
             print(f"로컬 이미지 {len(local_images)}개를 사용하여 영상 생성")
+
+            # media_files가 없는 경우 로컬 파일들의 타입 정보 생성
+            if media_files is None:
+                logging.info("🔍 media_files가 None이므로 자동 생성합니다...")
+                print("🔍 media_files가 None이므로 자동 생성합니다...")
+                media_files = []
+                video_extensions = ['.mp4', '.mov', '.avi', '.webm', '.mkv']
+                for i, image_path in enumerate(local_images):
+                    # 파일 확장자로 타입 판단
+                    is_video = any(image_path.lower().endswith(ext) for ext in video_extensions)
+                    file_type = "video" if is_video else "image"
+                    media_files.append((image_path, file_type))
+                    msg = f"  📁 자동 감지 [{i}]: {os.path.basename(image_path)} -> {file_type}"
+                    print(msg)
+                    logging.info(msg)
+            else:
+                msg = f"🔍 media_files가 이미 제공됨: {len(media_files)}개"
+                print(msg)
+                logging.info(msg)
+
+            msg = f"💽 최종 미디어 파일 정보: {len(media_files)}개"
+            print(msg)
+            logging.info(msg)
+            for i, (path, file_type) in enumerate(media_files):
+                msg = f"  [{i}] {os.path.basename(path)} -> {file_type}"
+                print(msg)
+                logging.info(msg)
             print(f"🏠 타이틀 영역 모드: {title_area_mode}")
 
             # 타이틀 영역 모드에 따른 처리
@@ -1743,9 +1797,14 @@ class VideoGenerator:
                         if tts_path:
                             audio_segments.append(AudioFileClip(tts_path))
 
-            # 그룹들 단순 연결
+            # 그룹들 연결 (크로스 디졸브 옵션에 따라 처리)
             print(f"🎬 영상 클립들 연결: {len(group_clips)}개 클립")
-            final_video = concatenate_videoclips(group_clips, method="compose")
+            if cross_dissolve == "enabled":
+                print("🎨 크로스 디졸브 효과 적용")
+                final_video = self.apply_smart_crossfade_transitions(group_clips, media_files, image_allocation_mode)
+            else:
+                print("🎬 기본 연결 방식 사용 (크로스 디졸브 미적용)")
+                final_video = concatenate_videoclips(group_clips, method="compose")
             
             # 8. TTS 오디오들 연결
             if audio_segments:
@@ -2042,9 +2101,14 @@ class VideoGenerator:
 
                     print(f"    ✅ 모든 대사 완료: 단일 이미지 연속 적용 ({total_duration:.1f}초)")
 
-            # 전체 영상 단순 연결
+            # 전체 영상 연결 (크로스 디졸브 옵션에 따라 처리)
             print(f"🎬 본문 클립들 연결: {len(body_clips)}개 클립")
-            final_video = concatenate_videoclips(body_clips, method="compose")
+            if cross_dissolve == "enabled":
+                print("🎨 크로스 디졸브 효과 적용")
+                final_video = self.apply_smart_crossfade_transitions(body_clips, media_files, image_allocation_mode)
+            else:
+                print("🎬 기본 연결 방식 사용 (크로스 디졸브 미적용)")
+                final_video = concatenate_videoclips(body_clips, method="compose")
             print(f"최종 비디오 길이: {final_video.duration:.1f}초")
             
             # TTS 오디오 세그먼트들을 순서대로 연결
@@ -2242,7 +2306,7 @@ class VideoGenerator:
         
         return scan_result
     
-    def create_video_from_uploads(self, output_folder, bgm_file_path=None, image_allocation_mode="2_per_image", text_position="bottom", text_style="outline", title_area_mode="keep", title_font="BMYEONSUNG_otf.otf", body_font="BMYEONSUNG_otf.otf", uploads_folder="uploads", music_mood="bright", voice_narration="enabled"):
+    def create_video_from_uploads(self, output_folder, bgm_file_path=None, image_allocation_mode="2_per_image", text_position="bottom", text_style="outline", title_area_mode="keep", title_font="BMYEONSUNG_otf.otf", body_font="BMYEONSUNG_otf.otf", uploads_folder="uploads", music_mood="bright", voice_narration="enabled", cross_dissolve="enabled"):
         """uploads 폴더의 파일들을 사용하여 영상 생성 (기존 메서드 재사용)"""
         try:
             print("🚀 uploads 폴더 기반 영상 생성 시작")
@@ -2275,7 +2339,7 @@ class VideoGenerator:
             self._temp_local_images = scan_result['image_files']
             
             # 기존 메서드 호출 (이미지 할당 모드, 텍스트 위치, 텍스트 스타일, 타이틀 영역 모드, 폰트 설정, 자막 읽어주기 전달)
-            return self.create_video_with_local_images(content, music_path, output_folder, image_allocation_mode, text_position, text_style, title_area_mode, title_font, body_font, music_mood, scan_result['media_files'], voice_narration)
+            return self.create_video_with_local_images(content, music_path, output_folder, image_allocation_mode, text_position, text_style, title_area_mode, title_font, body_font, music_mood, scan_result['media_files'], voice_narration, cross_dissolve)
             
         except Exception as e:
             raise Exception(f"uploads 폴더 기반 영상 생성 실패: {str(e)}")
@@ -2768,4 +2832,357 @@ class VideoGenerator:
 
         mask_clip = VideoClip(make_frame, duration=duration)
         return mask_clip
+
+    def detect_image_transitions(self, clips, media_files, image_allocation_mode):
+        """클립과 미디어 파일을 매핑하여 이미지-이미지 전환 구간의 인덱스를 반환"""
+        msg = f"🔍 이미지 전환 구간 감지 시작..."
+        print(msg)
+        logging.info(msg)
+
+        msg = f"   clips 개수: {len(clips) if clips else 0}"
+        print(msg)
+        logging.info(msg)
+
+        msg = f"   media_files 개수: {len(media_files) if media_files else 0}"
+        print(msg)
+        logging.info(msg)
+
+        msg = f"   image_allocation_mode: {image_allocation_mode}"
+        print(msg)
+        logging.info(msg)
+
+        if not media_files or not clips:
+            msg = "   ⚠️ media_files 또는 clips가 없습니다"
+            print(msg)
+            logging.warning(msg)
+            return []
+
+        # 클립과 미디어 파일 매핑 생성
+        clip_to_media_mapping = self._create_clip_media_mapping(clips, media_files, image_allocation_mode)
+
+        msg = f"   클립-미디어 매핑: {clip_to_media_mapping}"
+        print(msg)
+        logging.info(msg)
+
+        transition_indices = []
+        for i in range(len(clips) - 1):
+            try:
+                curr_media_idx = clip_to_media_mapping.get(i)
+                next_media_idx = clip_to_media_mapping.get(i+1)
+
+                if curr_media_idx is None or next_media_idx is None:
+                    msg = f"   [{i}] 매핑 없음: {curr_media_idx} → {next_media_idx}"
+                    print(msg)
+                    logging.info(msg)
+                    continue
+
+                curr_media = media_files[curr_media_idx]
+                next_media = media_files[next_media_idx]
+
+                curr_type = curr_media[1] if len(curr_media) > 1 else "unknown"
+                next_type = next_media[1] if len(next_media) > 1 else "unknown"
+
+                msg = f"   클립 [{i}] → [{i+1}]: 미디어 [{curr_media_idx}] ({curr_type}) → [{next_media_idx}] ({next_type})"
+                print(msg)
+                logging.info(msg)
+
+                if curr_type == "image" and next_type == "image":
+                    transition_indices.append(i)
+                    msg = f"  ✅ 전환 구간 발견: 클립 {i} → {i+1} (이미지→이미지)"
+                    print(msg)
+                    logging.info(msg)
+                else:
+                    msg = f"  ❌ 전환 구간 아님: 클립 {i} → {i+1} ({curr_type}→{next_type})"
+                    print(msg)
+                    logging.info(msg)
+
+            except Exception as e:
+                msg = f"   ⚠️ 클립 [{i}] 처리 중 오류: {e}"
+                print(msg)
+                logging.error(msg)
+                continue
+
+        msg = f"🎭 총 {len(transition_indices)}개 크로스 디졸브 구간 감지: {transition_indices}"
+        print(msg)
+        logging.info(msg)
+        return transition_indices
+
+    def _create_clip_media_mapping(self, clips, media_files, image_allocation_mode):
+        """클립과 미디어 파일 간의 매핑 생성"""
+        mapping = {}
+
+        if image_allocation_mode == "1_per_image":
+            # 각 클립마다 미디어 1개
+            for i, clip in enumerate(clips):
+                media_idx = i % len(media_files)  # 미디어 파일 순환 사용
+                mapping[i] = media_idx
+        elif image_allocation_mode == "2_per_image":
+            # 클립 2개당 미디어 1개
+            for i, clip in enumerate(clips):
+                media_idx = (i // 2) % len(media_files)  # 2개씩 묶어서 미디어 사용
+                mapping[i] = media_idx
+        else:
+            # 기본: 1:1 매핑
+            for i, clip in enumerate(clips):
+                if i < len(media_files):
+                    mapping[i] = i
+
+        return mapping
+
+    def apply_crossfade_to_clips(self, clips, transition_indices, fade_duration=2.0):
+        """지정된 전환 구간의 클립들에 fade 효과 적용"""
+        print(f"🎨 apply_crossfade_to_clips 호출됨!")
+        print(f"   transition_indices: {transition_indices}")
+        print(f"   fade_duration: {fade_duration}")
+        print(f"   clips 개수: {len(clips) if clips else 0}")
+
+        if not transition_indices:
+            print("   ⚠️ transition_indices가 비어있습니다. 원본 클립 반환")
+            return clips
+
+        processed_clips = clips.copy()
+
+        # fade 효과 임포트
+        try:
+            from moviepy.video.fx import fadeout, fadein
+            msg = "   ✅ MoviePy fade 효과 임포트 성공"
+            print(msg)
+            logging.info(msg)
+        except ImportError as e:
+            msg = f"   ⚠️ MoviePy fade 효과를 가져올 수 없습니다: {e}"
+            print(msg)
+            logging.error(msg)
+            msg = "   -> 기본 클립을 반환합니다."
+            print(msg)
+            logging.info(msg)
+            return clips
+
+        print(f"🎨 {len(transition_indices)}개 구간에 강화된 크로스 디졸브 효과 적용 (2초)")
+
+        for i in transition_indices:
+            try:
+                print(f"   🔄 전환 구간 {i}→{i+1} 처리 중...")
+
+                # 안전한 fade 시간 계산
+                current_clip = processed_clips[i]
+                next_clip = processed_clips[i+1]
+
+                print(f"     현재 클립 [{i}] 길이: {current_clip.duration:.2f}초")
+                print(f"     다음 클립 [{i+1}] 길이: {next_clip.duration:.2f}초")
+
+                safe_fade = min(fade_duration, current_clip.duration * 0.7, next_clip.duration * 0.7)
+                safe_fade = max(0.5, safe_fade)  # 최소 0.5초
+
+                print(f"     계산된 safe_fade: {safe_fade:.2f}초 (요청: {fade_duration}초)")
+
+                # 현재 클립에 fadeout 적용 (끝 부분)
+                print(f"     현재 클립에 fadeout({safe_fade:.2f}초) 적용...")
+                faded_current = current_clip.fx(fadeout, safe_fade)
+                print(f"     ✅ fadeout 적용 완료")
+
+                # 다음 클립에 fadein 적용 (시작 부분)
+                print(f"     다음 클립에 fadein({safe_fade:.2f}초) 적용...")
+                faded_next = next_clip.fx(fadein, safe_fade)
+                print(f"     ✅ fadein 적용 완료")
+
+                # 클립 길이 조정으로 자연스러운 오버랩 생성
+                overlap = safe_fade * 0.6  # 더 긴 겹침 (2초의 60% = 1.2초)
+                print(f"     계산된 overlap: {overlap:.2f}초")
+
+                # 현재 클립: 끝 부분 약간 단축
+                if current_clip.duration > overlap:
+                    print(f"     현재 클립 단축: {current_clip.duration:.2f}초 → {current_clip.duration - overlap:.2f}초")
+                    shortened_current = faded_current.subclip(0, current_clip.duration - overlap)
+                else:
+                    print(f"     현재 클립 단축 불가 (너무 짧음)")
+                    shortened_current = faded_current
+
+                # 다음 클립: 시작 부분 약간 생략
+                if next_clip.duration > overlap:
+                    print(f"     다음 클립 시프트: {overlap:.2f}초~{next_clip.duration:.2f}초")
+                    shifted_next = faded_next.subclip(overlap, next_clip.duration)
+                else:
+                    print(f"     다음 클립 시프트 불가 (너무 짧음)")
+                    shifted_next = faded_next
+
+                processed_clips[i] = shortened_current
+                processed_clips[i+1] = shifted_next
+
+                print(f"  ✨ 클립 {i}→{i+1}: {safe_fade:.2f}초 크로스 디졸브 적용 완료 (겹침: {overlap:.2f}초)")
+
+            except Exception as e:
+                print(f"  ⚠️ 클립 {i}→{i+1}: fade 효과 적용 실패 - {e}")
+                import traceback
+                traceback.print_exc()
+                # 실패 시 원본 클립 유지
+                continue
+
+        return processed_clips
+
+    def apply_crossfade_to_clips(self, clips, transition_indices, fade_duration=0.5):
+        """지정된 전환 구간의 클립들에 fade 효과 적용"""
+        msg = "🎨 apply_crossfade_to_clips 호출됨!"
+        print(msg)
+        logging.info(msg)
+
+        msg = f"   전환 구간: {transition_indices}"
+        print(msg)
+        logging.info(msg)
+
+        msg = f"   페이드 시간: {fade_duration}초"
+        print(msg)
+        logging.info(msg)
+
+        try:
+            # MoviePy fade 모듈 import 시도 (최신 버전 호환)
+            from moviepy.video.fx.fadein import fadein
+            from moviepy.video.fx.fadeout import fadeout
+            msg = "✅ MoviePy fade 모듈 import 성공"
+            print(msg)
+            logging.info(msg)
+        except ImportError as e:
+            msg = f"❌ MoviePy fade 모듈 import 실패: {e}"
+            print(msg)
+            logging.error(msg)
+            return clips
+
+        processed_clips = []
+
+        for i, clip in enumerate(clips):
+            try:
+                clip_copy = clip.copy()
+
+                # 크로스 디졸브 로직:
+                # transition_indices에 있는 인덱스는 "전환이 시작되는 클립"을 의미
+                # 즉, 클립 i에서 클립 i+1로 전환
+
+                # 현재 클립에서 다음 클립으로의 전환 (fadeout)
+                if i in transition_indices:
+                    if clip_copy.duration >= fade_duration:
+                        clip_copy = clip_copy.fx(fadeout, fade_duration)
+                        msg = f"✨ 클립 {i}→{i+1}: 2초 크로스 디졸브 적용 완료 (fadeout)"
+                        print(msg)
+                        logging.info(msg)
+                    else:
+                        msg = f"⚠️ 클립 {i}: 길이({clip_copy.duration:.1f}초)가 페이드 시간보다 짧아 fadeout 생략"
+                        print(msg)
+                        logging.warning(msg)
+
+                # 이전 클립에서 현재 클립으로의 전환 (fadein)
+                # i-1이 transition_indices에 있으면 현재 클립에 fadein 적용
+                if i > 0 and (i-1) in transition_indices:
+                    clip_copy = clip_copy.fx(fadein, fade_duration)
+                    msg = f"✨ 클립 {i-1}→{i}: 2초 크로스 디졸브 적용 완료 (fadein)"
+                    print(msg)
+                    logging.info(msg)
+
+                processed_clips.append(clip_copy)
+                msg = f"✅ 클립 {i} 처리 완료"
+                print(msg)
+                logging.info(msg)
+
+            except Exception as e:
+                msg = f"⚠️ 클립 {i} 처리 실패: {e}"
+                print(msg)
+                logging.error(msg)
+                # 실패 시 원본 클립 사용
+                processed_clips.append(clip)
+
+        msg = f"🎨 크로스페이드 효과 적용 완료: {len(processed_clips)}개 클립"
+        print(msg)
+        logging.info(msg)
+
+        return processed_clips
+
+    def apply_smart_crossfade_transitions(self, clips, media_files=None, image_allocation_mode="1_per_image", fade_duration=0.5):
+        """기존 구조를 유지하면서 스마트 크로스 디졸브 적용"""
+        msg = f"🎬 apply_smart_crossfade_transitions 호출됨!"
+        print(msg)
+        logging.info(msg)
+
+        msg = f"   clips 개수: {len(clips) if clips else 0}"
+        print(msg)
+        logging.info(msg)
+
+        msg = f"   media_files 타입: {type(media_files)}"
+        print(msg)
+        logging.info(msg)
+
+        msg = f"   media_files 개수: {len(media_files) if media_files else 0}"
+        print(msg)
+        logging.info(msg)
+
+        msg = f"   image_allocation_mode: {image_allocation_mode}"
+        print(msg)
+        logging.info(msg)
+
+        msg = f"   fade_duration: {fade_duration}"
+        print(msg)
+        logging.info(msg)
+
+        if not clips or len(clips) <= 1:
+            msg = "   ⚠️ 클립이 없거나 1개 이하입니다. 기본 연결 사용"
+            print(msg)
+            logging.warning(msg)
+            return concatenate_videoclips(clips, method="compose") if clips else None
+
+        msg = f"🎬 스마트 크로스 디졸브 전환 시작: {len(clips)}개 클립 (강화된 2초 효과)"
+        print(msg)
+        logging.info(msg)
+
+        # 이미지-이미지 전환 구간 감지 (수정된 매개변수)
+        msg = "🔍 이미지 전환 구간 감지 호출..."
+        print(msg)
+        logging.info(msg)
+
+        transition_indices = self.detect_image_transitions(clips, media_files, image_allocation_mode)
+
+        msg = f"🔍 감지 결과: {transition_indices}"
+        print(msg)
+        logging.info(msg)
+
+        if not transition_indices:
+            msg = "ℹ️ 이미지-이미지 전환 구간이 없어 일반 연결 사용"
+            print(msg)
+            logging.info(msg)
+
+            msg = "   -> concatenate_videoclips로 기본 연결합니다"
+            print(msg)
+            logging.info(msg)
+            return concatenate_videoclips(clips, method="compose")
+
+        # 개별 클립에 fade 효과 적용
+        print("🔄 개별 클립에 fade 효과 적용 호출...")
+        processed_clips = self.apply_crossfade_to_clips(clips, transition_indices, fade_duration)
+        print(f"🔄 fade 효과 적용 완료. 처리된 클립 개수: {len(processed_clips)}")
+
+        # 기존 방식으로 순차 연결 (CompositeVideoClip 사용 안함)
+        try:
+            print("🔗 최종 영상 연결 시작...")
+            print(f"   연결할 클립 개수: {len(processed_clips)}")
+
+            # 각 클립의 상태 확인
+            for i, clip in enumerate(processed_clips):
+                try:
+                    print(f"   클립 [{i}]: 길이 {clip.duration:.2f}초, 크기 {clip.size}")
+                except Exception as e:
+                    print(f"   클립 [{i}]: 정보 확인 실패 - {e}")
+
+            final_video = concatenate_videoclips(processed_clips, method="compose")
+            print(f"✅ 크로스 디졸브 전환 완료: 최종 길이 {final_video.duration:.2f}초")
+            return final_video
+        except Exception as e:
+            print(f"⚠️ 전환 효과 적용 실패: {e}")
+            import traceback
+            traceback.print_exc()
+            print("   -> 원본 클립들로 기본 연결을 시도합니다...")
+            # 실패 시 원본 클립들로 기본 연결
+            try:
+                fallback_video = concatenate_videoclips(clips, method="compose")
+                print(f"✅ 기본 연결 성공: 길이 {fallback_video.duration:.2f}초")
+                return fallback_video
+            except Exception as e2:
+                print(f"⚠️ 기본 연결도 실패: {e2}")
+                return None
+
 
