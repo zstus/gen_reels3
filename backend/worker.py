@@ -98,8 +98,10 @@ class VideoWorker:
             body_font = video_params.get('body_font', 'BMYEONSUNG_otf.otf')
             # 자막 읽어주기 파라미터 추출
             voice_narration = video_params.get('voice_narration', 'enabled')
+            # 크로스 디졸브 파라미터 추출
+            cross_dissolve = video_params.get('cross_dissolve', 'enabled')
 
-            logger.info(f"📋 영상 파라미터: 음악={music_mood}, 테스트파일={use_test_files}, 텍스트위치={text_position}, 타이틀폰트={title_font}, 본문폰트={body_font}, 자막음성={voice_narration}")
+            logger.info(f"📋 영상 파라미터: 음악={music_mood}, 테스트파일={use_test_files}, 텍스트위치={text_position}, 타이틀폰트={title_font}, 본문폰트={body_font}, 자막음성={voice_narration}, 크로스디졸브={cross_dissolve}")
 
             # 콘텐츠 데이터 파싱
             try:
@@ -147,7 +149,8 @@ class VideoWorker:
                     title_font=title_font,
                     body_font=body_font,
                     music_mood=music_mood,
-                    voice_narration=voice_narration
+                    voice_narration=voice_narration,
+                    cross_dissolve=cross_dissolve
                 )
             else:
                 # 업로드된 파일 사용
@@ -163,7 +166,8 @@ class VideoWorker:
                     title_font=title_font,
                     body_font=body_font,
                     music_mood=music_mood,
-                    voice_narration=voice_narration
+                    voice_narration=voice_narration,
+                    cross_dissolve=cross_dissolve
                 )
 
             if result and isinstance(result, str):

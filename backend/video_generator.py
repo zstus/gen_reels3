@@ -1499,6 +1499,11 @@ class VideoGenerator:
     def create_video_with_local_images(self, content, music_path, output_folder, image_allocation_mode="2_per_image", text_position="bottom", text_style="outline", title_area_mode="keep", title_font="BMYEONSUNG_otf.otf", body_font="BMYEONSUNG_otf.otf", music_mood="bright", media_files=None, voice_narration="enabled", cross_dissolve="enabled"):
         """로컬 이미지 파일들을 사용한 릴스 영상 생성"""
         try:
+            # 디버깅: 파라미터 확인
+            print(f"🔍 create_video_with_local_images 호출됨!")
+            print(f"🔍 cross_dissolve 파라미터: '{cross_dissolve}' (타입: {type(cross_dissolve)})")
+            logging.info(f"🔍 create_video_with_local_images 호출됨!")
+            logging.info(f"🔍 cross_dissolve 파라미터: '{cross_dissolve}' (타입: {type(cross_dissolve)})")
             # 로컬 이미지 파일들 가져오기
             local_images = self.get_local_images()
 
@@ -1799,11 +1804,16 @@ class VideoGenerator:
 
             # 그룹들 연결 (크로스 디졸브 옵션에 따라 처리)
             print(f"🎬 영상 클립들 연결: {len(group_clips)}개 클립")
+            print(f"🔍 [그룹모드] cross_dissolve 값: '{cross_dissolve}' (타입: {type(cross_dissolve)})")
+            logging.info(f"🎬 영상 클립들 연결: {len(group_clips)}개 클립")
+            logging.info(f"🔍 [그룹모드] cross_dissolve 값: '{cross_dissolve}' (타입: {type(cross_dissolve)})")
             if cross_dissolve == "enabled":
-                print("🎨 크로스 디졸브 효과 적용")
+                print("🎨 [그룹모드] 크로스 디졸브 효과 적용")
+                logging.info("🎨 [그룹모드] 크로스 디졸브 효과 적용")
                 final_video = self.apply_smart_crossfade_transitions(group_clips, media_files, image_allocation_mode)
             else:
-                print("🎬 기본 연결 방식 사용 (크로스 디졸브 미적용)")
+                print("🎬 [그룹모드] 기본 연결 방식 사용 (크로스 디졸브 미적용)")
+                logging.info("🎬 [그룹모드] 기본 연결 방식 사용 (크로스 디졸브 미적용)")
                 final_video = concatenate_videoclips(group_clips, method="compose")
             
             # 8. TTS 오디오들 연결
@@ -2103,11 +2113,16 @@ class VideoGenerator:
 
             # 전체 영상 연결 (크로스 디졸브 옵션에 따라 처리)
             print(f"🎬 본문 클립들 연결: {len(body_clips)}개 클립")
+            print(f"🔍 [일반모드] cross_dissolve 값: '{cross_dissolve}' (타입: {type(cross_dissolve)})")
+            logging.info(f"🎬 본문 클립들 연결: {len(body_clips)}개 클립")
+            logging.info(f"🔍 [일반모드] cross_dissolve 값: '{cross_dissolve}' (타입: {type(cross_dissolve)})")
             if cross_dissolve == "enabled":
-                print("🎨 크로스 디졸브 효과 적용")
+                print("🎨 [일반모드] 크로스 디졸브 효과 적용")
+                logging.info("🎨 [일반모드] 크로스 디졸브 효과 적용")
                 final_video = self.apply_smart_crossfade_transitions(body_clips, media_files, image_allocation_mode)
             else:
-                print("🎬 기본 연결 방식 사용 (크로스 디졸브 미적용)")
+                print("🎬 [일반모드] 기본 연결 방식 사용 (크로스 디졸브 미적용)")
+                logging.info("🎬 [일반모드] 기본 연결 방식 사용 (크로스 디졸브 미적용)")
                 final_video = concatenate_videoclips(body_clips, method="compose")
             print(f"최종 비디오 길이: {final_video.duration:.1f}초")
             

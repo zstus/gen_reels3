@@ -2407,7 +2407,9 @@ async def generate_video_async(
             'title_font': title_font,
             'body_font': body_font,
             # 자막 읽어주기 파라미터 추가
-            'voice_narration': voice_narration
+            'voice_narration': voice_narration,
+            # 크로스 디졸브 파라미터 추가
+            'cross_dissolve': cross_dissolve
         }
 
         # 3. 작업을 큐에 추가

@@ -1679,5 +1679,143 @@
     "error_message": null,
     "retry_count": 0,
     "max_retries": 2
+  },
+  "e48cfad0-bb55-4c09-ba02-e74107ac9f68": {
+    "job_id": "e48cfad0-bb55-4c09-ba02-e74107ac9f68",
+    "user_email": "xystus@gmail.com",
+    "status": "completed",
+    "created_at": "2025-09-27T15:46:42.842553",
+    "updated_at": "2025-09-27T15:49:14.156933",
+    "video_params": {
+      "content_data": "{\"title\":\"침대만 누우면 잠이 안 온다고?\",\"body1\":\"10초 전까진 졸려 죽겠다가, 침대만 누우면 멀쩡? 이 영상 끝나면 2분 컷으로 잔다\",\"body2\":\"수면은 체온·빛·각성도 싸움. 뜨거운 방, 밝은 화면, 뒤늦은 카페인이 너를 못 잠들게 하는 원인이야.\",\"body3\":\"온도는 18도로 살짝 쿨하게, 샤워가 도움이 돼. 시계는 없애. 시간을 보면 각성되니까. 카페인은 오전에만 마시고.\",\"body4\":\"낮에 햇빛 30분 쬐, 운동은 잠들기 2시간 전에 끝내고, 낮잠은 오후 3시 이후는 피해.\",\"body5\":\"눈감고 숨 깊게, 얼굴 힘 풀고, 어깨, 팔, 손, 가슴, 허벅지, 종아리, 발까지 힘줬다가 툭 힘풀어.\",\"body6\":\"생각 비우고, 여름 햇살 안에서 해먹에 누워, 천천히 흔들거리는 것을 상상해. \",\"body7\":\"마지막으로 매일 같은 시간에 자고, 같은 시간에 일어날 것. 효과는 댓글로!\",\"body8\":\"\"}",
+      "music_mood": "bright",
+      "image_allocation_mode": "2_per_image",
+      "text_position": "bottom",
+      "text_style": "black_text_white_outline",
+      "title_area_mode": "keep",
+      "selected_bgm_path": "Jumpy Pants - Freedom Trail Studio.mp3",
+      "use_test_files": false,
+      "uploaded_files": [
+        "1.png",
+        "2.png",
+        "3.png",
+        "4.png"
+      ],
+      "title_font": "BMYEONSUNG_otf.otf",
+      "body_font": "BMYEONSUNG_otf.otf",
+      "voice_narration": "enabled"
+    },
+    "result": {
+      "video_path": "/zstus/backend/output_videos/reels_70f22749.mp4",
+      "duration": "약 10-30초",
+      "completed_at": "2025-09-27T15:49:14.155164"
+    },
+    "error_message": null,
+    "retry_count": 0,
+    "max_retries": 2
+  },
+  "f4d81b1b-0b55-4a20-a78e-181661ff41df": {
+    "job_id": "f4d81b1b-0b55-4a20-a78e-181661ff41df",
+    "user_email": "xystus@gmail.com",
+    "status": "completed",
+    "created_at": "2025-09-27T16:12:00.526442",
+    "updated_at": "2025-09-27T16:14:33.097795",
+    "video_params": {
+      "content_data": "{\"title\":\"침대만 누우면 잠이 안 온다고?\",\"body1\":\"10초 전까진 졸려 죽겠다가, 침대만 누우면 멀쩡? 이 영상 끝나면 2분 컷으로 잔다\",\"body2\":\"수면은 체온·빛·각성도 싸움. 뜨거운 방, 밝은 화면, 뒤늦은 카페인이 너를 못 잠들게 하는 원인이야.\",\"body3\":\"온도는 18도로 살짝 쿨하게, 샤워가 도움이 돼. 시계는 없애. 시간을 보면 각성되니까. 카페인은 오전에만 마시고.\",\"body4\":\"낮에 햇빛 30분 쬐, 운동은 잠들기 2시간 전에 끝내고, 낮잠은 오후 3시 이후는 피해.\",\"body5\":\"눈감고 숨 깊게, 얼굴 힘 풀고, 어깨, 팔, 손, 가슴, 허벅지, 종아리, 발까지 힘줬다가 툭 힘풀어.\",\"body6\":\"생각 비우고, 여름 햇살 안에서 해먹에 누워, 천천히 흔들거리는 것을 상상해. \",\"body7\":\"마지막으로 매일 같은 시간에 자고, 같은 시간에 일어날 것. 효과는 댓글로!\",\"body8\":\"\"}",
+      "music_mood": "bright",
+      "image_allocation_mode": "2_per_image",
+      "text_position": "bottom",
+      "text_style": "background",
+      "title_area_mode": "keep",
+      "selected_bgm_path": "Jumpy Pants - Freedom Trail Studio.mp3",
+      "use_test_files": false,
+      "uploaded_files": [
+        "1.png",
+        "2.png",
+        "3.png",
+        "4.png"
+      ],
+      "title_font": "BMHANNAPro.ttf",
+      "body_font": "SeoulNamsanEB.ttf",
+      "voice_narration": "enabled"
+    },
+    "result": {
+      "video_path": "/zstus/backend/output_videos/reels_bcf6cc29.mp4",
+      "duration": "약 10-30초",
+      "completed_at": "2025-09-27T16:14:33.095940"
+    },
+    "error_message": null,
+    "retry_count": 0,
+    "max_retries": 2
+  },
+  "33c03298-8f16-434c-ab16-b92f8c2919ea": {
+    "job_id": "33c03298-8f16-434c-ab16-b92f8c2919ea",
+    "user_email": "xystus@gmail.com",
+    "status": "completed",
+    "created_at": "2025-09-27T16:23:44.702116",
+    "updated_at": "2025-09-27T16:26:16.014290",
+    "video_params": {
+      "content_data": "{\"title\":\"침대만 누우면 잠이 안 온다고?\",\"body1\":\"10초 전까진 졸려 죽겠다가, 침대만 누우면 멀쩡? 이 영상 끝나면 2분 컷으로 잔다\",\"body2\":\"수면은 체온·빛·각성도 싸움. 뜨거운 방, 밝은 화면, 뒤늦은 카페인이 너를 못 잠들게 하는 원인이야.\",\"body3\":\"온도는 18도로 살짝 쿨하게, 샤워가 도움이 돼. 시계는 없애. 시간을 보면 각성되니까. 카페인은 오전에만 마시고.\",\"body4\":\"낮에 햇빛 30분 쬐, 운동은 잠들기 2시간 전에 끝내고, 낮잠은 오후 3시 이후는 피해.\",\"body5\":\"눈감고 숨 깊게, 얼굴 힘 풀고, 어깨, 팔, 손, 가슴, 허벅지, 종아리, 발까지 힘줬다가 툭 힘풀어.\",\"body6\":\"생각 비우고, 여름 햇살 안에서 해먹에 누워, 천천히 흔들거리는 것을 상상해. \",\"body7\":\"마지막으로 매일 같은 시간에 자고, 같은 시간에 일어날 것. 효과는 댓글로!\",\"body8\":\"\"}",
+      "music_mood": "bright",
+      "image_allocation_mode": "2_per_image",
+      "text_position": "bottom",
+      "text_style": "outline",
+      "title_area_mode": "keep",
+      "selected_bgm_path": "For Granted - Dyalla.mp3",
+      "use_test_files": false,
+      "uploaded_files": [
+        "1.png",
+        "2.png",
+        "3.png",
+        "4.png"
+      ],
+      "title_font": "BMYEONSUNG_otf.otf",
+      "body_font": "BMYEONSUNG_otf.otf",
+      "voice_narration": "enabled",
+      "cross_dissolve": "disabled"
+    },
+    "result": {
+      "video_path": "/zstus/backend/output_videos/reels_8a28fb1e.mp4",
+      "duration": "약 10-30초",
+      "completed_at": "2025-09-27T16:26:16.012345"
+    },
+    "error_message": null,
+    "retry_count": 0,
+    "max_retries": 2
+  },
+  "2835a639-48e3-4aaa-a897-26ebaba4566f": {
+    "job_id": "2835a639-48e3-4aaa-a897-26ebaba4566f",
+    "user_email": "xystus@gmail.com",
+    "status": "completed",
+    "created_at": "2025-09-27T16:24:30.320769",
+    "updated_at": "2025-09-27T16:28:46.551880",
+    "video_params": {
+      "content_data": "{\"title\":\"침대만 누우면 잠이 안 온다고?\",\"body1\":\"10초 전까진 졸려 죽겠다가, 침대만 누우면 멀쩡? 이 영상 끝나면 2분 컷으로 잔다\",\"body2\":\"수면은 체온·빛·각성도 싸움. 뜨거운 방, 밝은 화면, 뒤늦은 카페인이 너를 못 잠들게 하는 원인이야.\",\"body3\":\"온도는 18도로 살짝 쿨하게, 샤워가 도움이 돼. 시계는 없애. 시간을 보면 각성되니까. 카페인은 오전에만 마시고.\",\"body4\":\"낮에 햇빛 30분 쬐, 운동은 잠들기 2시간 전에 끝내고, 낮잠은 오후 3시 이후는 피해.\",\"body5\":\"눈감고 숨 깊게, 얼굴 힘 풀고, 어깨, 팔, 손, 가슴, 허벅지, 종아리, 발까지 힘줬다가 툭 힘풀어.\",\"body6\":\"생각 비우고, 여름 햇살 안에서 해먹에 누워, 천천히 흔들거리는 것을 상상해. \",\"body7\":\"마지막으로 매일 같은 시간에 자고, 같은 시간에 일어날 것. 효과는 댓글로!\",\"body8\":\"\"}",
+      "music_mood": "bright",
+      "image_allocation_mode": "2_per_image",
+      "text_position": "bottom",
+      "text_style": "white_background",
+      "title_area_mode": "keep",
+      "selected_bgm_path": "For Granted - Dyalla.mp3",
+      "use_test_files": false,
+      "uploaded_files": [
+        "1.png",
+        "2.png",
+        "3.png",
+        "4.png"
+      ],
+      "title_font": "BMYEONSUNG_otf.otf",
+      "body_font": "BMYEONSUNG_otf.otf",
+      "voice_narration": "enabled",
+      "cross_dissolve": "enabled"
+    },
+    "result": {
+      "video_path": "/zstus/backend/output_videos/reels_6a3df9a9.mp4",
+      "duration": "약 10-30초",
+      "completed_at": "2025-09-27T16:28:46.550028"
+    },
+    "error_message": null,
+    "retry_count": 0,
+    "max_retries": 2
   }
 }
