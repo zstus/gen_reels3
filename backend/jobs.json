@@ -1,363 +1,4 @@
 {
-  "b360a921-7e49-4bad-8214-cf845fe9aee9": {
-    "job_id": "b360a921-7e49-4bad-8214-cf845fe9aee9",
-    "user_email": "xystus@gmail.com",
-    "status": "completed",
-    "created_at": "2025-09-19T18:19:23.564124",
-    "updated_at": "2025-09-19T18:24:08.092962",
-    "video_params": {
-      "content_data": "{\"title\":\"아직도 출가외인 타령?\",\"body1\":\"아직도 출가외인 타령하는 시어머니 있냐고 진짜 궁금해서 물어본다.\",\"body2\":\"이번에 내 고모 딸 결혼식이랑 남편 큰아빠 딸 결혼식 날짜가 겹쳤거든.\",\"body3\":\"근데 여자는 출가외인이라며 무조건 남편 쪽 결혼식 오라고 난리였어.\",\"body4\":\"양쪽 다 가까운 친척인데 왜 여자만 남편 쪽으로 가야 하냐고.\",\"body5\":\"친척언니한텐 둘러대고, 잔소리 들으며 장거리 운전까지 해서 진짜 체력 다 소진됐어.\",\"body6\":\"결혼 때보다 살도 좀 쪘는데, 7키로 정도, 하루 종일 살 빼라고 귀에 피딱지 앉게 떠들어 대셔.\",\"body7\":\"이런 이야기 들으면서 사는게 당연한 거야? 그냥 참아야 돼? 네 생각 궁금해.\",\"body8\":\"\"}",
-      "music_mood": "calm",
-      "image_allocation_mode": "2_per_image",
-      "text_position": "bottom",
-      "text_style": "outline",
-      "selected_bgm_path": "Taking in The Changes - Everet Almond.mp3",
-      "use_test_files": false,
-      "uploaded_files": [
-        "1.mp4",
-        "2.mp4",
-        "3.mp4",
-        "4.mp4"
-      ],
-      "title_font": "IBMPlexSansKR-Bold.ttf",
-      "body_font": "PretendardVariable.ttf"
-    },
-    "result": {
-      "video_path": "/zstus/backend/output_videos/reels_59dafd9f.mp4",
-      "duration": "약 10-30초",
-      "completed_at": "2025-09-19T18:24:08.092049"
-    },
-    "error_message": null,
-    "retry_count": 0,
-    "max_retries": 2
-  },
-  "beebf960-5973-43ab-af22-cd5a1b077892": {
-    "job_id": "beebf960-5973-43ab-af22-cd5a1b077892",
-    "user_email": "xystus@gmail.com",
-    "status": "completed",
-    "created_at": "2025-09-20T02:49:51.053996",
-    "updated_at": "2025-09-20T02:52:20.666405",
-    "video_params": {
-      "content_data": "{\"title\":\"알파고의 '무브37'과 용기\",\"body1\":\"안전한, 경험적 진리에 복종하지 않고 새로운 창의적 결정을 내리는 용기에 대해 이야기해보자.\",\"body2\":\"2016년 3월, 알파고와 이세돌 9단의 2국은 완전히 다른 분위기에서 시작됐어.\",\"body3\":\"1국 때 이세돌의 패배 때문에 프로기사들도 충격에 휩싸였고, 이세돌은 절치부심하는 모습이었거든.\",\"body4\":\"그렇게 시작된 2국, 알파고의 37번째 수였던 어깨 짚기는 기존 바둑 이론으론 설명하기 어려운 수였어\",\"body5\":\"해설자들은 “실수 같다”, “이상하다” 했고, 이세돌도 다음 돌을 위해 10분 넘게 고민을 했지.\",\"body6\":\"결국은 그 수를 기점으로 이세돌은 2국도 패배를 해. 사실 알고리즘이 창의력에 의한 판단을 했다고 보긴 힘들거야.\",\"body7\":\"하지만 불확실한 상황에서 새로운 선택을 하고 밀고나가는 용기에 대해 다시 생각해보게 됐어. 너는 어떻게 생각해?\",\"body8\":\"\"}",
-      "music_mood": "suspense",
-      "image_allocation_mode": "2_per_image",
-      "text_position": "bottom",
-      "text_style": "outline",
-      "selected_bgm_path": "Conspiracy Theory - Rod Kim.mp3",
-      "use_test_files": false,
-      "uploaded_files": [
-        "1.jpg",
-        "2.png",
-        "3.jpg",
-        "4.mp4"
-      ],
-      "title_font": "IBMPlexSansKR-Bold.ttf",
-      "body_font": "BMYEONSUNG_otf.otf"
-    },
-    "result": {
-      "video_path": "/zstus/backend/output_videos/reels_f797cc1e.mp4",
-      "duration": "약 10-30초",
-      "completed_at": "2025-09-20T02:52:20.665429"
-    },
-    "error_message": null,
-    "retry_count": 0,
-    "max_retries": 2
-  },
-  "6ba21342-afaa-4129-8353-c5dd2cef7cc5": {
-    "job_id": "6ba21342-afaa-4129-8353-c5dd2cef7cc5",
-    "user_email": "xystus@gmail.com",
-    "status": "completed",
-    "created_at": "2025-09-20T16:50:25.370716",
-    "updated_at": "2025-09-20T16:52:09.500982",
-    "video_params": {
-      "content_data": "{\"title\":\"엄마의 돈관리 맏겨도 되나\",\"body1\":\"엄마가 돈관리 해준다 해서 맡겼는데, 다 써버렸다니 너무 황당해.\",\"body2\":\"엄마한테 돈 안모아줘도 괜찮으니 돈 돌려달라 했더니 못 준다는 거야.\",\"body3\":\"계속 모으고 있는 줄 알았더니 생활비로 쓰고 있었다는거지. 나도 모르게...\",\"body4\":\"다른 집 애들은 돈 벌면 생활비 주고 독립도 한다던데, 나도 그러는게 나을까.\",\"body5\":\"생활비로 120만원씩 가져가는 게 진짜 맞는 거야? 엄마를 못 믿겠어.\",\"body6\":\"자취해도 120만원까지 안 들 것 같은데 내가 뭔가 잘못 생각하고 있는거야?\",\"body7\":\"돈을 맡기기 싫으면 독립하라는데, 너라면 어떻게 할래?\",\"body8\":\"\"}",
-      "music_mood": "sad",
-      "image_allocation_mode": "2_per_image",
-      "text_position": "bottom",
-      "text_style": "background",
-      "selected_bgm_path": "Chase Waves - Karneef.mp3",
-      "use_test_files": false,
-      "uploaded_files": [
-        "1.png",
-        "2.png",
-        "3.png",
-        "4.png"
-      ],
-      "title_font": "NanumSquareEB.ttf",
-      "body_font": "BMYEONSUNG_otf.otf"
-    },
-    "result": {
-      "video_path": "/zstus/backend/output_videos/reels_3669df30.mp4",
-      "duration": "약 10-30초",
-      "completed_at": "2025-09-20T16:52:09.500066"
-    },
-    "error_message": null,
-    "retry_count": 0,
-    "max_retries": 2
-  },
-  "10adad94-8edf-4b92-9163-b9fd55a6b7de": {
-    "job_id": "10adad94-8edf-4b92-9163-b9fd55a6b7de",
-    "user_email": "xystus@gmail.com",
-    "status": "completed",
-    "created_at": "2025-09-20T17:03:25.194780",
-    "updated_at": "2025-09-20T17:05:16.924840",
-    "video_params": {
-      "content_data": "{\"title\":\"여친의 전재산 3천만원, 결혼 괜찮을까?\",\"body1\":\"여자친구가 6년 일해서 3천만원 모았다는데, 이게 결혼할 때 문제가 될까?\",\"body2\":\"나는 2억5천 모았고 집에서 2억 지원도 받아, 여친은 별도 지원도 없음.\",\"body3\":\"여친이 적게 모은 건 알고 있긴 했는데, 솔직히 생각할 수록 실망감이 들어.\",\"body4\":\"모은 돈 보면 그 사람 경제관념을 알 수 있잖아. 결혼하고 나서도 괜찮을까?\",\"body5\":\"솔직히 신혼집 구할 때 여친이 1억은 보태줬으면 좋겠다는 욕심이 있어.\",\"body6\":\"여자친구를 사랑하지만, 신혼집 문제로 트러블 나지 않을까 걱정돼.\",\"body7\":\"조건이 이렇게 다르면 그냥 다른 사람 만나는 게 맞는 걸까?\",\"body8\":\"\"}",
-      "music_mood": "sad",
-      "image_allocation_mode": "2_per_image",
-      "text_position": "bottom",
-      "text_style": "outline",
-      "selected_bgm_path": "Land of a Loss - Dan _Lebo_ Lebowitz, Tone Seeker.mp3",
-      "use_test_files": false,
-      "uploaded_files": [
-        "1.png",
-        "2.png",
-        "3.png",
-        "4.mp4"
-      ],
-      "title_font": "BMYEONSUNG_otf.otf",
-      "body_font": "NanumSquareEB.ttf"
-    },
-    "result": {
-      "video_path": "/zstus/backend/output_videos/reels_13f68171.mp4",
-      "duration": "약 10-30초",
-      "completed_at": "2025-09-20T17:05:16.923899"
-    },
-    "error_message": null,
-    "retry_count": 0,
-    "max_retries": 2
-  },
-  "ed349362-41cf-410e-9d93-d4db72d21f21": {
-    "job_id": "ed349362-41cf-410e-9d93-d4db72d21f21",
-    "user_email": "xystus@gmail.com",
-    "status": "failed",
-    "created_at": "2025-09-20T17:40:58.881480",
-    "updated_at": "2025-09-20T17:41:06.337916",
-    "video_params": {
-      "content_data": "{\"title\":\"결혼 5개월 전, 이걸 봐버렸다…💔\",\"body1\":\"펜션에서 컵라면 먹으려다, 커피포트 물이 튀어 발등 화상! 🔥\",\"body2\":\"너무 아파서 주저앉았는데… 예비신랑? 그냥 '헐' 한마디 하고 소파 가서 유튜브 틀음…📱\",\"body3\":\"심지어 '괜찮아?' 이 한마디도 없음. 동태눈으로 빤히 쳐다본 게 다임😨\",\"body4\":\"이전에도 공감 제로, 내 얘기하면 무반응, 웃겨도 정색… 이번엔 진짜 터짐.\",\"body5\":\"따지니까 '내가 괜찮냐고 물으면 낫냐? 여자들은 너무 기대가 크다' 이딴 소리🤦\",\"body6\":\"결혼 약속하니까 이제 보인다. 이기적이고 공감 없는 남자라는 거.\",\"body7\":\"백년해로? 아니, 예식장 취소부터 검색 중ㅋㅋ 내가 너무한 걸까? 🤔\",\"body8\":\"\"}",
-      "music_mood": "bright",
-      "image_allocation_mode": "2_per_image",
-      "text_position": "bottom",
-      "text_style": "outline",
-      "selected_bgm_path": "Dark Elves - Jimena Contreras.mp3",
-      "use_test_files": false,
-      "uploaded_files": [
-        "1.mkv"
-      ],
-      "title_font": "IBMPlexSansKR-Bold.ttf",
-      "body_font": "BMYEONSUNG_otf.otf"
-    },
-    "result": null,
-    "error_message": "uploads 폴더 기반 영상 생성 실패: 이미지 파일이 없습니다",
-    "retry_count": 2,
-    "max_retries": 2
-  },
-  "e3b27e8c-b92f-4ece-8c72-a9c6d3a0a2d6": {
-    "job_id": "e3b27e8c-b92f-4ece-8c72-a9c6d3a0a2d6",
-    "user_email": "xystus@gmail.com",
-    "status": "completed",
-    "created_at": "2025-09-20T17:52:49.531464",
-    "updated_at": "2025-09-20T17:55:26.826161",
-    "video_params": {
-      "content_data": "{\"title\":\"결혼 5개월 전, 이걸 봐버렸다…💔\",\"body1\":\"펜션에서 컵라면 먹으려다, 커피포트 물이 튀어 발등 화상! 🔥\",\"body2\":\"너무 아파서 주저앉았는데… 예비신랑? 그냥 '헐' 한마디 하고 소파 가서 유튜브 틀음…📱\",\"body3\":\"심지어 '괜찮아?' 이 한마디도 없음. 동태눈으로 빤히 쳐다본 게 다임😨\",\"body4\":\"이전에도 공감 제로, 내 얘기하면 무반응, 웃겨도 정색… 이번엔 진짜 터짐.\",\"body5\":\"\",\"body6\":\"\",\"body7\":\"\",\"body8\":\"\"}",
-      "music_mood": "bright",
-      "image_allocation_mode": "2_per_image",
-      "text_position": "bottom",
-      "text_style": "outline",
-      "selected_bgm_path": "Jumpy Pants - Freedom Trail Studio.mp3",
-      "use_test_files": false,
-      "uploaded_files": [
-        "1.mkv"
-      ],
-      "title_font": "IBMPlexSansKR-Bold.ttf",
-      "body_font": "BMYEONSUNG_otf.otf"
-    },
-    "result": {
-      "video_path": "/zstus/backend/output_videos/reels_25410848.mp4",
-      "duration": "약 10-30초",
-      "completed_at": "2025-09-20T17:55:26.825166"
-    },
-    "error_message": null,
-    "retry_count": 0,
-    "max_retries": 2
-  },
-  "ad92c93a-392b-4174-8cf6-76e146b63e09": {
-    "job_id": "ad92c93a-392b-4174-8cf6-76e146b63e09",
-    "user_email": "xystus@gmail.com",
-    "status": "failed",
-    "created_at": "2025-09-20T18:11:51.046455",
-    "updated_at": "2025-09-20T18:12:13.940842",
-    "video_params": {
-      "content_data": "{\"title\":\"결혼 5개월 전, 이걸 봐버렸다…💔\",\"body1\":\"펜션에서 컵라면 먹으려다, 커피포트 물이 튀어 발등 화상! 🔥\",\"body2\":\"너무 아파서 주저앉았는데… 예비신랑? 그냥 '헐' 한마디 하고 소파 가서 유튜브 틀음…📱\",\"body3\":\"심지어 '괜찮아?' 이 한마디도 없음. 동태눈으로 빤히 쳐다본 게 다임😨\",\"body4\":\"\",\"body5\":\"\",\"body6\":\"\",\"body7\":\"\",\"body8\":\"\"}",
-      "music_mood": "none",
-      "image_allocation_mode": "2_per_image",
-      "text_position": "bottom",
-      "text_style": "outline",
-      "selected_bgm_path": "",
-      "use_test_files": false,
-      "uploaded_files": [
-        "1.mkv"
-      ],
-      "title_font": "BMYEONSUNG_otf.otf",
-      "body_font": "BMYEONSUNG_otf.otf"
-    },
-    "result": null,
-    "error_message": "uploads 폴더 기반 영상 생성 실패: 로컬 이미지 영상 생성 실패: Error in file /zstus/backend/uploads/1.mkv, Accessing time t=5.76-5.80 seconds, with clip duration=5 seconds, ",
-    "retry_count": 2,
-    "max_retries": 2
-  },
-  "5f6a0ef2-f68b-4847-86c9-63b4e4acac51": {
-    "job_id": "5f6a0ef2-f68b-4847-86c9-63b4e4acac51",
-    "user_email": "xystus@gmail.com",
-    "status": "completed",
-    "created_at": "2025-09-20T18:19:51.971230",
-    "updated_at": "2025-09-20T18:21:06.536723",
-    "video_params": {
-      "content_data": "{\"title\":\"결혼 5개월 전, 이걸 봐버렸다…💔\",\"body1\":\"펜션에서 컵라면 먹으려다, 커피포트 물이 튀어 발등 화상! 🔥\",\"body2\":\"너무 아파서 주저앉았는데… 예비신랑? 그냥 '헐' 한마디 하고 소파 가서 유튜브 틀음…📱\",\"body3\":\"심지어 '괜찮아?' 이 한마디도 없음. 동태눈으로 빤히 쳐다본 게 다임😨\",\"body4\":\"\",\"body5\":\"\",\"body6\":\"\",\"body7\":\"\",\"body8\":\"\"}",
-      "music_mood": "none",
-      "image_allocation_mode": "2_per_image",
-      "text_position": "bottom",
-      "text_style": "background",
-      "selected_bgm_path": "",
-      "use_test_files": false,
-      "uploaded_files": [
-        "1.mkv"
-      ],
-      "title_font": "BMYEONSUNG_otf.otf",
-      "body_font": "BMYEONSUNG_otf.otf"
-    },
-    "result": {
-      "video_path": "/zstus/backend/output_videos/reels_acc5a86b.mp4",
-      "duration": "약 10-30초",
-      "completed_at": "2025-09-20T18:21:06.535597"
-    },
-    "error_message": null,
-    "retry_count": 0,
-    "max_retries": 2
-  },
-  "a0dc9644-a059-48f9-8457-1c238d8f2b7d": {
-    "job_id": "a0dc9644-a059-48f9-8457-1c238d8f2b7d",
-    "user_email": "xystus@gmail.com",
-    "status": "completed",
-    "created_at": "2025-09-20T21:23:52.583309",
-    "updated_at": "2025-09-20T21:25:08.231182",
-    "video_params": {
-      "content_data": "{\"title\":\"결혼 5개월 전, 이걸 봐버렸다…💔\",\"body1\":\"펜션에서 컵라면 먹으려다, 커피포트 물이 튀어 발등 화상! 🔥\",\"body2\":\"너무 아파서 주저앉았는데… 예비신랑? 그냥 '헐' 한마디 하고 소파 가서 유튜브 틀음…📱\",\"body3\":\"심지어 '괜찮아?' 이 한마디도 없음. 동태눈으로 빤히 쳐다본 게 다임😨\",\"body4\":\"\",\"body5\":\"\",\"body6\":\"\",\"body7\":\"\",\"body8\":\"\"}",
-      "music_mood": "none",
-      "image_allocation_mode": "2_per_image",
-      "text_position": "bottom",
-      "text_style": "outline",
-      "selected_bgm_path": "",
-      "use_test_files": false,
-      "uploaded_files": [
-        "1.mkv"
-      ],
-      "title_font": "IBMPlexSansKR-Bold.ttf",
-      "body_font": "BMYEONSUNG_otf.otf",
-      "voice_narration": "disabled"
-    },
-    "result": {
-      "video_path": "/zstus/backend/output_videos/reels_12f04361.mp4",
-      "duration": "약 10-30초",
-      "completed_at": "2025-09-20T21:25:08.230113"
-    },
-    "error_message": null,
-    "retry_count": 0,
-    "max_retries": 2
-  },
-  "5f6e86fd-df52-463d-a6b2-0af5c32094b5": {
-    "job_id": "5f6e86fd-df52-463d-a6b2-0af5c32094b5",
-    "user_email": "xystus@gmail.com",
-    "status": "completed",
-    "created_at": "2025-09-21T02:34:10.291770",
-    "updated_at": "2025-09-21T02:35:58.698270",
-    "video_params": {
-      "content_data": "{\"title\":\"생일에 이럴 수 있음?\",\"body1\":\"난 중1 여학생이야. 생일 아침에 건성으로 생일 축하한다는 이야기만 들음\",\"body2\":\"시간 아낀다고 생일 점심 먹으러 가자고 아침부터 끌려 나감. 원래 저녁 먹는거 아냐?\",\"body3\":\"아웃백을 갔는데 부모님은 부동산 전화만 하고 오빠는 폰만 봄.\",\"body4\":\"음식 맛이나 메뉴도 다 오빠한테만 물어보고 나는 그냥 투명인간처럼 음식만 먹음\",\"body5\":\"생일 선물 얘기해도 그런건 별로라 하고, 케이크도 집에 가는 길에 대충 싼거 삼\",\"body6\":\"미역국도 꼭 먹어야 하냐고 하다가 결국 인스턴트 미역국으로 대충 먹음.\",\"body7\":\"생일날 편지 받고 케이크 불고 관심받는 거 너무 큰 바람이야? 나 주워온 애 맞지?\",\"body8\":\"\"}",
-      "music_mood": "sad",
-      "image_allocation_mode": "2_per_image",
-      "text_position": "bottom",
-      "text_style": "background",
-      "selected_bgm_path": "Basement Apartment - Everet Almond.mp3",
-      "use_test_files": false,
-      "uploaded_files": [
-        "1.png",
-        "2.png",
-        "3.png",
-        "4.png"
-      ],
-      "title_font": "IBMPlexSansKR-Bold.ttf",
-      "body_font": "BMYEONSUNG_otf.otf",
-      "voice_narration": "enabled"
-    },
-    "result": {
-      "video_path": "/zstus/backend/output_videos/reels_d812c77b.mp4",
-      "duration": "약 10-30초",
-      "completed_at": "2025-09-21T02:35:58.697186"
-    },
-    "error_message": null,
-    "retry_count": 0,
-    "max_retries": 2
-  },
-  "a863f1c7-d8f8-4dc0-9b74-02ec2aaaf6b4": {
-    "job_id": "a863f1c7-d8f8-4dc0-9b74-02ec2aaaf6b4",
-    "user_email": "xystus@gmail.com",
-    "status": "completed",
-    "created_at": "2025-09-21T08:24:48.990188",
-    "updated_at": "2025-09-21T08:25:59.056879",
-    "video_params": {
-      "content_data": "{\"title\":\"결혼 5개월 전, 이걸 봐버렸다…💔\",\"body1\":\"펜션에서 컵라면 먹으려다, 커피포트 물이 튀어 발등 화상! 🔥\",\"body2\":\"너무 아파서 주저앉았는데… 예비신랑? 그냥 '헐' 한마디 하고 소파 가서 유튜브 틀음…📱\",\"body3\":\"심지어 '괜찮아?' 이 한마디도 없음. 동태눈으로 빤히 쳐다본 게 다임😨\",\"body4\":\"\",\"body5\":\"\",\"body6\":\"\",\"body7\":\"\",\"body8\":\"\"}",
-      "music_mood": "none",
-      "image_allocation_mode": "2_per_image",
-      "text_position": "bottom",
-      "text_style": "outline",
-      "selected_bgm_path": "",
-      "use_test_files": false,
-      "uploaded_files": [
-        "1.mp4"
-      ],
-      "title_font": "BMYEONSUNG_otf.otf",
-      "body_font": "BMYEONSUNG_otf.otf",
-      "voice_narration": "enabled"
-    },
-    "result": {
-      "video_path": "/zstus/backend/output_videos/reels_cfe4827c.mp4",
-      "duration": "약 10-30초",
-      "completed_at": "2025-09-21T08:25:59.055776"
-    },
-    "error_message": null,
-    "retry_count": 0,
-    "max_retries": 2
-  },
-  "3e004a8a-7cef-4660-ab68-b8187911c66e": {
-    "job_id": "3e004a8a-7cef-4660-ab68-b8187911c66e",
-    "user_email": "xystus@gmail.com",
-    "status": "completed",
-    "created_at": "2025-09-21T08:28:45.181596",
-    "updated_at": "2025-09-21T08:31:47.340919",
-    "video_params": {
-      "content_data": "{\"title\":\"결혼 5개월 전, 이걸 봐버렸다…💔\",\"body1\":\"펜션에서 컵라면 먹으려다, 커피포트 물이 튀어 발등 화상! 🔥\",\"body2\":\"너무 아파서 주저앉았는데… 예비신랑? 그냥 '헐' 한마디 하고 소파 가서 유튜브 틀음…📱\",\"body3\":\"심지어 '괜찮아?' 이 한마디도 없음. 동태눈으로 빤히 쳐다본 게 다임😨\",\"body4\":\"이전에도 공감 제로, 내 얘기하면 무반응, 웃겨도 정색… 이번엔 진짜 터짐.\",\"body5\":\"따지니까 '내가 괜찮냐고 물으면 낫냐? 여자들은 너무 기대가 크다' 이딴 소리🤦\",\"body6\":\"결혼 약속하니까 이제 보인다. 이기적이고 공감 없는 남자라는 거.\",\"body7\":\"백년해로? 아니, 예식장 취소부터 검색 중ㅋㅋ 내가 너무한 걸까? 🤔\",\"body8\":\"\"}",
-      "music_mood": "none",
-      "image_allocation_mode": "2_per_image",
-      "text_position": "bottom",
-      "text_style": "outline",
-      "selected_bgm_path": "",
-      "use_test_files": false,
-      "uploaded_files": [
-        "1.mkv"
-      ],
-      "title_font": "BMYEONSUNG_otf.otf",
-      "body_font": "BMYEONSUNG_otf.otf",
-      "voice_narration": "enabled"
-    },
-    "result": {
-      "video_path": "/zstus/backend/output_videos/reels_503fa25b.mp4",
-      "duration": "약 10-30초",
-      "completed_at": "2025-09-21T08:31:47.339785"
-    },
-    "error_message": null,
-    "retry_count": 0,
-    "max_retries": 2
-  },
   "105a274b-2a0f-4c6e-ad81-40de53ae2688": {
     "job_id": "105a274b-2a0f-4c6e-ad81-40de53ae2688",
     "user_email": "xystus@gmail.com",
@@ -1813,6 +1454,111 @@
       "video_path": "/zstus/backend/output_videos/reels_6a3df9a9.mp4",
       "duration": "약 10-30초",
       "completed_at": "2025-09-27T16:28:46.550028"
+    },
+    "error_message": null,
+    "retry_count": 0,
+    "max_retries": 2
+  },
+  "8e85a3f5-252e-44f7-ab34-c8b851ca4dc0": {
+    "job_id": "8e85a3f5-252e-44f7-ab34-c8b851ca4dc0",
+    "user_email": "xystus@gmail.com",
+    "status": "completed",
+    "created_at": "2025-09-29T09:56:37.863990",
+    "updated_at": "2025-09-29T09:58:59.612509",
+    "video_params": {
+      "content_data": "{\"title\":\"결혼 5개월 전, 이걸 봐버렸다…💔\",\"body1\":\"펜션에서 컵라면 먹으려다, 커피포트 물이 튀어 발등 화상! 🔥\",\"body2\":\"너무 아파서 주저앉았는데… 예비신랑? 그냥 '헐' 한마디 하고 소파 가서 유튜브 틀음…📱\",\"body3\":\"심지어 '괜찮아?' 이 한마디도 없음. 동태눈으로 빤히 쳐다본 게 다임😨\",\"body4\":\"이전에도 공감 제로, 내 얘기하면 무반응, 웃겨도 정색… 이번엔 진짜 터짐.\",\"body5\":\"따지니까 '내가 괜찮냐고 물으면 낫냐? 여자들은 너무 기대가 크다' 이딴 소리🤦\",\"body6\":\"결혼 약속하니까 이제 보인다. 이기적이고 공감 없는 남자라는 거.\",\"body7\":\"백년해로? 아니, 예식장 취소부터 검색 중ㅋㅋ 내가 너무한 걸까? 🤔\",\"body8\":\"\"}",
+      "music_mood": "bright",
+      "image_allocation_mode": "2_per_image",
+      "text_position": "bottom",
+      "text_style": "white_background",
+      "title_area_mode": "keep",
+      "selected_bgm_path": "For Granted - Dyalla.mp3",
+      "use_test_files": false,
+      "uploaded_files": [
+        "1.png",
+        "2.png",
+        "3.mp4",
+        "4.mp4"
+      ],
+      "title_font": "BMHANNAPro.ttf",
+      "body_font": "BMYEONSUNG_otf.otf",
+      "voice_narration": "enabled",
+      "cross_dissolve": "enabled"
+    },
+    "result": {
+      "video_path": "/zstus/backend/output_videos/reels_52b3fb82.mp4",
+      "duration": "약 10-30초",
+      "completed_at": "2025-09-29T09:58:59.611011"
+    },
+    "error_message": null,
+    "retry_count": 0,
+    "max_retries": 2
+  },
+  "d539c55c-be81-49b7-9888-8158fb37c358": {
+    "job_id": "d539c55c-be81-49b7-9888-8158fb37c358",
+    "user_email": "xystus@gmail.com",
+    "status": "completed",
+    "created_at": "2025-09-29T10:06:10.815784",
+    "updated_at": "2025-09-29T10:08:34.268971",
+    "video_params": {
+      "content_data": "{\"title\":\"결혼 5개월 전, 이걸 봐버렸다…\",\"body1\":\"펜션에서 컵라면 먹으려다, 커피포트 물이 튀어 발등 화상! \",\"body2\":\"너무 아파서 주저앉았는데… 예비신랑? 그냥 '헐' 한마디 하고 소파 가서 유튜브 틀음…\",\"body3\":\"심지어 '괜찮아?' 이 한마디도 없음. 동태눈으로 빤히 쳐다본 게 다임\",\"body4\":\"이전에도 공감 제로, 내 얘기하면 무반응, 웃겨도 정색… 이번엔 진짜 터짐.\",\"body5\":\"따지니까 '내가 괜찮냐고 물으면 낫냐? 여자들은 너무 기대가 크다' 이딴 소리\",\"body6\":\"결혼 약속하니까 이제 보인다. 이기적이고 공감 없는 남자라는 거.\",\"body7\":\"백년해로? 아니, 예식장 취소부터 검색 중ㅋㅋ 내가 너무한 걸까? \",\"body8\":\"\"}",
+      "music_mood": "bright",
+      "image_allocation_mode": "2_per_image",
+      "text_position": "bottom",
+      "text_style": "white_background",
+      "title_area_mode": "remove",
+      "selected_bgm_path": "Jumpy Pants - Freedom Trail Studio.mp3",
+      "use_test_files": false,
+      "uploaded_files": [
+        "1.mp4",
+        "2.webp",
+        "3.mp4",
+        "4.mp4"
+      ],
+      "title_font": "BMYEONSUNG_otf.otf",
+      "body_font": "BMYEONSUNG_otf.otf",
+      "voice_narration": "enabled",
+      "cross_dissolve": "enabled"
+    },
+    "result": {
+      "video_path": "/zstus/backend/output_videos/reels_63a1d9af.mp4",
+      "duration": "약 10-30초",
+      "completed_at": "2025-09-29T10:08:34.267400"
+    },
+    "error_message": null,
+    "retry_count": 0,
+    "max_retries": 2
+  },
+  "d10a3620-b2c4-4e62-ba74-a87c64b8ed64": {
+    "job_id": "d10a3620-b2c4-4e62-ba74-a87c64b8ed64",
+    "user_email": "xystus@gmail.com",
+    "status": "completed",
+    "created_at": "2025-09-29T10:22:32.473703",
+    "updated_at": "2025-09-29T10:24:52.089871",
+    "video_params": {
+      "content_data": "{\"title\":\"결혼 5개월 전, 이걸 봐버렸다…💔\",\"body1\":\"펜션에서 컵라면 먹으려다, 커피포트 물이 튀어 발등 화상! 🔥\",\"body2\":\"너무 아파서 주저앉았는데… 예비신랑? 그냥 '헐' 한마디 하고 소파 가서 유튜브 틀음…📱\",\"body3\":\"심지어 '괜찮아?' 이 한마디도 없음. 동태눈으로 빤히 쳐다본 게 다임😨\",\"body4\":\"이전에도 공감 제로, 내 얘기하면 무반응, 웃겨도 정색… 이번엔 진짜 터짐.\",\"body5\":\"따지니까 '내가 괜찮냐고 물으면 낫냐? 여자들은 너무 기대가 크다' 이딴 소리🤦\",\"body6\":\"결혼 약속하니까 이제 보인다. 이기적이고 공감 없는 남자라는 거.\",\"body7\":\"백년해로? 아니, 예식장 취소부터 검색 중ㅋㅋ 내가 너무한 걸까? 🤔\",\"body8\":\"\"}",
+      "music_mood": "bright",
+      "image_allocation_mode": "2_per_image",
+      "text_position": "bottom",
+      "text_style": "white_background",
+      "title_area_mode": "keep",
+      "selected_bgm_path": "Excess - Freedom Trail Studio.mp3",
+      "use_test_files": false,
+      "uploaded_files": [
+        "1.mp4",
+        "2.png",
+        "3.png",
+        "4.mp4"
+      ],
+      "title_font": "BMYEONSUNG_otf.otf",
+      "body_font": "BMYEONSUNG_otf.otf",
+      "voice_narration": "enabled",
+      "cross_dissolve": "enabled"
+    },
+    "result": {
+      "video_path": "/zstus/backend/output_videos/reels_eae6cdbf.mp4",
+      "duration": "약 10-30초",
+      "completed_at": "2025-09-29T10:24:52.088334"
     },
     "error_message": null,
     "retry_count": 0,

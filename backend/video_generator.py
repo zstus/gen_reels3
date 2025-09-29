@@ -2849,8 +2849,8 @@ class VideoGenerator:
         return mask_clip
 
     def detect_image_transitions(self, clips, media_files, image_allocation_mode):
-        """클립과 미디어 파일을 매핑하여 이미지-이미지 전환 구간의 인덱스를 반환"""
-        msg = f"🔍 이미지 전환 구간 감지 시작..."
+        """클립과 미디어 파일을 매핑하여 모든 전환 구간의 인덱스를 반환 (영상-영상, 이미지-이미지, 영상-이미지, 이미지-영상)"""
+        msg = f"🔍 미디어 전환 구간 감지 시작..."
         print(msg)
         logging.info(msg)
 
@@ -2901,15 +2901,11 @@ class VideoGenerator:
                 print(msg)
                 logging.info(msg)
 
-                if curr_type == "image" and next_type == "image":
-                    transition_indices.append(i)
-                    msg = f"  ✅ 전환 구간 발견: 클립 {i} → {i+1} (이미지→이미지)"
-                    print(msg)
-                    logging.info(msg)
-                else:
-                    msg = f"  ❌ 전환 구간 아님: 클립 {i} → {i+1} ({curr_type}→{next_type})"
-                    print(msg)
-                    logging.info(msg)
+                # 모든 타입의 전환에 dissolve 적용 (영상-영상, 이미지-이미지, 영상-이미지, 이미지-영상)
+                transition_indices.append(i)
+                msg = f"  ✅ 전환 구간 발견: 클립 {i} → {i+1} ({curr_type}→{next_type})"
+                print(msg)
+                logging.info(msg)
 
             except Exception as e:
                 msg = f"   ⚠️ 클립 [{i}] 처리 중 오류: {e}"
@@ -2917,7 +2913,7 @@ class VideoGenerator:
                 logging.error(msg)
                 continue
 
-        msg = f"🎭 총 {len(transition_indices)}개 크로스 디졸브 구간 감지: {transition_indices}"
+        msg = f"🎭 총 {len(transition_indices)}개 크로스 디졸브 구간 감지 (모든 미디어 전환): {transition_indices}"
         print(msg)
         logging.info(msg)
         return transition_indices
@@ -2944,97 +2940,8 @@ class VideoGenerator:
 
         return mapping
 
-    def apply_crossfade_to_clips(self, clips, transition_indices, fade_duration=2.0):
-        """지정된 전환 구간의 클립들에 fade 효과 적용"""
-        print(f"🎨 apply_crossfade_to_clips 호출됨!")
-        print(f"   transition_indices: {transition_indices}")
-        print(f"   fade_duration: {fade_duration}")
-        print(f"   clips 개수: {len(clips) if clips else 0}")
 
-        if not transition_indices:
-            print("   ⚠️ transition_indices가 비어있습니다. 원본 클립 반환")
-            return clips
-
-        processed_clips = clips.copy()
-
-        # fade 효과 임포트
-        try:
-            from moviepy.video.fx import fadeout, fadein
-            msg = "   ✅ MoviePy fade 효과 임포트 성공"
-            print(msg)
-            logging.info(msg)
-        except ImportError as e:
-            msg = f"   ⚠️ MoviePy fade 효과를 가져올 수 없습니다: {e}"
-            print(msg)
-            logging.error(msg)
-            msg = "   -> 기본 클립을 반환합니다."
-            print(msg)
-            logging.info(msg)
-            return clips
-
-        print(f"🎨 {len(transition_indices)}개 구간에 강화된 크로스 디졸브 효과 적용 (2초)")
-
-        for i in transition_indices:
-            try:
-                print(f"   🔄 전환 구간 {i}→{i+1} 처리 중...")
-
-                # 안전한 fade 시간 계산
-                current_clip = processed_clips[i]
-                next_clip = processed_clips[i+1]
-
-                print(f"     현재 클립 [{i}] 길이: {current_clip.duration:.2f}초")
-                print(f"     다음 클립 [{i+1}] 길이: {next_clip.duration:.2f}초")
-
-                safe_fade = min(fade_duration, current_clip.duration * 0.7, next_clip.duration * 0.7)
-                safe_fade = max(0.5, safe_fade)  # 최소 0.5초
-
-                print(f"     계산된 safe_fade: {safe_fade:.2f}초 (요청: {fade_duration}초)")
-
-                # 현재 클립에 fadeout 적용 (끝 부분)
-                print(f"     현재 클립에 fadeout({safe_fade:.2f}초) 적용...")
-                faded_current = current_clip.fx(fadeout, safe_fade)
-                print(f"     ✅ fadeout 적용 완료")
-
-                # 다음 클립에 fadein 적용 (시작 부분)
-                print(f"     다음 클립에 fadein({safe_fade:.2f}초) 적용...")
-                faded_next = next_clip.fx(fadein, safe_fade)
-                print(f"     ✅ fadein 적용 완료")
-
-                # 클립 길이 조정으로 자연스러운 오버랩 생성
-                overlap = safe_fade * 0.6  # 더 긴 겹침 (2초의 60% = 1.2초)
-                print(f"     계산된 overlap: {overlap:.2f}초")
-
-                # 현재 클립: 끝 부분 약간 단축
-                if current_clip.duration > overlap:
-                    print(f"     현재 클립 단축: {current_clip.duration:.2f}초 → {current_clip.duration - overlap:.2f}초")
-                    shortened_current = faded_current.subclip(0, current_clip.duration - overlap)
-                else:
-                    print(f"     현재 클립 단축 불가 (너무 짧음)")
-                    shortened_current = faded_current
-
-                # 다음 클립: 시작 부분 약간 생략
-                if next_clip.duration > overlap:
-                    print(f"     다음 클립 시프트: {overlap:.2f}초~{next_clip.duration:.2f}초")
-                    shifted_next = faded_next.subclip(overlap, next_clip.duration)
-                else:
-                    print(f"     다음 클립 시프트 불가 (너무 짧음)")
-                    shifted_next = faded_next
-
-                processed_clips[i] = shortened_current
-                processed_clips[i+1] = shifted_next
-
-                print(f"  ✨ 클립 {i}→{i+1}: {safe_fade:.2f}초 크로스 디졸브 적용 완료 (겹침: {overlap:.2f}초)")
-
-            except Exception as e:
-                print(f"  ⚠️ 클립 {i}→{i+1}: fade 효과 적용 실패 - {e}")
-                import traceback
-                traceback.print_exc()
-                # 실패 시 원본 클립 유지
-                continue
-
-        return processed_clips
-
-    def apply_crossfade_to_clips(self, clips, transition_indices, fade_duration=0.5):
+    def apply_crossfade_to_clips(self, clips, transition_indices, fade_duration=0.4):
         """지정된 전환 구간의 클립들에 fade 효과 적용"""
         msg = "🎨 apply_crossfade_to_clips 호출됨!"
         print(msg)
@@ -3109,7 +3016,7 @@ class VideoGenerator:
 
         return processed_clips
 
-    def apply_smart_crossfade_transitions(self, clips, media_files=None, image_allocation_mode="1_per_image", fade_duration=0.5):
+    def apply_smart_crossfade_transitions(self, clips, media_files=None, image_allocation_mode="1_per_image", fade_duration=0.4):
         """기존 구조를 유지하면서 스마트 크로스 디졸브 적용"""
         msg = f"🎬 apply_smart_crossfade_transitions 호출됨!"
         print(msg)
@@ -3145,8 +3052,8 @@ class VideoGenerator:
         print(msg)
         logging.info(msg)
 
-        # 이미지-이미지 전환 구간 감지 (수정된 매개변수)
-        msg = "🔍 이미지 전환 구간 감지 호출..."
+        # 모든 미디어 전환 구간 감지 (영상-영상, 이미지-이미지, 영상-이미지, 이미지-영상)
+        msg = "🔍 미디어 전환 구간 감지 호출..."
         print(msg)
         logging.info(msg)
 
@@ -3157,7 +3064,7 @@ class VideoGenerator:
         logging.info(msg)
 
         if not transition_indices:
-            msg = "ℹ️ 이미지-이미지 전환 구간이 없어 일반 연결 사용"
+            msg = "ℹ️ 전환 구간이 없어 일반 연결 사용"
             print(msg)
             logging.info(msg)
 
