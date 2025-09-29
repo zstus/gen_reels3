@@ -21,6 +21,12 @@ import ImageStep from '../components/ImageStep';
 import MusicStep from '../components/MusicStep';
 import GenerateStep from '../components/GenerateStep';
 import { ProjectData, ReelsContent, MusicMood, ImageUploadMode, MusicFile, TextPosition, TextStyle, TitleAreaMode, CrossDissolve } from '../types';
+import * as apiService from '../services/api';
+
+// UUID 생성 유틸리티 함수
+const generateJobId = (): string => {
+  return 'job_' + Math.random().toString(36).substr(2, 9) + '_' + Date.now().toString(36);
+};
 
 const steps = [
   '릴스 대본 작성',
@@ -36,6 +42,7 @@ const MainApp: React.FC = () => {
   
   // 프로젝트 데이터 상태
   const [projectData, setProjectData] = useState<ProjectData>({
+    jobId: generateJobId(), // 초기 Job ID 생성
     content: {
       title: '',
       body1: '',
@@ -73,6 +80,7 @@ const MainApp: React.FC = () => {
   const handleReset = () => {
     setActiveStep(0);
     setProjectData({
+      jobId: generateJobId(), // 새로운 Job ID 생성
       content: {
         title: '',
         body1: '',
@@ -105,19 +113,39 @@ const MainApp: React.FC = () => {
   };
 
   const handleImagesChange = (images: File[], mode: ImageUploadMode) => {
-    setProjectData(prev => ({ 
-      ...prev, 
+    setProjectData(prev => ({
+      ...prev,
       images,
-      imageUploadMode: mode 
+      imageUploadMode: mode
     }));
   };
 
   const handleMusicChange = (selectedMusic: MusicFile | null, musicMood: MusicMood) => {
-    setProjectData(prev => ({ 
-      ...prev, 
+    setProjectData(prev => ({
+      ...prev,
       selectedMusic,
-      musicMood 
+      musicMood
     }));
+  };
+
+  // ContentStep에서 "다음" 버튼을 누를 때 job 폴더 생성
+  const handleContentStepNext = async () => {
+    try {
+      console.log('🚀 Job 폴더 생성 중:', projectData.jobId);
+
+      // Backend에 job 폴더 생성 요청
+      await apiService.createJobFolder(projectData.jobId);
+
+      console.log('✅ Job 폴더 생성 완료:', projectData.jobId);
+
+      // 다음 단계로 이동
+      handleNext();
+    } catch (error) {
+      console.error('❌ Job 폴더 생성 실패:', error);
+
+      // Job ID를 새로 생성하고 재시도 또는 사용자에게 알림
+      alert('작업 폴더 생성에 실패했습니다. 다시 시도해주세요.');
+    }
   };
 
 
@@ -141,7 +169,7 @@ const MainApp: React.FC = () => {
           <ContentStep
             content={projectData.content}
             onChange={handleContentChange}
-            onNext={handleNext}
+            onNext={handleContentStepNext} // Job 폴더 생성을 포함한 핸들러 사용
           />
         );
       case 1:
@@ -150,6 +178,7 @@ const MainApp: React.FC = () => {
             images={projectData.images}
             imageUploadMode={projectData.imageUploadMode}
             content={projectData.content}
+            jobId={projectData.jobId} // Job ID 전달
             onChange={handleImagesChange}
             onNext={handleNext}
             onBack={handleBack}

@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { ApiResponse, GenerateVideoRequest, MusicFolder, MusicFile, MusicMood, ImageUploadMode, TextPosition, TextStyle, AsyncVideoRequest, AsyncVideoResponse, JobInfo, VoiceNarration, TitleAreaMode, CrossDissolve } from '../types';
+import { ApiResponse, GenerateVideoRequest, MusicFolder, MusicFile, MusicMood, ImageUploadMode, TextPosition, TextStyle, AsyncVideoRequest, AsyncVideoResponse, JobInfo, VoiceNarration, TitleAreaMode, CrossDissolve, CreateJobFolderResponse, CleanupJobFolderResponse } from '../types';
 
 // API 베이스 URL 설정
 const API_BASE_URL = '/api';
@@ -194,6 +194,7 @@ export const apiService = {
     bodyFont?: string;
     voiceNarration: VoiceNarration;
     crossDissolve: CrossDissolve;
+    jobId?: string;  // Job ID 추가
   }): Promise<AsyncVideoResponse> {
     const formData = new FormData();
 
@@ -235,6 +236,11 @@ export const apiService = {
     // 선택된 음악 파일 경로 추가
     if (data.musicFile) {
       formData.append('selected_bgm_path', data.musicFile.filename);
+    }
+
+    // Job ID 추가
+    if (data.jobId) {
+      formData.append('job_id', data.jobId);
     }
 
     // 이미지 파일들 추가
@@ -295,6 +301,7 @@ export const apiService = {
     titleFont: string;
     bodyFont: string;
     image?: File;
+    jobId?: string;  // Job ID 추가
   }): Promise<{ status: string; preview_url: string; message: string }> {
     const formData = new FormData();
 
@@ -305,6 +312,10 @@ export const apiService = {
     formData.append('title_area_mode', data.titleAreaMode);
     formData.append('title_font', data.titleFont);
     formData.append('body_font', data.bodyFont);
+
+    if (data.jobId) {
+      formData.append('job_id', data.jobId);  // Job ID 추가
+    }
 
     if (data.image) {
       formData.append('image_1', data.image);
@@ -322,7 +333,37 @@ export const apiService = {
       console.error('미리보기 생성 실패:', error);
       throw error;
     }
+  },
+
+  // Job 폴더 생성
+  async createJobFolder(jobId: string): Promise<CreateJobFolderResponse> {
+    try {
+      const response = await apiClient.post('/create-job-folder', {
+        job_id: jobId,
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Job 폴더 생성 실패:', error);
+      throw error;
+    }
+  },
+
+  // Job 폴더 정리
+  async cleanupJobFolder(jobId: string, keepOutput: boolean = true): Promise<CleanupJobFolderResponse> {
+    try {
+      const response = await apiClient.post('/cleanup-job-folder', {
+        job_id: jobId,
+        keep_output: keepOutput,
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Job 폴더 정리 실패:', error);
+      throw error;
+    }
   }
 };
+
+// 개별 함수들도 export
+export const { createJobFolder, cleanupJobFolder } = apiService;
 
 export default apiService;

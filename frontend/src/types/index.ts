@@ -72,6 +72,7 @@ export interface FontSettings {
 
 // 프로젝트 상태 타입
 export interface ProjectData {
+  jobId: string; // Job ID 추가 - 폴더 격리를 위한 고유 식별자
   content: ReelsContent;
   images: File[]; // 이미지 및 비디오 파일들 (이름은 호환성을 위해 유지)
   imageUploadMode: ImageUploadMode;
@@ -202,4 +203,32 @@ export interface TextImagePair {
   isGenerating: boolean;
   customPrompt?: string;
   useCustomPrompt?: boolean;
+}
+
+// Job 폴더 생성 요청 타입
+export interface CreateJobFolderRequest {
+  job_id: string;
+}
+
+// Job 폴더 생성 응답 타입
+export interface CreateJobFolderResponse {
+  status: 'success' | 'error';
+  message: string;
+  job_id: string;
+  uploads_folder?: string;
+  output_folder?: string;
+}
+
+// Job 폴더 정리 요청 타입
+export interface CleanupJobFolderRequest {
+  job_id: string;
+  keep_output?: boolean;
+}
+
+// Job 폴더 정리 응답 타입
+export interface CleanupJobFolderResponse {
+  status: 'success' | 'error';
+  message: string;
+  job_id: string;
+  cleaned: boolean;
 }

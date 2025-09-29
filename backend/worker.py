@@ -31,6 +31,16 @@ except ImportError as e:
     job_logger = None
     JOB_LOGGER_AVAILABLE = False
 
+# Folder 관리 시스템 import
+try:
+    from folder_manager import folder_manager
+    FOLDER_MANAGER_AVAILABLE = True
+    print("✅ Worker: Folder 관리 시스템 로드 성공")
+except ImportError as e:
+    print(f"⚠️ Worker: Folder 관리 시스템 로드 실패: {e}")
+    folder_manager = None
+    FOLDER_MANAGER_AVAILABLE = False
+
 # 로깅 설정
 logging.basicConfig(
     level=logging.INFO,
@@ -120,8 +130,23 @@ class VideoWorker:
                     logger.warning(f"⚠️ 지정된 BGM 파일 없음: {bgm_file_path}")
                     bgm_file_path = None
 
-            # uploads 폴더 설정
-            uploads_folder = os.path.join(current_dir, "uploads")
+            # uploads 폴더 설정 - Job 폴더 우선 사용
+            if FOLDER_MANAGER_AVAILABLE:
+                try:
+                    # Job별 고유 폴더 사용
+                    job_uploads_folder, job_output_folder = folder_manager.get_job_folders(job_id)
+                    uploads_folder = job_uploads_folder
+                    # output_folder도 job별 폴더 사용 (월별 구조)
+                    output_folder = job_output_folder
+                    logger.info(f"📁 Job 폴더 사용: {uploads_folder}")
+                    logger.info(f"📁 Job 출력 폴더: {output_folder}")
+                except Exception as job_error:
+                    logger.warning(f"⚠️ Job 폴더 가져오기 실패, 기본 폴더 사용: {job_error}")
+                    uploads_folder = os.path.join(current_dir, "uploads")
+            else:
+                # Folder Manager 미사용 시 기본 폴더
+                uploads_folder = os.path.join(current_dir, "uploads")
+                logger.info(f"📁 기본 폴더 사용: {uploads_folder}")
 
             # text.json 파일을 uploads 폴더에 저장 (VideoGenerator가 기대하는 파일명)
             content_file_path = os.path.join(uploads_folder, "text.json")
@@ -270,6 +295,20 @@ class VideoWorker:
             return False
 
         finally:
+            # Job 폴더 정리 (성공/실패 관계없이)
+            if FOLDER_MANAGER_AVAILABLE:
+                try:
+                    logger.info(f"🗑️ Job 폴더 정리 시작: {job_id}")
+                    cleaned = folder_manager.cleanup_job_folders(job_id, keep_output=True)
+                    if cleaned:
+                        logger.info(f"✅ Job 폴더 정리 완료: {job_id}")
+                    else:
+                        logger.warning(f"⚠️ Job 폴더 정리 부분 실패: {job_id}")
+                except Exception as cleanup_error:
+                    logger.error(f"❌ Job 폴더 정리 실패: {job_id} - {cleanup_error}")
+            else:
+                logger.info(f"ℹ️ Folder Manager 미사용으로 폴더 정리 생략: {job_id}")
+
             self.current_job = None
 
     def start(self, poll_interval: int = 5):

@@ -69,6 +69,16 @@ except ImportError as e:
     job_logger = None
     JOB_LOGGER_AVAILABLE = False
 
+# Folder 관리 시스템 import
+try:
+    from folder_manager import folder_manager
+    FOLDER_MANAGER_AVAILABLE = True
+    print("✅ Folder 관리 시스템 로드 성공")
+except ImportError as e:
+    print(f"⚠️ Folder 관리 시스템 로드 실패: {e}")
+    folder_manager = None
+    FOLDER_MANAGER_AVAILABLE = False
+
 # .env 파일 로드
 load_dotenv()
 
@@ -85,6 +95,7 @@ class URLExtractRequest(BaseModel):
 class ImageGenerateRequest(BaseModel):
     texts: List[str]  # 이미지 생성할 텍스트 리스트
     mode: str = "per_script"  # "per_script" 또는 "per_two_scripts"
+    job_id: Optional[str] = None  # Job ID 추가 (선택적)
 
 class ReelsContent(BaseModel):
     title: str
@@ -115,6 +126,27 @@ class JobStatusResponse(BaseModel):
     updated_at: str
     result: Optional[dict] = None
     error_message: Optional[str] = None
+
+# Job 폴더 관련 모델들
+class CreateJobFolderRequest(BaseModel):
+    job_id: str
+
+class CreateJobFolderResponse(BaseModel):
+    status: str
+    message: str
+    job_id: str
+    uploads_folder: Optional[str] = None
+    output_folder: Optional[str] = None
+
+class CleanupJobFolderRequest(BaseModel):
+    job_id: str
+    keep_output: bool = True
+
+class CleanupJobFolderResponse(BaseModel):
+    status: str
+    message: str
+    job_id: str
+    cleaned: bool
 
 # 로깅 설정
 logging.basicConfig(level=logging.INFO)
@@ -469,13 +501,30 @@ async def generate_video(
     image_6: Optional[UploadFile] = File(None),
     image_7: Optional[UploadFile] = File(None),
     image_8: Optional[UploadFile] = File(None),
-    
+
     # 모드 설정
-    use_test_files: bool = Form(default=False)  # test 폴더 사용 여부
+    use_test_files: bool = Form(default=False),  # test 폴더 사용 여부
+
+    # Job ID (선택적)
+    job_id: Optional[str] = Form(None)  # Job ID 추가
 ):
     try:
         print("🚀 웹서비스 API 호출 시작")
-        
+
+        # Job ID에 따라 작업 폴더 설정
+        global UPLOAD_FOLDER, OUTPUT_FOLDER
+        original_upload_folder = UPLOAD_FOLDER
+        original_output_folder = OUTPUT_FOLDER
+
+        if job_id and FOLDER_MANAGER_AVAILABLE:
+            try:
+                job_uploads_folder, job_output_folder = folder_manager.get_job_folders(job_id)
+                UPLOAD_FOLDER = job_uploads_folder
+                OUTPUT_FOLDER = job_output_folder
+                print(f"🗂️ Job 고유 폴더 사용 (영상 생성): uploads={UPLOAD_FOLDER}, output={OUTPUT_FOLDER}")
+            except Exception as job_error:
+                print(f"⚠️ Job 폴더 사용 실패, 기본 폴더 사용 (영상 생성): {job_error}")
+
         # 1. uploads 폴더 준비 및 정리
         if os.path.exists(UPLOAD_FOLDER):
             shutil.rmtree(UPLOAD_FOLDER)
@@ -566,7 +615,12 @@ async def generate_video(
             voice_narration,
             cross_dissolve
         )
-        
+
+        # 글로벌 변수 복원
+        if job_id and FOLDER_MANAGER_AVAILABLE:
+            UPLOAD_FOLDER = original_upload_folder
+            OUTPUT_FOLDER = original_output_folder
+
         return JSONResponse(
             status_code=200,
             content={
@@ -575,8 +629,13 @@ async def generate_video(
                 "video_path": output_path
             }
         )
-    
+
     except Exception as e:
+        # 글로벌 변수 복원 (에러 시에도)
+        if job_id and FOLDER_MANAGER_AVAILABLE:
+            UPLOAD_FOLDER = original_upload_folder
+            OUTPUT_FOLDER = original_output_folder
+
         return JSONResponse(
             status_code=500,
             content={
@@ -589,6 +648,7 @@ class SingleImageRequest(BaseModel):
     text: Optional[str] = None
     custom_prompt: Optional[str] = None
     additional_context: Optional[str] = None
+    job_id: Optional[str] = None  # Job ID 추가 (선택적)
 
 @app.post("/generate-single-image")
 async def generate_single_image(request: SingleImageRequest):
@@ -677,18 +737,46 @@ async def generate_single_image(request: SingleImageRequest):
         image_response.raise_for_status()
         logger.info(f"📥 이미지 다운로드 완료 ({len(image_response.content)} bytes)")
         
-        # uploads 폴더에 저장
-        os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+        # Job 폴더 또는 기본 uploads 폴더에 저장
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         filename = f"generated_single_{timestamp}_{uuid.uuid4().hex[:8]}.png"
+
+        if request.job_id and FOLDER_MANAGER_AVAILABLE:
+            # Job 고유 폴더에 저장
+            try:
+                job_uploads_folder, _ = folder_manager.get_job_folders(request.job_id)
+                os.makedirs(job_uploads_folder, exist_ok=True)
+                local_path = os.path.join(job_uploads_folder, filename)
+
+                with open(local_path, 'wb') as f:
+                    f.write(image_response.content)
+
+                logger.info(f"💾 개별 이미지 job 폴더 저장 완료: {filename}")
+                logger.info(f"📂 Job 경로: {local_path}")
+
+                # job_id가 있는 경우 job별 URL 반환
+                return {
+                    "status": "success",
+                    "message": "이미지가 성공적으로 생성되었습니다",
+                    "image_url": f"/job-uploads/{request.job_id}/{filename}",
+                    "local_path": local_path,
+                    "job_id": request.job_id
+                }
+
+            except Exception as job_error:
+                logger.warning(f"⚠️ Job 폴더 저장 실패, 기본 폴더 사용: {job_error}")
+                # Job 폴더 저장 실패 시 기본 폴더로 fallback
+
+        # 기본 uploads 폴더에 저장 (Job ID 없음 또는 Job 폴더 저장 실패)
+        os.makedirs(UPLOAD_FOLDER, exist_ok=True)
         local_path = os.path.join(UPLOAD_FOLDER, filename)
-        
+
         with open(local_path, 'wb') as f:
             f.write(image_response.content)
-        
-        logger.info(f"💾 개별 이미지 저장 완료: {filename}")
+
+        logger.info(f"💾 개별 이미지 기본 폴더 저장 완료: {filename}")
         logger.info(f"📂 로컬 경로: {local_path}")
-        
+
         return {
             "status": "success",
             "message": "이미지가 성공적으로 생성되었습니다",
@@ -788,8 +876,30 @@ async def serve_uploaded_file(filename: str):
     file_path = os.path.join(UPLOAD_FOLDER, filename)
     if not os.path.exists(file_path):
         raise HTTPException(status_code=404, detail="파일을 찾을 수 없습니다")
-    
+
     return FileResponse(file_path)
+
+@app.get("/job-uploads/{job_id}/{filename}")
+async def serve_job_uploaded_file(job_id: str, filename: str):
+    """Job별 업로드된 파일 제공"""
+    try:
+        if not FOLDER_MANAGER_AVAILABLE:
+            raise HTTPException(status_code=500, detail="폴더 관리 시스템이 사용 불가능합니다.")
+
+        # Job 폴더 경로 조회
+        job_uploads_folder, _ = folder_manager.get_job_folders(job_id)
+        file_path = os.path.join(job_uploads_folder, filename)
+
+        if not os.path.exists(file_path):
+            logger.warning(f"🔍 Job 파일 없음: {file_path}")
+            raise HTTPException(status_code=404, detail="파일을 찾을 수 없습니다")
+
+        logger.info(f"📁 Job 파일 제공: {job_id}/{filename}")
+        return FileResponse(file_path)
+
+    except Exception as e:
+        logger.error(f"❌ Job 파일 제공 실패: {job_id}/{filename} - {e}")
+        raise HTTPException(status_code=500, detail="파일 제공 중 오류가 발생했습니다")
 
 @app.get("/bgm-list")
 async def get_bgm_list():
@@ -963,6 +1073,7 @@ async def preview_video(
     title_font: str = Form(default="BMYEONSUNG_otf.otf"),
     body_font: str = Form(default="BMYEONSUNG_otf.otf"),
     image_1: Optional[UploadFile] = File(None),
+    job_id: Optional[str] = Form(None),  # Job ID 추가
 ):
     """미리보기 이미지 생성"""
     try:
@@ -971,9 +1082,20 @@ async def preview_video(
         # VideoGenerator 인스턴스 생성
         video_generator = VideoGenerator()
 
-        # 업로드 폴더 확인
-        uploads_folder = os.path.join(os.path.dirname(__file__), "uploads")
-        os.makedirs(uploads_folder, exist_ok=True)
+        # 업로드 폴더 설정 (Job ID에 따라 분기)
+        if job_id and FOLDER_MANAGER_AVAILABLE:
+            try:
+                job_uploads_folder, _ = folder_manager.get_job_folders(job_id)
+                uploads_folder = job_uploads_folder
+                os.makedirs(uploads_folder, exist_ok=True)
+                logger.info(f"🗂️ Job 고유 폴더 사용 (프리뷰): {uploads_folder}")
+            except Exception as job_error:
+                logger.warning(f"⚠️ Job 폴더 사용 실패, 기본 폴더 사용 (프리뷰): {job_error}")
+                uploads_folder = os.path.join(os.path.dirname(__file__), "uploads")
+                os.makedirs(uploads_folder, exist_ok=True)
+        else:
+            uploads_folder = os.path.join(os.path.dirname(__file__), "uploads")
+            os.makedirs(uploads_folder, exist_ok=True)
 
         # 이미지/비디오 파일 처리
         preview_image_path = None
@@ -1109,12 +1231,18 @@ async def preview_video(
 
         logger.info(f"미리보기 생성 완료: {preview_filename}")
 
+        # Job ID에 따라 URL 경로 설정
+        if job_id and FOLDER_MANAGER_AVAILABLE:
+            preview_url = f"/job-uploads/{job_id}/{preview_filename}"
+        else:
+            preview_url = f"/uploads/{preview_filename}"
+
         return JSONResponse(
             status_code=200,
             content={
                 "status": "success",
                 "message": "미리보기 생성 성공",
-                "preview_url": f"/uploads/{preview_filename}",
+                "preview_url": preview_url,
                 "preview_path": preview_save_path
             }
         )
@@ -1918,7 +2046,7 @@ Keywords: photorealistic, silhouette, shadow play, muted colors, natural light, 
 # ---------------------------------------------------------------------------
 # 1) 병렬(비동기) 생성 함수
 # ---------------------------------------------------------------------------
-async def generate_images_with_dalle(texts: List[str]) -> List[str]:
+async def generate_images_with_dalle(texts: List[str], job_id: Optional[str] = None) -> List[str]:
     """DALL-E를 사용하여 이미지 생성하고 로컬에 저장 (병렬 처리로 60-80% 성능 향상)"""
     import requests
     import aiohttp
@@ -1934,8 +2062,8 @@ async def generate_images_with_dalle(texts: List[str]) -> List[str]:
 
     if not AIOHTTP_AVAILABLE:
         logger.warning("aiohttp가 설치되지 않아 순차 처리로 대체합니다.")
-        # 순차 처리 fallback 사용
-        return await generate_images_with_dalle_sequential(texts)
+        # 순차 처리 fallback 사용 (job_id 전달)
+        return await generate_images_with_dalle_sequential(texts, job_id)
 
     try:
         if not OPENAI_API_KEY:
@@ -1946,9 +2074,20 @@ async def generate_images_with_dalle(texts: List[str]) -> List[str]:
         # OpenAI 클라이언트 초기화
         client = OpenAI(api_key=OPENAI_API_KEY, timeout=60.0)
 
-        # uploads 디렉토리 확인
-        uploads_dir = os.path.join(os.path.dirname(__file__), "uploads")
-        os.makedirs(uploads_dir, exist_ok=True)
+        # uploads 디렉토리 설정 (Job ID에 따라 분기)
+        if job_id and FOLDER_MANAGER_AVAILABLE:
+            try:
+                job_uploads_folder, _ = folder_manager.get_job_folders(job_id)
+                uploads_dir = job_uploads_folder
+                os.makedirs(uploads_dir, exist_ok=True)
+                logger.info(f"🗂️ Job 고유 폴더 사용: {uploads_dir}")
+            except Exception as job_error:
+                logger.warning(f"⚠️ Job 폴더 사용 실패, 기본 폴더 사용: {job_error}")
+                uploads_dir = os.path.join(os.path.dirname(__file__), "uploads")
+                os.makedirs(uploads_dir, exist_ok=True)
+        else:
+            uploads_dir = os.path.join(os.path.dirname(__file__), "uploads")
+            os.makedirs(uploads_dir, exist_ok=True)
 
         async def generate_single_image(i: int, text: str) -> str:
             """단일 이미지 생성 함수 (비동기 처리)"""
@@ -1984,7 +2123,12 @@ async def generate_images_with_dalle(texts: List[str]) -> List[str]:
                             with open(file_path, "wb") as f:
                                 f.write(await img_response.read())
 
-                            image_url_path = f"/get-image/{filename}"
+                            # Job ID에 따라 URL 경로 설정
+                            if job_id and FOLDER_MANAGER_AVAILABLE:
+                                image_url_path = f"/job-uploads/{job_id}/{filename}"
+                            else:
+                                image_url_path = f"/get-image/{filename}"
+
                             logger.info(f"💾 이미지 {i+1} 저장 완료: {filename}")
                             return image_url_path
                         else:
@@ -2057,7 +2201,7 @@ async def generate_images_with_dalle(texts: List[str]) -> List[str]:
 # ---------------------------------------------------------------------------
 # 2) 순차(동기) 폴백 함수
 # ---------------------------------------------------------------------------
-async def generate_images_with_dalle_sequential(texts: List[str]) -> List[str]:
+async def generate_images_with_dalle_sequential(texts: List[str], job_id: Optional[str] = None) -> List[str]:
     """DALL-E를 사용하여 이미지 생성하고 로컬에 저장 (순차 처리 fallback)"""
     import requests
     from openai import OpenAI
@@ -2072,9 +2216,20 @@ async def generate_images_with_dalle_sequential(texts: List[str]) -> List[str]:
         # OpenAI 클라이언트 초기화
         client = OpenAI(api_key=OPENAI_API_KEY, timeout=60.0)
 
-        # uploads 디렉토리 확인
-        uploads_dir = os.path.join(os.path.dirname(__file__), "uploads")
-        os.makedirs(uploads_dir, exist_ok=True)
+        # uploads 디렉토리 설정 (Job ID에 따라 분기)
+        if job_id and FOLDER_MANAGER_AVAILABLE:
+            try:
+                job_uploads_folder, _ = folder_manager.get_job_folders(job_id)
+                uploads_dir = job_uploads_folder
+                os.makedirs(uploads_dir, exist_ok=True)
+                logger.info(f"🗂️ Job 고유 폴더 사용 (순차 처리): {uploads_dir}")
+            except Exception as job_error:
+                logger.warning(f"⚠️ Job 폴더 사용 실패, 기본 폴더 사용 (순차 처리): {job_error}")
+                uploads_dir = os.path.join(os.path.dirname(__file__), "uploads")
+                os.makedirs(uploads_dir, exist_ok=True)
+        else:
+            uploads_dir = os.path.join(os.path.dirname(__file__), "uploads")
+            os.makedirs(uploads_dir, exist_ok=True)
 
         generated_image_paths: List[str] = []
 
@@ -2105,7 +2260,12 @@ async def generate_images_with_dalle_sequential(texts: List[str]) -> List[str]:
                     with open(file_path, "wb") as f:
                         f.write(img_response.content)
 
-                    image_url_path = f"/get-image/{filename}"
+                    # Job ID에 따라 URL 경로 설정
+                    if job_id and FOLDER_MANAGER_AVAILABLE:
+                        image_url_path = f"/job-uploads/{job_id}/{filename}"
+                    else:
+                        image_url_path = f"/get-image/{filename}"
+
                     logger.info(f"💾 이미지 {i+1} 저장 완료: {filename}")
                     generated_image_paths.append(image_url_path)
                 else:
@@ -2135,7 +2295,12 @@ async def generate_images_with_dalle_sequential(texts: List[str]) -> List[str]:
                             with open(retry_file_path, "wb") as f:
                                 f.write(retry_img.content)
 
-                            retry_image_url_path = f"/get-image/{retry_filename}"
+                            # Job ID에 따라 URL 경로 설정 (재시도)
+                            if job_id and FOLDER_MANAGER_AVAILABLE:
+                                retry_image_url_path = f"/job-uploads/{job_id}/{retry_filename}"
+                            else:
+                                retry_image_url_path = f"/get-image/{retry_filename}"
+
                             logger.info(f"💾 이미지 {i+1} 재시도 저장 완료: {retry_filename}")
                             generated_image_paths.append(retry_image_url_path)
                         else:
@@ -2179,9 +2344,9 @@ async def generate_images(request: ImageGenerateRequest):
             # 각각 개별 처리
             processed_texts = request.texts
         
-        # DALL-E로 이미지 생성
+        # DALL-E로 이미지 생성 (Job ID 전달)
         try:
-            image_urls = await generate_images_with_dalle(processed_texts)
+            image_urls = await generate_images_with_dalle(processed_texts, request.job_id)
         except ValueError as e:
             raise HTTPException(status_code=500, detail=str(e))
         
@@ -2346,6 +2511,9 @@ async def generate_video_async(
     # 크로스 디졸브 설정
     cross_dissolve: str = Form(default="enabled"),          # "enabled" (적용) 또는 "disabled" (미적용)
 
+    # Job ID (선택적)
+    job_id: Optional[str] = Form(None),  # Job ID 추가
+
     # 이미지 파일 업로드 (최대 8개)
     image_1: Optional[UploadFile] = File(None),
     image_2: Optional[UploadFile] = File(None),
@@ -2366,10 +2534,30 @@ async def generate_video_async(
 
         logger.info(f"🚀 비동기 영상 생성 요청: {user_email}")
 
-        # 1. uploads 폴더 정리 및 파일 저장
-        if os.path.exists(UPLOAD_FOLDER):
-            shutil.rmtree(UPLOAD_FOLDER)
-        os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+        # 1. Job ID 미리 생성 및 Job 폴더 생성
+        job_id = str(uuid.uuid4())
+        logger.info(f"🆔 Job ID 생성: {job_id}")
+
+        if FOLDER_MANAGER_AVAILABLE:
+            try:
+                # Job별 고유 폴더 생성
+                job_uploads_folder, job_output_folder = folder_manager.create_job_folders(job_id)
+                uploads_folder_to_use = job_uploads_folder
+                logger.info(f"📁 Job 폴더 생성 완료: {uploads_folder_to_use}")
+            except Exception as job_error:
+                logger.warning(f"⚠️ Job 폴더 생성 실패, 기본 폴더 사용: {job_error}")
+                uploads_folder_to_use = UPLOAD_FOLDER
+                # 기본 폴더 정리 및 생성
+                if os.path.exists(uploads_folder_to_use):
+                    shutil.rmtree(uploads_folder_to_use)
+                os.makedirs(uploads_folder_to_use, exist_ok=True)
+        else:
+            # Folder Manager 미사용 시 기본 폴더
+            uploads_folder_to_use = UPLOAD_FOLDER
+            if os.path.exists(uploads_folder_to_use):
+                shutil.rmtree(uploads_folder_to_use)
+            os.makedirs(uploads_folder_to_use, exist_ok=True)
+            logger.info(f"📁 기본 폴더 사용: {uploads_folder_to_use}")
 
         # 업로드된 파일들 저장
         uploaded_files = [
@@ -2384,7 +2572,7 @@ async def generate_video_async(
                 file_number = field_name.split('_')[1]
                 file_extension = uploaded_file.filename.split('.')[-1].lower()
                 save_filename = f"{file_number}.{file_extension}"
-                save_path = os.path.join(UPLOAD_FOLDER, save_filename)
+                save_path = os.path.join(uploads_folder_to_use, save_filename)
 
                 with open(save_path, "wb") as buffer:
                     shutil.copyfileobj(uploaded_file.file, buffer)
@@ -2412,8 +2600,8 @@ async def generate_video_async(
             'cross_dissolve': cross_dissolve
         }
 
-        # 3. 작업을 큐에 추가
-        job_id = job_queue.add_job(user_email, video_params)
+        # 3. 작업을 큐에 추가 (미리 생성된 job_id 사용)
+        actual_job_id = job_queue.add_job(user_email, video_params, job_id=job_id)
 
         # 4. Job 로깅 시스템에 로그 생성
         if JOB_LOGGER_AVAILABLE:
@@ -2738,6 +2926,68 @@ async def get_job_statistics():
     except Exception as e:
         logger.error(f"❌ Job 통계 조회 실패: {e}")
         raise HTTPException(status_code=500, detail="Job 통계 조회 중 오류가 발생했습니다.")
+
+# Job 폴더 관리 API 엔드포인트들
+@app.post("/create-job-folder")
+async def create_job_folder(request: CreateJobFolderRequest):
+    """Job별 격리된 폴더 생성"""
+    try:
+        if not FOLDER_MANAGER_AVAILABLE:
+            raise HTTPException(status_code=500, detail="폴더 관리 시스템이 사용 불가능합니다.")
+
+        logger.info(f"🚀 Job 폴더 생성 요청: {request.job_id}")
+
+        # Job 폴더 생성
+        uploads_folder, output_folder = folder_manager.create_job_folders(request.job_id)
+
+        logger.info(f"✅ Job 폴더 생성 완료: {request.job_id}")
+        logger.info(f"   📁 uploads: {uploads_folder}")
+        logger.info(f"   📁 output: {output_folder}")
+
+        return CreateJobFolderResponse(
+            status="success",
+            message="Job 폴더가 성공적으로 생성되었습니다.",
+            job_id=request.job_id,
+            uploads_folder=uploads_folder,
+            output_folder=output_folder
+        )
+
+    except Exception as e:
+        logger.error(f"❌ Job 폴더 생성 실패: {request.job_id} - {e}")
+        raise HTTPException(status_code=500, detail=f"Job 폴더 생성 실패: {str(e)}")
+
+@app.post("/cleanup-job-folder")
+async def cleanup_job_folder(request: CleanupJobFolderRequest):
+    """Job 완료 후 임시 폴더 정리"""
+    try:
+        if not FOLDER_MANAGER_AVAILABLE:
+            raise HTTPException(status_code=500, detail="폴더 관리 시스템이 사용 불가능합니다.")
+
+        logger.info(f"🗑️ Job 폴더 정리 요청: {request.job_id} (keep_output: {request.keep_output})")
+
+        # Job 폴더 정리
+        cleaned = folder_manager.cleanup_job_folders(request.job_id, request.keep_output)
+
+        if cleaned:
+            logger.info(f"✅ Job 폴더 정리 완료: {request.job_id}")
+            return CleanupJobFolderResponse(
+                status="success",
+                message="Job 폴더가 성공적으로 정리되었습니다.",
+                job_id=request.job_id,
+                cleaned=True
+            )
+        else:
+            logger.warning(f"⚠️ Job 폴더 정리 부분 실패: {request.job_id}")
+            return CleanupJobFolderResponse(
+                status="warning",
+                message="Job 폴더 정리가 부분적으로만 완료되었습니다.",
+                job_id=request.job_id,
+                cleaned=False
+            )
+
+    except Exception as e:
+        logger.error(f"❌ Job 폴더 정리 실패: {request.job_id} - {e}")
+        raise HTTPException(status_code=500, detail=f"Job 폴더 정리 실패: {str(e)}")
 
 # 정적 파일 서빙
 app.mount("/bgm", StaticFiles(directory=BGM_FOLDER), name="bgm")

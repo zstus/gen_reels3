@@ -28,6 +28,7 @@ interface ImageStepProps {
   images: File[];
   imageUploadMode: ImageUploadMode;
   content: ReelsContent;
+  jobId: string; // Job ID 추가
   onChange: (images: File[], mode: ImageUploadMode) => void;
   onNext: () => void;
   onBack: () => void;
@@ -37,6 +38,7 @@ const ImageStep: React.FC<ImageStepProps> = ({
   images,
   imageUploadMode,
   content,
+  jobId, // Job ID 추가
   onChange,
   onNext,
   onBack,
@@ -224,7 +226,8 @@ const ImageStep: React.FC<ImageStepProps> = ({
         },
         body: JSON.stringify({
           texts: bodyTexts,
-          mode: mode
+          mode: mode,
+          job_id: jobId  // Job ID 추가
         }),
       });
 
@@ -494,6 +497,7 @@ const ImageStep: React.FC<ImageStepProps> = ({
           content={content}
           imageUploadMode={imageUploadMode}
           images={images}
+          jobId={jobId} // Job ID 전달
           onChange={onChange}
         />
       </Box>

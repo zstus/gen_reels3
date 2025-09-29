@@ -36,6 +36,7 @@ interface TextImagePairManagerProps {
   content: ReelsContent;
   imageUploadMode: ImageUploadMode;
   images: File[];
+  jobId: string; // Job ID 추가
   onChange: (images: File[], mode: ImageUploadMode) => void;
 }
 
@@ -43,6 +44,7 @@ const TextImagePairManager: React.FC<TextImagePairManagerProps> = ({
   content,
   imageUploadMode,
   images,
+  jobId, // Job ID 추가
   onChange,
 }) => {
   const [generationStatus, setGenerationStatus] = useState<{ [key: string]: string }>({});
@@ -240,7 +242,9 @@ const TextImagePairManager: React.FC<TextImagePairManagerProps> = ({
 
     try {
       // 요청 바디 구성
-      let requestBody: any = {};
+      let requestBody: any = {
+        job_id: jobId  // Job ID 추가
+      };
 
       if (useCustomPrompt && customPrompt?.trim()) {
         // 커스텀 프롬프트 사용
@@ -255,6 +259,8 @@ const TextImagePairManager: React.FC<TextImagePairManagerProps> = ({
         }
         console.log('📝 기본 텍스트 사용:', texts[0]);
       }
+
+      console.log('🚀 요청 바디 (Job ID 포함):', requestBody);
 
       const response = await fetch('/generate-single-image', {
         method: 'POST',

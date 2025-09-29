@@ -43,9 +43,12 @@ class JobQueue:
         with open(self.queue_file, 'w', encoding='utf-8') as f:
             json.dump(queue_data, f, ensure_ascii=False, indent=2)
 
-    def add_job(self, user_email: str, video_params: Dict[str, Any]) -> str:
+    def add_job(self, user_email: str, video_params: Dict[str, Any], job_id: str = None) -> str:
         """새 작업을 큐에 추가"""
-        job_id = str(uuid.uuid4())
+        if job_id is None:
+            job_id = str(uuid.uuid4())
+        else:
+            job_id = str(job_id)  # 문자열로 변환
 
         job_data = {
             'job_id': job_id,

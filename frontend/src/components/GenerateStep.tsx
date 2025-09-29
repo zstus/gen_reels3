@@ -172,6 +172,7 @@ const GenerateStep: React.FC<GenerateStepProps> = ({
         titleFont: titleFont,
         bodyFont: bodyFont,
         image: projectData.images[0] || undefined,
+        jobId: projectData.jobId,  // Job ID 추가
       });
 
       if (response.status === 'success') {
@@ -260,6 +261,7 @@ const GenerateStep: React.FC<GenerateStepProps> = ({
         bodyFont: bodyFont,
         voiceNarration: voiceNarration,
         crossDissolve: crossDissolve,
+        jobId: projectData.jobId,  // Job ID 추가
       });
 
       if (response.status === 'success') {
