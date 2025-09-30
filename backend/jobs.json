@@ -1314,5 +1314,218 @@
     "error_message": null,
     "retry_count": 0,
     "max_retries": 2
+  },
+  "b938724f-1d7e-4bfb-897f-5f64a255e847": {
+    "job_id": "b938724f-1d7e-4bfb-897f-5f64a255e847",
+    "user_email": "xystus@gmail.com",
+    "status": "completed",
+    "created_at": "2025-09-29T22:54:49.911407",
+    "updated_at": "2025-09-29T22:56:34.527144",
+    "video_params": {
+      "content_data": "{\"title\":\"결혼 5개월 전, 이걸 봐버렸다…💔\",\"body1\":\"펜션에서 컵라면 먹으려다, 커피포트 물이 튀어 발등 화상! 🔥\",\"body2\":\"너무 아파서 주저앉았는데… 예비신랑? 그냥 '헐' 한마디 하고 소파 가서 유튜브 틀음…📱\",\"body3\":\"심지어 '괜찮아?' 이 한마디도 없음. 동태눈으로 빤히 쳐다본 게 다임😨\",\"body4\":\"이전에도 공감 제로, 내 얘기하면 무반응, 웃겨도 정색… 이번엔 진짜 터짐.\",\"body5\":\"따지니까 '내가 괜찮냐고 물으면 낫냐? 여자들은 너무 기대가 크다' 이딴 소리🤦\",\"body6\":\"결혼 약속하니까 이제 보인다. 이기적이고 공감 없는 남자라는 거.\",\"body7\":\"백년해로? 아니, 예식장 취소부터 검색 중ㅋㅋ 내가 너무한 걸까? 🤔\",\"body8\":\"\"}",
+      "music_mood": "bright",
+      "image_allocation_mode": "2_per_image",
+      "text_position": "bottom",
+      "text_style": "white_background",
+      "title_area_mode": "remove",
+      "selected_bgm_path": "Fun Vibe - Dyalla.mp3",
+      "use_test_files": false,
+      "uploaded_files": [
+        "1.png",
+        "2.png",
+        "3.png",
+        "4.png"
+      ],
+      "title_font": "BMYEONSUNG_otf.otf",
+      "body_font": "BMYEONSUNG_otf.otf",
+      "voice_narration": "enabled",
+      "cross_dissolve": "enabled"
+    },
+    "result": {
+      "video_path": "/zstus/backend/output_videos/202509/reels_902892c6.mp4",
+      "duration": "약 10-30초",
+      "completed_at": "2025-09-29T22:56:34.525674"
+    },
+    "error_message": null,
+    "retry_count": 0,
+    "max_retries": 2
+  },
+  "10592447-e827-46af-8665-f72d1e70023c": {
+    "job_id": "10592447-e827-46af-8665-f72d1e70023c",
+    "user_email": "xystus@gmail.com",
+    "status": "completed",
+    "created_at": "2025-09-29T22:58:47.611659",
+    "updated_at": "2025-09-29T23:00:44.629267",
+    "video_params": {
+      "content_data": "{\"title\":\"마지막\",\"body1\":\"펜션에서 컵라면 먹으려다, 커피포트 물이 튀어 발등 화상! 🔥\",\"body2\":\"너무 아파서 주저앉았는데… 예비신랑? 그냥 '헐' 한마디 하고 소파 가서 유튜브 틀음…📱\",\"body3\":\"심지어 '괜찮아?' 이 한마디도 없음. 동태눈으로 빤히 쳐다본 게 다임😨\",\"body4\":\"이전에도 공감 제로, 내 얘기하면 무반응, 웃겨도 정색… 이번엔 진짜 터짐.\",\"body5\":\"따지니까 '내가 괜찮냐고 물으면 낫냐? 여자들은 너무 기대가 크다' 이딴 소리🤦\",\"body6\":\"결혼 약속하니까 이제 보인다. 이기적이고 공감 없는 남자라는 거.\",\"body7\":\"백년해로? 아니, 예식장 취소부터 검색 중ㅋㅋ 내가 너무한 걸까? 🤔\",\"body8\":\"\"}",
+      "music_mood": "bright",
+      "image_allocation_mode": "2_per_image",
+      "text_position": "bottom",
+      "text_style": "outline",
+      "title_area_mode": "keep",
+      "selected_bgm_path": "Love Me Never Ending - Everet Almond.mp3",
+      "use_test_files": false,
+      "uploaded_files": [
+        "1.png",
+        "2.png",
+        "3.png",
+        "4.png"
+      ],
+      "title_font": "BMYEONSUNG_otf.otf",
+      "body_font": "BMYEONSUNG_otf.otf",
+      "voice_narration": "enabled",
+      "cross_dissolve": "enabled"
+    },
+    "result": {
+      "video_path": "/zstus/backend/output_videos/202509/reels_f9b12b5f.mp4",
+      "duration": "약 10-30초",
+      "completed_at": "2025-09-29T23:00:44.627715"
+    },
+    "error_message": null,
+    "retry_count": 0,
+    "max_retries": 2
+  },
+  "11d69b01-6309-4603-9b31-29f8ea713646": {
+    "job_id": "11d69b01-6309-4603-9b31-29f8ea713646",
+    "user_email": "xystus@gmail.com",
+    "status": "completed",
+    "created_at": "2025-09-29T23:00:31.424804",
+    "updated_at": "2025-09-29T23:02:31.485807",
+    "video_params": {
+      "content_data": "{\"title\":\"결혼 5개월 전, 이걸 봐버렸다…💔\",\"body1\":\"펜션에서 컵라면 먹으려다, 커피포트 물이 튀어 발등 화상! 🔥\",\"body2\":\"너무 아파서 주저앉았는데… 예비신랑? 그냥 '헐' 한마디 하고 소파 가서 유튜브 틀음…📱\",\"body3\":\"심지어 '괜찮아?' 이 한마디도 없음. 동태눈으로 빤히 쳐다본 게 다임😨\",\"body4\":\"이전에도 공감 제로, 내 얘기하면 무반응, 웃겨도 정색… 이번엔 진짜 터짐.\",\"body5\":\"따지니까 '내가 괜찮냐고 물으면 낫냐? 여자들은 너무 기대가 크다' 이딴 소리🤦\",\"body6\":\"결혼 약속하니까 이제 보인다. 이기적이고 공감 없는 남자라는 거.\",\"body7\":\"백년해로? 아니, 예식장 취소부터 검색 중ㅋㅋ 내가 너무한 걸까? 🤔\",\"body8\":\"\"}",
+      "music_mood": "bright",
+      "image_allocation_mode": "2_per_image",
+      "text_position": "bottom",
+      "text_style": "outline",
+      "title_area_mode": "keep",
+      "selected_bgm_path": "It's Definitely It - Freedom Trail Studio.mp3",
+      "use_test_files": false,
+      "uploaded_files": [
+        "1.mp4",
+        "2.mp4",
+        "3.webp",
+        "4.mp4"
+      ],
+      "title_font": "BMYEONSUNG_otf.otf",
+      "body_font": "BMYEONSUNG_otf.otf",
+      "voice_narration": "enabled",
+      "cross_dissolve": "enabled"
+    },
+    "result": {
+      "video_path": "/zstus/backend/output_videos/202509/reels_a74f291e.mp4",
+      "duration": "약 10-30초",
+      "completed_at": "2025-09-29T23:02:31.484037"
+    },
+    "error_message": null,
+    "retry_count": 0,
+    "max_retries": 2
+  },
+  "job_phhg77ym5_mg5r0jnl": {
+    "job_id": "job_phhg77ym5_mg5r0jnl",
+    "user_email": "xystus@gmail.com",
+    "status": "completed",
+    "created_at": "2025-09-29T23:19:21.637596",
+    "updated_at": "2025-09-29T23:22:46.141900",
+    "video_params": {
+      "content_data": "{\"title\":\"🔥정부 전산망 마비 총정리: 대한민국 멈춘 이유, 뭔데?\",\"body1\":\"지난 26일, 대전 국가정보자원관리원에서 불이 났대. 그 결과 정부 업무 시스템 647개가 다 먹통이 됐지. 행정, 우편까지 싹 다 멈춘 역대급 사건이야.\",\"body2\":\"대체 왜 이렇게까지 됐을까? 첫 번째 이유! 불에 약한 리튬이온 배터리랑 중요한 서버들을 한데 촘촘히 뒀대. 불나니 피해가 엄청날 수밖에.\",\"body3\":\"두 번째 이유! '백업 체계(이중화)'가 개판이었어. 센터 하나 멈추면 쌍둥이 센터가 바로 이어받아야 하는데, 그냥 데이터 최소한만 백업해 둔 수준이래.\",\"body4\":\"사실 정부 전산망 오류는 처음이 아냐. 2023년에도 행정망 마비돼서 '3시간 복구' 약속했는데, 이번에 또 못 지킨 거지.\",\"body5\":\"2022년에 카카오 먹통 됐을 땐 정부가 '이중화 똑바로 하라'고 민간 기업을 혼냈잖아. 근데 정작 정부 자기들 시스템은 준비가 안 돼 있었다는 비판이 쏟아지고 있어.\",\"body6\":\"공주에 네 번째 센터 계획이 2008년부터 있었지만, 예산 문제 등으로 완공만 해놓고 운영 시스템 백업 기능은 아직도 없대. 이게 제대로 돼 있었으면 피해가 덜했을 거라고.\",\"body7\":\"정부24, 모바일 신분증 같은 건 복구됐지만, 전부 정상화되려면 추석 연휴를 넘겨야 할 것 같대. 국민들 일상인데, 언제쯤 안심하고 쓸 수 있을까?\",\"body8\":\"\"}",
+      "music_mood": "calm",
+      "image_allocation_mode": "2_per_image",
+      "text_position": "top",
+      "text_style": "black_text_white_outline",
+      "title_area_mode": "remove",
+      "selected_bgm_path": "Call me crazy - Patrick Patrikios.mp3",
+      "use_test_files": false,
+      "uploaded_files": [
+        "1.png",
+        "2.png",
+        "3.png",
+        "4.png"
+      ],
+      "title_font": "BMYEONSUNG_otf.otf",
+      "body_font": "BMYEONSUNG_otf.otf",
+      "voice_narration": "enabled",
+      "cross_dissolve": "enabled"
+    },
+    "result": {
+      "video_path": "/zstus/backend/output_videos/202509/reels_0a56bcc6.mp4",
+      "duration": "약 10-30초",
+      "completed_at": "2025-09-29T23:22:46.140346"
+    },
+    "error_message": null,
+    "retry_count": 0,
+    "max_retries": 2
+  },
+  "job_58fvz6mg3_mg60mnx2": {
+    "job_id": "job_58fvz6mg3_mg60mnx2",
+    "user_email": "xystus@gmail.com",
+    "status": "completed",
+    "created_at": "2025-09-30T03:49:27.720226",
+    "updated_at": "2025-09-30T03:50:58.055273",
+    "video_params": {
+      "content_data": "{\"title\":\"가족관계 꼭 회복해야 할까\",\"body1\":\"꼭 이 가족관계, 회복해야 될까 계속 고민돼.\",\"body2\":\"내가 이렇게 느끼는 가장 큰 이유는 내 형제자매 A 때문이야.\",\"body3\":\"어릴 때부터 A는 나를 괴롭혀왔어 그래서 말이야.\",\"body4\":\"나는 적어도 사과라도 해주길 바랐는데, 오히려 내 탓이라고 큰소리치더라.\",\"body5\":\"이런 일들이 쌓이다 보니 A가 그냥 싫어졌어.\",\"body6\":\"오히려 내가 이유 없이 화해를 거부하는 못된 사람처럼 보여서 더 힘들어.\",\"body7\":\"정말 내가 그냥 참고 화해하는 게 정답일까? 너라면 어떻게 할 것 같아?\",\"body8\":\"\"}",
+      "music_mood": "calm",
+      "image_allocation_mode": "1_per_image",
+      "text_position": "bottom",
+      "text_style": "white_background",
+      "title_area_mode": "keep",
+      "selected_bgm_path": "June time - Patrick Patrikios.mp3",
+      "use_test_files": false,
+      "uploaded_files": [
+        "1.png",
+        "2.png",
+        "3.png",
+        "4.png",
+        "5.png",
+        "6.png",
+        "7.png"
+      ],
+      "title_font": "BMHANNAPro.ttf",
+      "body_font": "BMYEONSUNG_otf.otf",
+      "voice_narration": "enabled",
+      "cross_dissolve": "enabled"
+    },
+    "result": {
+      "video_path": "/zstus/backend/output_videos/202509/reels_4cfab4eb.mp4",
+      "duration": "약 10-30초",
+      "completed_at": "2025-09-30T03:50:58.053501"
+    },
+    "error_message": null,
+    "retry_count": 0,
+    "max_retries": 2
+  },
+  "job_nt6ssyqdf_mg61rgcs": {
+    "job_id": "job_nt6ssyqdf_mg61rgcs",
+    "user_email": "xystus@gmail.com",
+    "status": "completed",
+    "created_at": "2025-09-30T04:20:52.700528",
+    "updated_at": "2025-09-30T04:22:50.485367",
+    "video_params": {
+      "content_data": "{\"title\":\"결혼\",\"body1\":\"펜션에서 컵라면 먹으려다, 커피포트 물이 튀어 발등 화상! 🔥\",\"body2\":\"너무 아파서 주저앉았는데… 예비신랑? 그냥 '헐' 한마디 하고 소파 가서 유튜브 틀음…📱\",\"body3\":\"심지어 '괜찮아?' 이 한마디도 없음. 동태눈으로 빤히 쳐다본 게 다임😨\",\"body4\":\"이전에도 공감 제로, 내 얘기하면 무반응, 웃겨도 정색… 이번엔 진짜 터짐.\",\"body5\":\"따지니까 '내가 괜찮냐고 물으면 낫냐? 여자들은 너무 기대가 크다' 이딴 소리🤦\",\"body6\":\"결혼 약속하니까 이제 보인다. 이기적이고 공감 없는 남자라는 거.\",\"body7\":\"백년해로? 아니, 예식장 취소부터 검색 중ㅋㅋ 내가 너무한 걸까? 🤔\",\"body8\":\"\"}",
+      "music_mood": "bright",
+      "image_allocation_mode": "2_per_image",
+      "text_position": "bottom",
+      "text_style": "outline",
+      "title_area_mode": "keep",
+      "selected_bgm_path": "For Granted - Dyalla.mp3",
+      "use_test_files": false,
+      "uploaded_files": [
+        "1.png",
+        "2.png",
+        "3.png",
+        "4.png"
+      ],
+      "title_font": "BMYEONSUNG_otf.otf",
+      "body_font": "BMYEONSUNG_otf.otf",
+      "voice_narration": "enabled",
+      "cross_dissolve": "enabled"
+    },
+    "result": {
+      "video_path": "/zstus/backend/output_videos/202509/reels_9d32a7db.mp4",
+      "duration": "약 10-30초",
+      "completed_at": "2025-09-30T04:22:50.483667"
+    },
+    "error_message": null,
+    "retry_count": 0,
+    "max_retries": 2
   }
 }

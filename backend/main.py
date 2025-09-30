@@ -526,10 +526,16 @@ async def generate_video(
                 print(f"⚠️ Job 폴더 사용 실패, 기본 폴더 사용 (영상 생성): {job_error}")
 
         # 1. uploads 폴더 준비 및 정리
-        if os.path.exists(UPLOAD_FOLDER):
-            shutil.rmtree(UPLOAD_FOLDER)
-        os.makedirs(UPLOAD_FOLDER, exist_ok=True)
-        print("📁 uploads 폴더 준비 완료")
+        if job_id and FOLDER_MANAGER_AVAILABLE:
+            # Job 폴더 사용 시: 기존 파일들 보존 (이미지 자동생성, 프리뷰 등)
+            os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+            print(f"📁 기존 Job 폴더 재사용: {UPLOAD_FOLDER}")
+        else:
+            # 기본 폴더 사용 시: 기존 방식대로 폴더 초기화
+            if os.path.exists(UPLOAD_FOLDER):
+                shutil.rmtree(UPLOAD_FOLDER)
+            os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+            print("📁 uploads 폴더 준비 완료")
         
         # 2. 파일들을 uploads 폴더에 준비
         # 업로드된 이미지 파일들 수집
@@ -616,6 +622,18 @@ async def generate_video(
             cross_dissolve
         )
 
+        # 영상 생성 성공 시 job 폴더 정리
+        if job_id and FOLDER_MANAGER_AVAILABLE:
+            try:
+                # Job 폴더 정리 (output 폴더는 보존, uploads 폴더는 정리)
+                cleaned = folder_manager.cleanup_job_folders(job_id, keep_output=True)
+                if cleaned:
+                    print(f"✅ Job 폴더 정리 완료: {job_id}")
+                else:
+                    print(f"⚠️ Job 폴더 정리 실패: {job_id}")
+            except Exception as cleanup_error:
+                print(f"⚠️ Job 폴더 정리 중 오류: {cleanup_error}")
+
         # 글로벌 변수 복원
         if job_id and FOLDER_MANAGER_AVAILABLE:
             UPLOAD_FOLDER = original_upload_folder
@@ -631,6 +649,18 @@ async def generate_video(
         )
 
     except Exception as e:
+        # 에러 시에도 job 폴더 정리 (uploads 폴더 정리)
+        if job_id and FOLDER_MANAGER_AVAILABLE:
+            try:
+                # 에러 시에는 모든 파일 정리 (output 폴더도 정리)
+                cleaned = folder_manager.cleanup_job_folders(job_id, keep_output=False)
+                if cleaned:
+                    print(f"🗑️ 에러 발생으로 Job 폴더 전체 정리: {job_id}")
+                else:
+                    print(f"⚠️ 에러 시 Job 폴더 정리 실패: {job_id}")
+            except Exception as cleanup_error:
+                print(f"⚠️ 에러 시 Job 폴더 정리 중 추가 오류: {cleanup_error}")
+
         # 글로벌 변수 복원 (에러 시에도)
         if job_id and FOLDER_MANAGER_AVAILABLE:
             UPLOAD_FOLDER = original_upload_folder
@@ -2534,16 +2564,32 @@ async def generate_video_async(
 
         logger.info(f"🚀 비동기 영상 생성 요청: {user_email}")
 
-        # 1. Job ID 미리 생성 및 Job 폴더 생성
-        job_id = str(uuid.uuid4())
-        logger.info(f"🆔 Job ID 생성: {job_id}")
+        # 1. Job ID 처리: 전달받은 job_id 사용 또는 새로 생성
+        if job_id:
+            logger.info(f"🆔 기존 Job ID 사용: {job_id}")
+        else:
+            job_id = str(uuid.uuid4())
+            logger.info(f"🆔 새 Job ID 생성: {job_id}")
 
+        # 2. Job 폴더 처리: 기존 폴더 사용 또는 새로 생성
         if FOLDER_MANAGER_AVAILABLE:
             try:
-                # Job별 고유 폴더 생성
-                job_uploads_folder, job_output_folder = folder_manager.create_job_folders(job_id)
-                uploads_folder_to_use = job_uploads_folder
-                logger.info(f"📁 Job 폴더 생성 완료: {uploads_folder_to_use}")
+                # 기존 job 폴더가 있는지 확인하고 사용
+                try:
+                    job_uploads_folder, job_output_folder = folder_manager.get_job_folders(job_id)
+                    if os.path.exists(job_uploads_folder):
+                        uploads_folder_to_use = job_uploads_folder
+                        logger.info(f"📁 기존 Job 폴더 사용: {uploads_folder_to_use}")
+                    else:
+                        # 폴더가 없으면 새로 생성
+                        job_uploads_folder, job_output_folder = folder_manager.create_job_folders(job_id)
+                        uploads_folder_to_use = job_uploads_folder
+                        logger.info(f"📁 새 Job 폴더 생성: {uploads_folder_to_use}")
+                except Exception:
+                    # get_job_folders 실패 시 새로 생성
+                    job_uploads_folder, job_output_folder = folder_manager.create_job_folders(job_id)
+                    uploads_folder_to_use = job_uploads_folder
+                    logger.info(f"📁 Job 폴더 생성 완료: {uploads_folder_to_use}")
             except Exception as job_error:
                 logger.warning(f"⚠️ Job 폴더 생성 실패, 기본 폴더 사용: {job_error}")
                 uploads_folder_to_use = UPLOAD_FOLDER

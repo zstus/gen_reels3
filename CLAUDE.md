@@ -1,6 +1,119 @@
 # 이성일
 # 릴스 영상 생성 서비스 (Reels Video Generator)
 
+## 🔗 Frontend-Backend 작업 협력 표준 (Job 폴더 시스템)
+
+### Job 폴더 격리 시스템 구현 패턴 (2024-12-30 완성)
+
+**목적**: 동시 작업 간섭 방지를 위한 사용자별 독립 작업 공간 제공
+
+#### **1. Frontend 세션 관리 패턴**
+```typescript
+// MainApp.tsx - 애플리케이션 전체 세션 관리
+const generateJobId = (): string => {
+  return 'job_' + Math.random().toString(36).substr(2, 9) + '_' + Date.now().toString(36);
+};
+
+// 프로젝트 상태에서 jobId 지속 유지
+const [projectData, setProjectData] = useState<ProjectData>({
+  jobId: generateJobId(), // 초기 생성 후 세션 종료까지 유지
+  // ... 기타 데이터
+});
+```
+
+#### **2. Backend Job 폴더 생성 API 패턴**
+```python
+# main.py - Job 폴더 생성 엔드포인트
+@app.post("/create-job-folder")
+async def create_job_folder(request: CreateJobFolderRequest):
+    """사용자별 독립 작업 공간 생성"""
+    try:
+        logger.info(f"🚀 Job 폴더 생성 요청: {request.job_id}")
+
+        # 고유 폴더 생성 (uploads/job_xxx, output/job_xxx)
+        uploads_folder, output_folder = folder_manager.create_job_folders(request.job_id)
+
+        return CreateJobFolderResponse(
+            status="success",
+            message="Job 폴더가 성공적으로 생성되었습니다.",
+            job_id=request.job_id,
+            uploads_folder=uploads_folder,
+            output_folder=output_folder
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Job 폴더 생성 실패: {str(e)}")
+```
+
+#### **3. Frontend-Backend 작업 흐름 표준**
+```typescript
+// 단계별 작업 흐름
+// Step 1: 대본 작성 완료 → 이미지 업로드 단계 이동 시
+const handleContentStepNext = async () => {
+  try {
+    console.log('🚀 Job 폴더 생성 중:', projectData.jobId);
+    // Backend에 job 폴더 생성 요청
+    await apiService.createJobFolder(projectData.jobId);
+    console.log('✅ Job 폴더 생성 완료:', projectData.jobId);
+    handleNext(); // 다음 단계로 이동
+  } catch (error) {
+    console.error('❌ Job 폴더 생성 실패:', error);
+  }
+};
+
+// Step 2-4: 모든 API 요청에 jobId 포함
+const apiRequest = {
+  // ... 기타 데이터
+  job_id: projectData.jobId  // 일관된 jobId 전달
+};
+```
+
+#### **4. Backend Job 폴더 사용 패턴**
+```python
+# 모든 API 엔드포인트에서 일관된 패턴
+async def any_api_endpoint(job_id: Optional[str] = Form(None)):
+    """Job 폴더 사용 표준 패턴"""
+
+    # Job 폴더 설정
+    if job_id and FOLDER_MANAGER_AVAILABLE:
+        try:
+            # 기존 폴더 사용 또는 새로 생성
+            job_uploads_folder, job_output_folder = folder_manager.get_job_folders(job_id)
+            if os.path.exists(job_uploads_folder):
+                uploads_folder = job_uploads_folder
+                logger.info(f"📁 기존 Job 폴더 사용: {uploads_folder}")
+            else:
+                job_uploads_folder, job_output_folder = folder_manager.create_job_folders(job_id)
+                uploads_folder = job_uploads_folder
+                logger.info(f"📁 새 Job 폴더 생성: {uploads_folder}")
+
+            # Job별 URL 경로 반환
+            file_url = f"/job-uploads/{job_id}/{filename}"
+        except Exception:
+            # Fallback: 기본 폴더 사용
+            uploads_folder = UPLOAD_FOLDER
+            file_url = f"/uploads/{filename}"
+
+    # 작업 완료 후 정리
+    try:
+        cleaned = folder_manager.cleanup_job_folders(job_id, keep_output=True)
+        logger.info(f"✅ Job 폴더 정리 완료: {job_id}")
+    except Exception as cleanup_error:
+        logger.error(f"⚠️ Job 폴더 정리 실패: {cleanup_error}")
+```
+
+#### **5. 작업 완료 후 정리 패턴**
+```python
+# 성공 시: output 폴더 보존, uploads 폴더 정리
+cleaned = folder_manager.cleanup_job_folders(job_id, keep_output=True)
+
+# 실패 시: 모든 폴더 정리
+cleaned = folder_manager.cleanup_job_folders(job_id, keep_output=False)
+```
+
+**이 패턴을 따르면 동시 작업 간섭 없이 안전한 협력 작업이 가능합니다.**
+
+---
+
 ## ⚠️ 개발 환경 중요 사항 (Claude AI 전용)
 
 **작업 환경**: macOS에서 공유 폴더(Docker/SMB)를 통해 Ubuntu 서버의 프로젝트 폴더에 원격 접근
@@ -48,6 +161,11 @@ FastAPI와 MoviePy를 사용한 자동 릴스 영상 생성 서비스입니다. 
 - **TTS 음성 1.5배속** 처리로 시청 시간 단축 (50% 빠름)
 - 텍스트 길이에 따른 자동 시간 조절
 - **📧 배치 작업 시스템**: 백그라운드 영상 생성 + 완료 시 이메일 알림
+- **🔗 Job 폴더 격리 시스템 (2024-12-30 신규)**: 동시 작업 간섭 방지를 위한 사용자별 독립 작업 공간
+  - **Frontend 세션 관리**: 프로젝트 전체에서 단일 JobID 유지
+  - **Backend Job 폴더**: 사용자별 uploads/job_xxx, output/job_xxx 폴더 생성
+  - **완전 격리 보장**: AI 이미지 생성, 미리보기, 영상 생성 모든 과정에서 독립 폴더 사용
+  - **자동 정리**: 작업 완료/실패 시 적절한 폴더 cleanup으로 간섭 방지
   - **비동기 영상 생성**: 영상 생성 요청 후 즉시 작업 ID 반환
   - **백그라운드 워커**: 독립적인 워커 프로세스에서 영상 생성 처리
   - **이메일 알림**: Gmail SMTP를 통한 완료/실패 이메일 자동 발송
