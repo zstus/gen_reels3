@@ -232,3 +232,14 @@ export interface CleanupJobFolderResponse {
   job_id: string;
   cleaned: boolean;
 }
+
+// 북마크 비디오 타입
+export interface BookmarkVideo {
+  filename: string;
+  display_name: string;
+  size_mb: number;
+  modified_time: number;
+  video_url: string;
+  thumbnail_url: string | null;
+  has_thumbnail: boolean;
+}

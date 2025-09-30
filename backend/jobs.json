@@ -1,38 +1,4 @@
 {
-  "b7debe00-4331-4b40-9144-8e45f2ecfa59": {
-    "job_id": "b7debe00-4331-4b40-9144-8e45f2ecfa59",
-    "user_email": "xystus@gmail.com",
-    "status": "completed",
-    "created_at": "2025-09-22T03:09:47.026628",
-    "updated_at": "2025-09-22T03:11:31.916287",
-    "video_params": {
-      "content_data": "{\"title\":\"대화가 벽에다 말하는 기분\",\"body1\":\"우리 대화가 왜 이렇게 안 통하는지 진짜 모르겠어.\",\"body2\":\"결혼 4년차고 아이가 4살이야. 연애 짧게 하고 휩쓸려 결혼했어.\",\"body3\":\"그 사람만 보면 숨이 막히고 오늘 또 무슨 말을 해야 할지 불안해져.\",\"body4\":\"나는 문제가 생기면 대화로 합의점을 찾고 싶은데, 상대는 미안하단 말만 해.\",\"body5\":\"싸우는 레퍼토리가 항상 똑같고, 대화하다가 더 크게 싸우는 게 99.9프로야.\",\"body6\":\"내가 생각하는 대화는 서로 할 얘기를 하는 건데, 내가 잘못된 건가 싶어.\",\"body7\":\"아이랑 둘이 사는 게 더 마음 편할 것 같은데, 참고 잘 사는 방법 있을까?\",\"body8\":\"\"}",
-      "music_mood": "bright",
-      "image_allocation_mode": "2_per_image",
-      "text_position": "bottom",
-      "text_style": "background",
-      "title_area_mode": "keep",
-      "selected_bgm_path": "Lace Tablecloths - The Mini Vandals.mp3",
-      "use_test_files": false,
-      "uploaded_files": [
-        "1.png",
-        "2.png",
-        "3.png",
-        "4.png"
-      ],
-      "title_font": "IBMPlexSansKR-Bold.ttf",
-      "body_font": "BMYEONSUNG_otf.otf",
-      "voice_narration": "enabled"
-    },
-    "result": {
-      "video_path": "/zstus/backend/output_videos/reels_40265eb8.mp4",
-      "duration": "약 10-30초",
-      "completed_at": "2025-09-22T03:11:31.914843"
-    },
-    "error_message": null,
-    "retry_count": 0,
-    "max_retries": 2
-  },
   "983fa4be-d415-4e64-ad79-57b07de0aa83": {
     "job_id": "983fa4be-d415-4e64-ad79-57b07de0aa83",
     "user_email": "xystus@gmail.com",

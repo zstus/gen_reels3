@@ -27,10 +27,13 @@ import {
   ExpandMore,
   ExpandLess,
   Movie as MovieIcon,
-  Warning
+  Warning,
+  VideoLibrary
 } from '@mui/icons-material';
 import { useDropzone } from 'react-dropzone';
-import { ReelsContent, ImageUploadMode, TextImagePair, CustomPrompt } from '../types';
+import { ReelsContent, ImageUploadMode, TextImagePair, CustomPrompt, BookmarkVideo } from '../types';
+import VideoBookmarkModal from './VideoBookmarkModal';
+import apiService from '../services/api';
 
 interface TextImagePairManagerProps {
   content: ReelsContent;
@@ -51,6 +54,8 @@ const TextImagePairManager: React.FC<TextImagePairManagerProps> = ({
   const [uploadErrors, setUploadErrors] = useState<{ [key: number]: string }>({});
   const [customPrompts, setCustomPrompts] = useState<{ [key: number]: CustomPrompt }>({});
   const [promptsExpanded, setPromptsExpanded] = useState<{ [key: number]: boolean }>({});
+  const [bookmarkModalOpen, setBookmarkModalOpen] = useState<boolean>(false);
+  const [currentBookmarkIndex, setCurrentBookmarkIndex] = useState<number | null>(null);
 
   // 최신 images 상태를 추적하기 위한 ref
   const imagesRef = useRef<File[]>(images);
@@ -369,6 +374,81 @@ const TextImagePairManager: React.FC<TextImagePairManagerProps> = ({
       console.log('💾 이미지 다운로드 완료 - imageIndex:', imageIndex, 'fileName:', image.name);
     } catch (error) {
       console.error('이미지 다운로드 오류:', error);
+    }
+  };
+
+  // 북마크 모달 열기
+  const handleOpenBookmarkModal = (imageIndex: number) => {
+    console.log('🎬 북마크 모달 열기 - imageIndex:', imageIndex);
+    setCurrentBookmarkIndex(imageIndex);
+    setBookmarkModalOpen(true);
+  };
+
+  // 북마크 모달 닫기
+  const handleCloseBookmarkModal = () => {
+    setBookmarkModalOpen(false);
+    setCurrentBookmarkIndex(null);
+  };
+
+  // 북마크 비디오 선택 핸들러
+  const handleSelectBookmarkVideo = async (video: BookmarkVideo) => {
+    if (currentBookmarkIndex === null) return;
+
+    console.log('✅ 북마크 비디오 선택:', video.filename, 'imageIndex:', currentBookmarkIndex);
+
+    try {
+      // 생성 상태 업데이트
+      setGenerationStatus(prev => ({ ...prev, [currentBookmarkIndex]: 'generating' }));
+
+      // 백엔드 API 호출: 북마크 비디오를 Job 폴더로 복사
+      const response = await apiService.copyBookmarkVideo(
+        jobId,
+        video.filename,
+        currentBookmarkIndex
+      );
+
+      if (response.status === 'success') {
+        // 복사된 비디오 파일을 File 객체로 변환하여 이미지 배열에 추가
+        const videoUrl = response.data.file_url;
+        const videoFilename = response.data.filename;
+
+        // 비디오 파일을 Fetch로 가져와서 File 객체 생성
+        const videoResponse = await fetch(videoUrl);
+        if (!videoResponse.ok) {
+          throw new Error('비디오 파일 다운로드에 실패했습니다');
+        }
+
+        const blob = await videoResponse.blob();
+        const file = new File([blob], videoFilename, { type: 'video/mp4' });
+
+        console.log('📸 북마크 비디오 파일 생성 완료 - fileName:', videoFilename, 'imageIndex:', currentBookmarkIndex);
+
+        // 이미지 배열 업데이트
+        handleIndividualImageUpload(currentBookmarkIndex, [file]);
+
+        setGenerationStatus(prev => ({ ...prev, [currentBookmarkIndex]: 'success' }));
+        setTimeout(() => {
+          setGenerationStatus(prev => {
+            const newStatus = { ...prev };
+            delete newStatus[currentBookmarkIndex];
+            return newStatus;
+          });
+        }, 3000);
+
+        console.log('✅ 북마크 비디오 복사 및 업로드 완료');
+      }
+    } catch (error: any) {
+      console.error('❌ 북마크 비디오 선택 오류:', error);
+      setGenerationStatus(prev => ({ ...prev, [currentBookmarkIndex]: 'error' }));
+      setUploadErrors(prev => ({ ...prev, [currentBookmarkIndex]: error.message || '북마크 비디오 불러오기 실패' }));
+
+      setTimeout(() => {
+        setGenerationStatus(prev => {
+          const newStatus = { ...prev };
+          delete newStatus[currentBookmarkIndex];
+          return newStatus;
+        });
+      }, 5000);
     }
   };
 
@@ -705,7 +785,9 @@ const TextImagePairManager: React.FC<TextImagePairManagerProps> = ({
               }}
             >
               <input {...getInputProps()} />
-              <CloudUpload sx={{ fontSize: 32, color: 'grey.400', mb: 1 }} />
+              <Box sx={{ display: 'flex', justifyContent: 'center', width: '100%' }}>
+                <CloudUpload sx={{ fontSize: 32, color: 'grey.400', mb: 1 }} />
+              </Box>
               <Typography variant="caption" color="text.secondary">
                 {isDragActive ? '파일을 놓으세요' : '미디어 드래그 또는 클릭'}
               </Typography>
@@ -745,7 +827,7 @@ const TextImagePairManager: React.FC<TextImagePairManagerProps> = ({
         </CardContent>
 
         {/* 하단 액션 버튼 */}
-        <Box sx={{ p: 1.5, pt: 0 }}>
+        <Box sx={{ p: 1.5, pt: 0, display: 'flex', flexDirection: 'column', gap: 1 }}>
           <Button
             fullWidth
             variant="outlined"
@@ -771,6 +853,25 @@ const TextImagePairManager: React.FC<TextImagePairManagerProps> = ({
             }}
           >
             {isGenerating ? '생성중...' : (currentCustomPrompt?.enabled ? '커스텀 프롬프트로 생성' : 'AI 자동생성')}
+          </Button>
+
+          <Button
+            fullWidth
+            variant="outlined"
+            size="small"
+            startIcon={<VideoLibrary />}
+            onClick={() => handleOpenBookmarkModal(imageIndex)}
+            disabled={isGenerating}
+            sx={{
+              borderColor: 'secondary.main',
+              color: 'secondary.main',
+              '&:hover': {
+                bgcolor: 'rgba(156, 39, 176, 0.08)',
+                borderColor: 'secondary.main',
+              }
+            }}
+          >
+            동영상 불러오기
           </Button>
         </Box>
       </Card>
@@ -805,6 +906,13 @@ const TextImagePairManager: React.FC<TextImagePairManagerProps> = ({
           대본을 먼저 작성해주세요.
         </Alert>
       )}
+
+      {/* 북마크 비디오 선택 모달 */}
+      <VideoBookmarkModal
+        open={bookmarkModalOpen}
+        onClose={handleCloseBookmarkModal}
+        onSelect={handleSelectBookmarkVideo}
+      />
     </Box>
   );
 };

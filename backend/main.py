@@ -79,6 +79,16 @@ except ImportError as e:
     folder_manager = None
     FOLDER_MANAGER_AVAILABLE = False
 
+# 썸네일 생성 시스템 import
+try:
+    from thumbnail_generator import generate_missing_thumbnails
+    THUMBNAIL_GENERATOR_AVAILABLE = True
+    print("✅ 썸네일 생성 시스템 로드 성공")
+except ImportError as e:
+    print(f"⚠️ 썸네일 생성 시스템 로드 실패: {e}")
+    generate_missing_thumbnails = None
+    THUMBNAIL_GENERATOR_AVAILABLE = False
+
 # .env 파일 로드
 load_dotenv()
 
@@ -184,11 +194,13 @@ app.add_middleware(
 OUTPUT_FOLDER = "output_videos"
 UPLOAD_FOLDER = "uploads"
 BGM_FOLDER = "bgm"
+BOOKMARK_VIDEOS_FOLDER = os.path.join("assets", "videos", "bookmark")
 
 # 폴더 생성
 os.makedirs(OUTPUT_FOLDER, exist_ok=True)
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 os.makedirs(BGM_FOLDER, exist_ok=True)
+os.makedirs(BOOKMARK_VIDEOS_FOLDER, exist_ok=True)
 
 # 글로벌 변수
 CURRENT_BGM_PATH = None
@@ -1092,6 +1104,167 @@ async def get_font_list():
                 "message": str(e)
             }
         )
+
+@app.get("/bookmark-videos")
+async def get_bookmark_videos():
+    """북마크 비디오 목록 조회 (최근 등록순, 썸네일 포함)"""
+    try:
+        videos = []
+
+        if os.path.exists(BOOKMARK_VIDEOS_FOLDER):
+            # 썸네일 자동 생성 (누락된 썸네일만)
+            if THUMBNAIL_GENERATOR_AVAILABLE:
+                try:
+                    logger.info("🎬 썸네일 생성 시작...")
+                    result = generate_missing_thumbnails(BOOKMARK_VIDEOS_FOLDER)
+                    logger.info(f"✅ 썸네일 생성 완료: 새로 생성 {result['generated']}개, 기존 {result['skipped']}개, 실패 {result['errors']}개")
+                except Exception as thumbnail_error:
+                    logger.warning(f"⚠️ 썸네일 생성 중 오류 발생 (계속 진행): {thumbnail_error}")
+            else:
+                logger.warning("⚠️ 썸네일 생성기를 사용할 수 없습니다")
+
+            # mp4 파일들만 검색
+            video_files = glob.glob(os.path.join(BOOKMARK_VIDEOS_FOLDER, "*.mp4"))
+
+            for video_path in video_files:
+                filename = os.path.basename(video_path)
+
+                # 파일 정보
+                file_stat = os.stat(video_path)
+                file_size = file_stat.st_size
+                file_size_mb = round(file_size / (1024 * 1024), 2)
+                modified_time = file_stat.st_mtime
+
+                # 썸네일 이미지 찾기 (같은 이름의 .jpg 파일)
+                thumbnail_name = filename.replace('.mp4', '.jpg')
+                thumbnail_path = os.path.join(BOOKMARK_VIDEOS_FOLDER, thumbnail_name)
+                has_thumbnail = os.path.exists(thumbnail_path)
+
+                videos.append({
+                    "filename": filename,
+                    "display_name": filename.replace('.mp4', ''),
+                    "size_mb": file_size_mb,
+                    "modified_time": modified_time,
+                    "video_url": f"/bookmark-videos/{filename}",
+                    "thumbnail_url": f"/bookmark-videos/{thumbnail_name}" if has_thumbnail else None,
+                    "has_thumbnail": has_thumbnail
+                })
+
+        # 최근 등록순으로 정렬 (modified_time 기준 내림차순)
+        videos.sort(key=lambda x: x['modified_time'], reverse=True)
+
+        logger.info(f"✅ 북마크 비디오 목록 조회 완료: {len(videos)}개")
+
+        return JSONResponse(
+            status_code=200,
+            content={
+                "status": "success",
+                "message": f"{len(videos)}개의 북마크 비디오를 찾았습니다",
+                "data": videos
+            }
+        )
+
+    except Exception as e:
+        logger.error(f"❌ 북마크 비디오 목록 조회 오류: {e}")
+        return JSONResponse(
+            status_code=500,
+            content={
+                "status": "error",
+                "message": str(e)
+            }
+        )
+
+@app.get("/bookmark-videos/{filename}")
+async def serve_bookmark_video(filename: str):
+    """북마크 비디오 또는 썸네일 파일 제공"""
+    try:
+        file_path = os.path.join(BOOKMARK_VIDEOS_FOLDER, filename)
+
+        if not os.path.exists(file_path):
+            raise HTTPException(status_code=404, detail="파일을 찾을 수 없습니다")
+
+        # 파일 확장자에 따라 적절한 미디어 타입 반환
+        if filename.endswith('.mp4'):
+            media_type = "video/mp4"
+        elif filename.endswith('.jpg') or filename.endswith('.jpeg'):
+            media_type = "image/jpeg"
+        else:
+            media_type = "application/octet-stream"
+
+        return FileResponse(
+            path=file_path,
+            media_type=media_type,
+            filename=filename
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"❌ 북마크 파일 제공 실패: {filename} - {e}")
+        raise HTTPException(status_code=500, detail="파일 제공 중 오류가 발생했습니다")
+
+class CopyBookmarkVideoRequest(BaseModel):
+    job_id: str
+    video_filename: str
+    image_index: int
+
+@app.post("/copy-bookmark-video")
+async def copy_bookmark_video(request: CopyBookmarkVideoRequest):
+    """북마크 비디오를 Job 폴더로 복사하여 사용"""
+    try:
+        logger.info(f"🎬 북마크 비디오 복사 요청: job_id={request.job_id}, video={request.video_filename}, index={request.image_index}")
+
+        # 1. 원본 비디오 파일 경로 확인
+        source_video_path = os.path.join(BOOKMARK_VIDEOS_FOLDER, request.video_filename)
+
+        if not os.path.exists(source_video_path):
+            raise HTTPException(status_code=404, detail=f"북마크 비디오를 찾을 수 없습니다: {request.video_filename}")
+
+        # 2. Job 폴더 확인 (없으면 생성)
+        if FOLDER_MANAGER_AVAILABLE:
+            job_uploads_folder, job_output_folder = folder_manager.get_job_folders(request.job_id)
+            if not os.path.exists(job_uploads_folder):
+                job_uploads_folder, job_output_folder = folder_manager.create_job_folders(request.job_id)
+                logger.info(f"📁 Job 폴더 생성: {job_uploads_folder}")
+            uploads_folder = job_uploads_folder
+        else:
+            # Fallback: 기본 uploads 폴더 사용
+            uploads_folder = UPLOAD_FOLDER
+            os.makedirs(uploads_folder, exist_ok=True)
+
+        # 3. 대상 파일 경로 설정 (image_index 사용)
+        file_extension = os.path.splitext(request.video_filename)[1]
+        dest_filename = f"{request.image_index + 1}{file_extension}"
+        dest_video_path = os.path.join(uploads_folder, dest_filename)
+
+        # 4. 비디오 파일 복사
+        shutil.copy2(source_video_path, dest_video_path)
+        logger.info(f"✅ 비디오 파일 복사 완료: {source_video_path} → {dest_video_path}")
+
+        # 5. 파일 URL 반환
+        if FOLDER_MANAGER_AVAILABLE:
+            file_url = f"/job-uploads/{request.job_id}/{dest_filename}"
+        else:
+            file_url = f"/uploads/{dest_filename}"
+
+        return JSONResponse(
+            status_code=200,
+            content={
+                "status": "success",
+                "message": "북마크 비디오를 성공적으로 복사했습니다",
+                "data": {
+                    "filename": dest_filename,
+                    "file_url": file_url,
+                    "image_index": request.image_index
+                }
+            }
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"❌ 북마크 비디오 복사 실패: {e}")
+        raise HTTPException(status_code=500, detail=f"비디오 복사 중 오류가 발생했습니다: {str(e)}")
 
 @app.post("/preview-video")
 async def preview_video(

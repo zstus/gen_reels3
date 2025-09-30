@@ -360,6 +360,47 @@ export const apiService = {
       console.error('Job 폴더 정리 실패:', error);
       throw error;
     }
+  },
+
+  // 북마크 비디오 목록 조회
+  async getBookmarkVideos(): Promise<{ status: string; message: string; data: BookmarkVideo[] }> {
+    try {
+      const response = await apiClient.get('/bookmark-videos');
+      return response.data;
+    } catch (error) {
+      console.error('북마크 비디오 목록 조회 실패:', error);
+      throw error;
+    }
+  },
+
+  // 북마크 비디오 URL 생성
+  getBookmarkVideoUrl(filename: string): string {
+    return `/bookmark-videos/${encodeURIComponent(filename)}`;
+  },
+
+  // 북마크 비디오 썸네일 URL 생성
+  getBookmarkThumbnailUrl(filename: string): string {
+    const thumbnailFilename = filename.replace('.mp4', '.jpg');
+    return `/bookmark-videos/${encodeURIComponent(thumbnailFilename)}`;
+  },
+
+  // 북마크 비디오를 Job 폴더로 복사
+  async copyBookmarkVideo(jobId: string, videoFilename: string, imageIndex: number): Promise<{
+    status: string;
+    message: string;
+    data: { filename: string; file_url: string; image_index: number };
+  }> {
+    try {
+      const response = await apiClient.post('/copy-bookmark-video', {
+        job_id: jobId,
+        video_filename: videoFilename,
+        image_index: imageIndex,
+      });
+      return response.data;
+    } catch (error) {
+      console.error('북마크 비디오 복사 실패:', error);
+      throw error;
+    }
   }
 };
 
