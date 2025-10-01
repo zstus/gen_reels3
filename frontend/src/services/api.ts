@@ -94,6 +94,7 @@ export const apiService = {
     bodyFont?: string;
     voiceNarration: VoiceNarration;
     crossDissolve: CrossDissolve;
+    subtitleDuration?: number;
   }): Promise<ApiResponse> {
     const formData = new FormData();
     
@@ -124,6 +125,11 @@ export const apiService = {
 
     // 크로스 디졸브 설정 추가
     formData.append('cross_dissolve', data.crossDissolve);
+
+    // 자막 지속 시간 추가
+    if (data.subtitleDuration !== undefined) {
+      formData.append('subtitle_duration', String(data.subtitleDuration));
+    }
 
     // 폰트 설정 추가
     if (data.titleFont) {
@@ -194,6 +200,7 @@ export const apiService = {
     bodyFont?: string;
     voiceNarration: VoiceNarration;
     crossDissolve: CrossDissolve;
+    subtitleDuration?: number;
     jobId?: string;  // Job ID 추가
   }): Promise<AsyncVideoResponse> {
     const formData = new FormData();
@@ -224,6 +231,11 @@ export const apiService = {
 
     // 크로스 디졸브 설정 추가
     formData.append('cross_dissolve', data.crossDissolve);
+
+    // 자막 지속 시간 추가
+    if (data.subtitleDuration !== undefined) {
+      formData.append('subtitle_duration', String(data.subtitleDuration));
+    }
 
     // 폰트 설정 추가
     if (data.titleFont) {

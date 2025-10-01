@@ -101,6 +101,7 @@ const GenerateStep: React.FC<GenerateStepProps> = ({
   const [titleAreaMode, setTitleAreaMode] = useState<TitleAreaMode>('keep');
   const [voiceNarration, setVoiceNarration] = useState<VoiceNarration>('enabled');
   const [crossDissolve, setCrossDissolve] = useState<CrossDissolve>('enabled');
+  const [subtitleDuration, setSubtitleDuration] = useState<number>(0);
 
   // 미리보기 관련 상태
   const [previewImage, setPreviewImage] = useState<string | null>(null);
@@ -261,6 +262,7 @@ const GenerateStep: React.FC<GenerateStepProps> = ({
         bodyFont: bodyFont,
         voiceNarration: voiceNarration,
         crossDissolve: crossDissolve,
+        subtitleDuration: subtitleDuration,
         jobId: projectData.jobId,  // Job ID 추가
       });
 
@@ -323,6 +325,7 @@ const GenerateStep: React.FC<GenerateStepProps> = ({
         bodyFont: bodyFont,
         voiceNarration: voiceNarration,
         crossDissolve: crossDissolve,
+        subtitleDuration: subtitleDuration,
       });
 
       if (response.status === 'success') {
@@ -400,7 +403,11 @@ const GenerateStep: React.FC<GenerateStepProps> = ({
           ? '2대사마다 이미지'
           : '모든 대사에 미디어 1개',
       titleAreaMode: titleAreaMode === 'keep' ? '확보 (타이틀 + 미디어 영역)' : '제거 (전체 미디어)',
-      textPosition: titleAreaMode === 'keep' ? (textPosition === 'top' ? '상단 (340-520px 영역)' : '하단 (520-700px 영역)') : '미디어 위 오버레이',
+      textPosition: titleAreaMode === 'keep'
+        ? (textPosition === 'top' ? '상단 (340-520px 영역)'
+          : textPosition === 'bottom-edge' ? '최하단 (바닥에서 20px)'
+          : '하단 (520-700px 영역)')
+        : '미디어 위 오버레이',
       textStyle: projectData.textStyle === 'outline' ? '외곽선 (배경 투명)' : '반투명 검은 배경',
       musicName: projectData.selectedMusic?.displayName || '기본 음악',
       musicMood: projectData.musicMood,
@@ -634,6 +641,11 @@ const GenerateStep: React.FC<GenerateStepProps> = ({
                         control={<Radio size="small" />}
                         label="하단"
                       />
+                      <FormControlLabel
+                        value="bottom-edge"
+                        control={<Radio size="small" />}
+                        label="최하단"
+                      />
                     </RadioGroup>
                     <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
                       {titleAreaMode === 'keep'
@@ -700,6 +712,21 @@ const GenerateStep: React.FC<GenerateStepProps> = ({
                     - 추가: 자막 음성이 포함된 영상 생성<br/>
                     - 제거: 자막 표시는 유지하되 음성은 무음으로 처리 (배경음악이나 원본 비디오 소리만 재생)
                   </Typography>
+
+                  {voiceNarration === 'disabled' && (
+                    <Box sx={{ mt: 2 }}>
+                      <TextField
+                        fullWidth
+                        type="number"
+                        label="각 대사 표시 시간 (초)"
+                        value={subtitleDuration}
+                        onChange={(e) => setSubtitleDuration(Math.max(0, parseFloat(e.target.value) || 0))}
+                        size="small"
+                        inputProps={{ min: 0, step: 0.5 }}
+                        helperText="0초: 음성 파일 길이만큼 표시 (기존 방식) | 0초 초과: 입력한 시간만큼 각 대사 표시 (TTS 생성 건너뜀, 빠른 처리)"
+                      />
+                    </Box>
+                  )}
                 </Box>
 
                 <Box>

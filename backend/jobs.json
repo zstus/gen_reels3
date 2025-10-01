@@ -1,140 +1,4 @@
 {
-  "983fa4be-d415-4e64-ad79-57b07de0aa83": {
-    "job_id": "983fa4be-d415-4e64-ad79-57b07de0aa83",
-    "user_email": "xystus@gmail.com",
-    "status": "completed",
-    "created_at": "2025-09-22T15:15:31.327523",
-    "updated_at": "2025-09-22T15:16:56.630903",
-    "video_params": {
-      "content_data": "{\"title\":\"앞으로 어떻게 살아야 할까\",\"body1\":\"39살 미혼 여자고 가족 없이 혼자 지내고 있어.\",\"body2\":\"조금 모아둔 돈도 투자로 날려서 진짜 막막해.\",\"body3\":\"다니는 직장도 힘들어서 관두고 싶은데, 사람 때문에 너무 힘들어.\",\"body4\":\"일자리사이트 보면 괜찮은 곳은 100대1 넘고, 나이도 많아서 뽑아줄까 싶어.\",\"body5\":\"이 나이에 집도 차도 없으니 쉬지도 못하겠고 더 한심해.\",\"body6\":\"내가 봐도 너무 한심해서 멍하니 있으면 눈물이 나와.\",\"body7\":\"다른 내 또래들은 어떻게 살고 있는지, 나만 이런 건가 궁금해.\",\"body8\":\"\"}",
-      "music_mood": "sad",
-      "image_allocation_mode": "2_per_image",
-      "text_position": "bottom",
-      "text_style": "background",
-      "title_area_mode": "keep",
-      "selected_bgm_path": "Basement Apartment - Everet Almond.mp3",
-      "use_test_files": false,
-      "uploaded_files": [
-        "1.png",
-        "2.png",
-        "3.png",
-        "4.png"
-      ],
-      "title_font": "IBMPlexSansKR-Bold.ttf",
-      "body_font": "BMYEONSUNG_otf.otf",
-      "voice_narration": "enabled"
-    },
-    "result": {
-      "video_path": "/zstus/backend/output_videos/reels_26c6d96d.mp4",
-      "duration": "약 10-30초",
-      "completed_at": "2025-09-22T15:16:56.629436"
-    },
-    "error_message": null,
-    "retry_count": 0,
-    "max_retries": 2
-  },
-  "e1659b03-936a-4139-bb51-7eed8ffb77d0": {
-    "job_id": "e1659b03-936a-4139-bb51-7eed8ffb77d0",
-    "user_email": "xystus@gmail.com",
-    "status": "completed",
-    "created_at": "2025-09-22T22:56:20.833773",
-    "updated_at": "2025-09-22T22:58:01.241364",
-    "video_params": {
-      "content_data": "{\"title\":\"8년 연애, 결혼 왜 미루지?\",\"body1\":\"내 친구가 30대 후반에 8년째 연애 중인데, 남자가 계속 결혼을 미루고 있어.\",\"body2\":\"서울에 집 마련하고 안정적으로 시작하고 싶다는데, 신혼집처럼 꾸며놓고 동거하는데도 전세라서 아직 안 된대\",\"body3\":\"이제는 정말 모르겠다. 내 친구는 어릴 때부터 일찍 결혼하고 싶어 했거든.\",\"body4\":\"요즘 신혼부부들 대부분 월세나 전세로 시작하는데 꼭 자가여야만 결혼이 가능할까?\",\"body5\":\"남자가 결혼 생각 없는 거 뻔히 보이는데, 친구가 너무 순진한 것 같아.\",\"body6\":\"결혼 안 해도 그만이지만, 친구가 원하는 행복한 가정 이루길 바라는 마음이 너무 커.\",\"body7\":\"2년 안에 결혼한다는데 그냥 기다려야 할까, 아니면 그만두라고 얘기해야 할까?\",\"body8\":\"\"}",
-      "music_mood": "calm",
-      "image_allocation_mode": "2_per_image",
-      "text_position": "bottom",
-      "text_style": "background",
-      "title_area_mode": "keep",
-      "selected_bgm_path": "City lights - Patrick Patrikios.mp3",
-      "use_test_files": false,
-      "uploaded_files": [
-        "1.png",
-        "2.png",
-        "3.png",
-        "4.png"
-      ],
-      "title_font": "IBMPlexSansKR-Bold.ttf",
-      "body_font": "BMYEONSUNG_otf.otf",
-      "voice_narration": "enabled"
-    },
-    "result": {
-      "video_path": "/zstus/backend/output_videos/reels_b3516143.mp4",
-      "duration": "약 10-30초",
-      "completed_at": "2025-09-22T22:58:01.239787"
-    },
-    "error_message": null,
-    "retry_count": 0,
-    "max_retries": 2
-  },
-  "568ae496-3df9-4265-9c59-4e739a680cad": {
-    "job_id": "568ae496-3df9-4265-9c59-4e739a680cad",
-    "user_email": "xystus@gmail.com",
-    "status": "completed",
-    "created_at": "2025-09-22T23:01:34.933794",
-    "updated_at": "2025-09-22T23:02:56.110043",
-    "video_params": {
-      "content_data": "{\"title\":\"월요병, 왜 더 힘들까?\",\"body1\":\"월요일엔 왜 더 힘들까? 주말은 왜 이렇게 순식간에 지나갈까?\",\"body2\":\"오늘이 지나면 또 다시 시작되는 월요일이 찾아와.\",\"body3\":\"월요일만 되면 느끼는 월요병, 나만 그런 게 아니래.\",\"body4\":\"사람뿐만 아니라 반려견도 월요일엔 슬픔에 빠진다고 해.\",\"body5\":\"월요병의 주된 이유는 수면패턴이 달라지면서 생체리듬이 깨지기 때문이래.\",\"body6\":\"그럼 월요병을 극복할 방법은? 수면패턴을 일정하게 유지시켜봐!\",\"body7\":\"이번주부터 한번 시도해보는 건 어때? 건강하게 지내는게 최고야!\",\"body8\":\"\"}",
-      "music_mood": "bright",
-      "image_allocation_mode": "2_per_image",
-      "text_position": "bottom",
-      "text_style": "background",
-      "title_area_mode": "keep",
-      "selected_bgm_path": "Fun Vibe - Dyalla.mp3",
-      "use_test_files": false,
-      "uploaded_files": [
-        "1.png",
-        "2.png",
-        "3.png",
-        "4.mp4"
-      ],
-      "title_font": "IBMPlexSansKR-Bold.ttf",
-      "body_font": "PretendardVariable.ttf",
-      "voice_narration": "enabled"
-    },
-    "result": {
-      "video_path": "/zstus/backend/output_videos/reels_31c12a30.mp4",
-      "duration": "약 10-30초",
-      "completed_at": "2025-09-22T23:02:56.106023"
-    },
-    "error_message": null,
-    "retry_count": 0,
-    "max_retries": 2
-  },
-  "a91a531d-48c1-4b93-8fce-7a67be9e655c": {
-    "job_id": "a91a531d-48c1-4b93-8fce-7a67be9e655c",
-    "user_email": "xystus@gmail.com",
-    "status": "completed",
-    "created_at": "2025-09-23T03:14:56.194838",
-    "updated_at": "2025-09-23T03:16:06.241926",
-    "video_params": {
-      "content_data": "{\"title\":\"스텔라 블레이드 콜라보?\",\"body1\":\"스텔라 블레이드가 뭔가 공개할 거라고 암시했어.\",\"body2\":\"Shift Up은 이번 달 초 파생작 계획도 밝혔지.\",\"body3\":\"공포 테마라니, 괜히 기대되고 궁금해지는 분위기야.\",\"body4\":\"두 게임 다 다른 작품과 콜라보한 적 있어서 가능성 충분해.\",\"body5\":\"명확한 저작권 고지는 없지만, 공식 SNS에 사일런트 힐 느낌 이미지를 올렸\",\"body6\":\"진짜 콜라보 이벤트가 나오는 걸까 궁금해.\",\"body7\":\"단순 기간 한정 이벤트일 수도 있고, 너는 어떤 쪽이 더 기대돼?\",\"body8\":\"\"}",
-      "music_mood": "calm",
-      "image_allocation_mode": "2_per_image",
-      "text_position": "bottom",
-      "text_style": "background",
-      "title_area_mode": "keep",
-      "selected_bgm_path": "Twinkle - The Grey Room _ Density & Time.mp3",
-      "use_test_files": false,
-      "uploaded_files": [
-        "1.png",
-        "2.png",
-        "3.png",
-        "4.png"
-      ],
-      "title_font": "IBMPlexSansKR-Bold.ttf",
-      "body_font": "BMYEONSUNG_otf.otf",
-      "voice_narration": "enabled"
-    },
-    "result": {
-      "video_path": "/zstus/backend/output_videos/reels_45b033fe.mp4",
-      "duration": "약 10-30초",
-      "completed_at": "2025-09-23T03:16:06.240350"
-    },
-    "error_message": null,
-    "retry_count": 0,
-    "max_retries": 2
-  },
   "6469662d-29ea-4b04-abf0-9defcf56cba2": {
     "job_id": "6469662d-29ea-4b04-abf0-9defcf56cba2",
     "user_email": "xystus@gmail.com",
@@ -1489,6 +1353,435 @@
       "video_path": "/zstus/backend/output_videos/202509/reels_9d32a7db.mp4",
       "duration": "약 10-30초",
       "completed_at": "2025-09-30T04:22:50.483667"
+    },
+    "error_message": null,
+    "retry_count": 0,
+    "max_retries": 2
+  },
+  "job_ynd5fkjf0_mg6h7lop": {
+    "job_id": "job_ynd5fkjf0_mg6h7lop",
+    "user_email": "xystus@gmail.com",
+    "status": "completed",
+    "created_at": "2025-09-30T11:32:23.104731",
+    "updated_at": "2025-09-30T11:35:26.789271",
+    "video_params": {
+      "content_data": "{\"title\":\"이혼 사유 맞아?\",\"body1\":\"남편은 연봉 2000에 키 168 금수저고, 난 연봉 1억에 키 165 흙수저야. 남편이 아이 갖기싫다해서 6년차 딩크고..\",\"body2\":\"남편이 나랑 있어도 내가 살이 쪄서 여자로 안 보이고 즐겁지 않대. 같이 있어도 외롭다는 거야.\",\"body3\":\"그런데, 생활비 80% 내가 내고 집안일도 전부 내가 하고 있어. 그래서 말을 할 시간이 없고 하고 싶은 마음도 안 들어.\",\"body4\":\"몇년 전에 남편이 19세 여학생 음란캠 보고 그 여자 인스타까지 뒤지는 거 보고 그때부터 잠자리는 거부하고 있거든.\",\"body5\":\"남편은 가족이랑 친하게 살고 싶고 떨어져 살기 싫대. 그리고, 자기 가족은 나를 싫어한대.\",\"body6\":\"가끔 맥주한잔하며 진지한 얘기 할때마다 “우리 영원히 함께 할건 아니지?” 하고 남편이 물어.\",\"body7\":\"대체 무슨 이야기야? 내가 어떻게 해야해?\",\"body8\":\"\"}",
+      "music_mood": "calm",
+      "image_allocation_mode": "2_per_image",
+      "text_position": "bottom",
+      "text_style": "white_background",
+      "title_area_mode": "keep",
+      "selected_bgm_path": "Golden Hour - Telecasted.mp3",
+      "use_test_files": false,
+      "uploaded_files": [
+        "1.png",
+        "2.png",
+        "3.mp4",
+        "4.mp4"
+      ],
+      "title_font": "BMHANNAPro.ttf",
+      "body_font": "BMYEONSUNG_otf.otf",
+      "voice_narration": "enabled",
+      "cross_dissolve": "enabled"
+    },
+    "result": {
+      "video_path": "/zstus/backend/output_videos/202509/reels_8d5b39a4.mp4",
+      "duration": "약 10-30초",
+      "completed_at": "2025-09-30T11:35:26.787516"
+    },
+    "error_message": null,
+    "retry_count": 0,
+    "max_retries": 2
+  },
+  "job_9krauhhav_mg6j3x5s": {
+    "job_id": "job_9krauhhav_mg6j3x5s",
+    "user_email": "xystus@gmail.com",
+    "status": "completed",
+    "created_at": "2025-09-30T12:26:06.214036",
+    "updated_at": "2025-09-30T12:29:51.976289",
+    "video_params": {
+      "content_data": "{\"title\":\"💔잘 가, GA! '디지털 분석' 패러다임이 끝나는 이유\",\"body1\":\"야, 지난 20년 동안 '데이터 기반 의사결정' 한다면서 방문자 수, 클릭 수만 죽어라 봤잖아? 근데 그거, 사실 비즈니스에 별 영향 없었다는 거 알아?\",\"body2\":\"디지털 분석이 진짜 쓸모 있던 건 딱 두 가지래. 마케팅 예산 최적화해주는 **'속성 분석'**이랑, 사람들이 어디서 나가는지 보여주는 **'어두운 영역 가시화'** 정도?\",\"body3\":\"근데 지금 그 기반 자체가 무너지고 있어. 개인 정보 보호 규제가 강화되고, 브라우저가 추적을 막으니까 **속성 분석**이 점점 힘을 잃고 있는 거지.\",\"body4\":\"결정적으로 **GA4(Google Analytics 4)**, 완전 재앙이잖아? 복잡하고 마이그레이션도 어려워서 마케터들한테 혼란만 줬지. 그래서 다들 다른 분석 툴로 갈아타고 있어.\",\"body5\":\"이제 '일단 수집해 두면 언젠가 쓰겠지' 마인드는 끝났어. 데이터는 두 가지 길 중 하나로 가야 해.\",\"body6\":\"첫 번째는 '운영적 최적화': AI가 드롭오프 지점 같은 걸 바로 알려주고 즉시 실행하게 만드는 거. **빠른 실험과 행동**이 핵심이야.\",\"body7\":\"두 번째는 '수익 인텔리전스': 데이터 웨어하우스를 써서 수익, 행동 데이터를 싹 다 합치는 거야. 그래서 이탈 위험이나 기회를 **미리 예측하고 선제적으로 대응**하는 거지.\",\"body8\":\"이제 보고서 만드는 시대는 가고, 행동을 유발하는 시스템만이 살아남는대. 넌 어떤 길을 선택할래?\"}",
+      "music_mood": "calm",
+      "image_allocation_mode": "2_per_image",
+      "text_position": "top",
+      "text_style": "white_background",
+      "title_area_mode": "remove",
+      "selected_bgm_path": "Call me crazy - Patrick Patrikios.mp3",
+      "use_test_files": false,
+      "uploaded_files": [
+        "1.png",
+        "2.png",
+        "3.png",
+        "4.png"
+      ],
+      "title_font": "BMYEONSUNG_otf.otf",
+      "body_font": "BMYEONSUNG_otf.otf",
+      "voice_narration": "enabled",
+      "cross_dissolve": "enabled"
+    },
+    "result": {
+      "video_path": "/zstus/backend/output_videos/202509/reels_4e4395f2.mp4",
+      "duration": "약 10-30초",
+      "completed_at": "2025-09-30T12:29:51.974591"
+    },
+    "error_message": null,
+    "retry_count": 0,
+    "max_retries": 2
+  },
+  "job_loi96i1sb_mg6nftqd": {
+    "job_id": "job_loi96i1sb_mg6nftqd",
+    "user_email": "xystus@gmail.com",
+    "status": "completed",
+    "created_at": "2025-09-30T14:28:28.756132",
+    "updated_at": "2025-09-30T14:38:09.498800",
+    "video_params": {
+      "content_data": "{\"title\":\"학교 폭력-히키코모리에서 아이콘으로!\",\"body1\":\"중학교 때부터 학교 폭력에 시달린 한 소녀가 있었어. 교실 대신 보건실에 숨어 지내야 했고, 학교는 그녀에게 지옥과도 같았지. 고등학교에 진학해서도 상황은 나아지지 않았어.\",\"body2\":\"결국 고등학교 자퇴 후 히키코모리로 지냈어. 방문 앞에 배달된 밥만 먹을 정도로 인간 혐오에 빠졌던 아노. 세상이 싫었지만, 어떻게든 적응하려 슈퍼마켓 알바에 도전했지.\",\"body3\":\"하지만 세상은 녹록지 않았어. 알바 3일 만에 손님에게 화를 내고 그만뒀지. 그런데 그 3일 동안 파트타임 선배들에게 '아이돌 해보는 건 어때?'라는 뜻밖의 권유를 받게 돼.\",\"body4\":\"다시 방으로 돌아온 아노는 트위터에서 아이돌 모집 공고를 보고 응모해. 면접 메일을 무시했지만, 프로듀서의 끈질긴 권유로 용기를 내 라이브장에 갔고, 지하 아이돌 '유르메루모!'로 활동을 시작했지.\",\"body5\":\"초기 활동은 괴짜에 가까웠어. 일반 아이돌과는 거리가 멀었지. 하지만 이 '또라이' 같은 날것의 이미지가 오히려 '기적의 한 장'으로 바이럴되며 아노를 유명하게 만들었어.\",\"body6\":\"6년여 활동 후 탈퇴하고 다시 1년 동안 히키코모리 생활을 했지만, 내면의 무언가를 표현하고 싶어 다시 솔로로 돌아와. 스스로 작사/작곡한 '딜리트'로 활동을 재개했지.\",\"body7\":\"열등감으로 가득 차 '바보'라고 외치던 그녀의 모습은 화려하게 포장된 성공 스토리가 아닌, 하루하루를 버텨내는 현실의 외침이었고, 이게 오히려 시대의 아이콘으로 만들었어.\",\"body8\":\"맥도날드는 그녀를 모델로 기용해 '스마일 안 줄 거야'라는 노래를 발표하게 했어. '남들에게 맞춰지지 않고 나답게 살겠다'는 메시지는 엄청난 공감을 얻으며 크루 지원율을 115% 올렸지. 자신의 삶을 그대로 보여주며 다양성을 실현하는 아노. 방 속에 숨어 있던 그녀는 어쩌면 세상 속 누구보다 용기 있게 살고 있는 거야.\"}",
+      "music_mood": "none",
+      "image_allocation_mode": "single_for_all",
+      "text_position": "bottom",
+      "text_style": "white_background",
+      "title_area_mode": "remove",
+      "selected_bgm_path": "",
+      "use_test_files": false,
+      "uploaded_files": [
+        "1.mp4"
+      ],
+      "title_font": "BMYEONSUNG_otf.otf",
+      "body_font": "BMYEONSUNG_otf.otf",
+      "voice_narration": "enabled",
+      "cross_dissolve": "enabled"
+    },
+    "result": {
+      "video_path": "/zstus/backend/output_videos/202509/reels_829e66c2.mp4",
+      "duration": "약 10-30초",
+      "completed_at": "2025-09-30T14:38:09.497054"
+    },
+    "error_message": null,
+    "retry_count": 0,
+    "max_retries": 2
+  },
+  "job_t4we6156t_mg6nn4ac": {
+    "job_id": "job_t4we6156t_mg6nn4ac",
+    "user_email": "xystus@gmail.com",
+    "status": "completed",
+    "created_at": "2025-09-30T14:34:26.143619",
+    "updated_at": "2025-09-30T14:41:57.254337",
+    "video_params": {
+      "content_data": "{\"title\":\"'디지털 분석' 패러다임이 끝나는 이유\",\"body1\":\"지난 20년 동안 '데이터 기반 의사결정' 한다면서 방문자 수, 클릭 수만 죽어라 봤잖아? 근데 그거, 사실 비즈니스에 별 영향 없었다는 거 알아?\",\"body2\":\"디지털 분석이 진짜 쓸모 있던 건 딱 두 가지래. 마케팅 예산 최적화해주는 '속성 분석'이랑, 사람들이 어디서 나가는지 보여주는 '어두운 영역 가시화' 정도?\",\"body3\":\"근데 지금 그 기반 자체가 무너지고 있어. 개인 정보 보호 규제가 강화되고, 브라우저가 추적을 막으니까 속성 분석이 점점 힘을 잃고 있는 거지.\",\"body4\":\"결정적으로 GA4(Google Analytics 4), 완전 재앙이잖아? 복잡하고 마이그레이션도 어려워서 마케터들한테 혼란만 줬지. 그래서 다들 다른 분석 툴로 갈아타고 있어.\",\"body5\":\"이제 '일단 수집해 두면 언젠가 쓰겠지' 마인드는 끝났어. 데이터는 두 가지 길 중 하나로 가야 해.\",\"body6\":\"첫 번째는 '운영적 최적화': AI가 드롭오프 지점 같은 걸 바로 알려주고 즉시 실행하게 만드는 거. 빠른 실험과 행동이 핵심이야.\",\"body7\":\"두 번째는 '수익 인텔리전스': 데이터 웨어하우스를 써서 수익, 행동 데이터를 싹 다 합치는 거야. 그래서 이탈 위험이나 기회를 미리 예측하고 선제적으로 대응하는 거지.\",\"body8\":\"이제 보고서 만드는 시대는 가고, 행동을 유발하는 시스템만이 살아남는대. 넌 어떤 길을 선택할래?\"}",
+      "music_mood": "calm",
+      "image_allocation_mode": "2_per_image",
+      "text_position": "top",
+      "text_style": "white_background",
+      "title_area_mode": "keep",
+      "selected_bgm_path": "Call me crazy - Patrick Patrikios.mp3",
+      "use_test_files": false,
+      "uploaded_files": [
+        "1.png",
+        "2.png",
+        "3.png",
+        "4.png"
+      ],
+      "title_font": "BMYEONSUNG_otf.otf",
+      "body_font": "BMHANNAPro.ttf",
+      "voice_narration": "enabled",
+      "cross_dissolve": "enabled"
+    },
+    "result": {
+      "video_path": "/zstus/backend/output_videos/202509/reels_31ae87dd.mp4",
+      "duration": "약 10-30초",
+      "completed_at": "2025-09-30T14:41:57.252398"
+    },
+    "error_message": null,
+    "retry_count": 0,
+    "max_retries": 2
+  },
+  "job_ylamhtgam_mg6nzqhb": {
+    "job_id": "job_ylamhtgam_mg6nzqhb",
+    "user_email": "xystus@gmail.com",
+    "status": "completed",
+    "created_at": "2025-09-30T14:44:57.749043",
+    "updated_at": "2025-09-30T14:51:46.568890",
+    "video_params": {
+      "content_data": "{\"title\":\"히키코모리에서 일본 아이콘으로!\",\"body1\":\"중학교 때부터 학교 폭력에 시달린 한 소녀가 있었어. 교실 대신 보건실에 숨어 지내야 했고, 학교는 그녀에게 지옥과도 같았지. 고등학교에 진학해서도 상황은 나아지지 않았어.\",\"body2\":\"결국 고등학교 자퇴 후 히키코모리로 지냈어. 방문 앞에 배달된 밥만 먹을 정도로 인간 혐오에 빠졌던 아노. 세상이 싫었지만, 어떻게든 적응하려 슈퍼마켓 알바에 도전했지.\",\"body3\":\"하지만 세상은 녹록지 않았어. 알바 3일 만에 손님에게 화를 내고 그만뒀지. 그런데 그 3일 동안 파트타임 선배들에게 '아이돌 해보는 건 어때?'라는 뜻밖의 권유를 받게 돼.\",\"body4\":\"다시 방으로 돌아온 아노는 트위터에서 아이돌 모집 공고를 보고 응모해. 면접 메일을 무시했지만, 프로듀서의 끈질긴 권유로 용기를 내 라이브장에 갔고, 지하 아이돌 '유르메루모!'로 활동을 시작했지.\",\"body5\":\"초기 활동은 괴짜에 가까웠어. 일반 아이돌과는 거리가 멀었지. 6년여 활동후 다시 히키코모리로. 하지만 다시 솔로로 돌아와 스스로 작사/작곡한 '딜리트'로 활동재개.\",\"body6\":\"열등감으로 가득 차 '바보'라고 외치던 그녀의 모습은 화려하게 포장된 성공 스토리가 아닌, 하루하루를 버텨내는 현실의 외침이었고, 이게 오히려 그녀를 시대의 아이콘으로 만들었어. 아노의 갤럭시 CF 넌 어때?\",\"body7\":\"\",\"body8\":\"\"}",
+      "music_mood": "none",
+      "image_allocation_mode": "single_for_all",
+      "text_position": "bottom",
+      "text_style": "white_background",
+      "title_area_mode": "keep",
+      "selected_bgm_path": "",
+      "use_test_files": false,
+      "uploaded_files": [
+        "1.mp4"
+      ],
+      "title_font": "BMHANNAPro.ttf",
+      "body_font": "BMYEONSUNG_otf.otf",
+      "voice_narration": "disabled",
+      "cross_dissolve": "enabled"
+    },
+    "result": {
+      "video_path": "/zstus/backend/output_videos/202509/reels_2df60c78.mp4",
+      "duration": "약 10-30초",
+      "completed_at": "2025-09-30T14:51:46.566920"
+    },
+    "error_message": null,
+    "retry_count": 0,
+    "max_retries": 2
+  },
+  "job_85zyt4lj4_mg6osjre": {
+    "job_id": "job_85zyt4lj4_mg6osjre",
+    "user_email": "xystus@gmail.com",
+    "status": "completed",
+    "created_at": "2025-09-30T15:03:49.929099",
+    "updated_at": "2025-09-30T15:10:49.493293",
+    "video_params": {
+      "content_data": "{\"title\":\"히키코모리에서 일본 아이콘으로!\",\"body1\":\"중학교 때부터 학교 폭력에 시달린 한 소녀가 있었어. 교실 대신 보건실에 숨어 지내야 했고, 학교는 그녀에게 지옥과도 같았지. 고등학교에 진학해서도 상황은 나아지지 않았어.\",\"body2\":\"결국 고등학교 자퇴 후 히키코모리로 지냈어. 방문 앞에 배달된 밥만 먹을 정도로 인간 혐오에 빠졌던 아노. 세상이 싫었지만, 어떻게든 적응하려 슈퍼마켓 알바에 도전했지.\",\"body3\":\"하지만 세상은 녹록지 않았어. 알바 3일 만에 손님에게 화를 내고 그만뒀지. 그런데 그 3일 동안 파트타임 선배들에게 '아이돌 해보는 건 어때?'라는 뜻밖의 권유를 받게 돼.\",\"body4\":\"다시 방으로 돌아온 아노는 트위터에서 아이돌 모집 공고를 보고 응모해. 면접 메일을 무시했지만, 프로듀서의 끈질긴 권유로 용기를 내 라이브장에 갔고, 지하 아이돌 '유르메루모!'로 활동을 시작했지.\",\"body5\":\"초기 활동은 괴짜에 가까웠어. 일반 아이돌과는 거리가 멀었지. 6년여 활동후 다시 히키코모리로. 하지만 다시 솔로로 돌아와 스스로 작사/작곡한 '딜리트'로 활동재개.\",\"body6\":\"열등감으로 가득 차 '바보'라고 외치던 그녀의 모습은 화려하게 포장된 성공 스토리가 아닌, 하루하루를 버텨내는 현실의 외침이었고, 이게 오히려 그녀를 시대의 아이콘으로 만들었어. 아노의 갤럭시 CF 넌 어때?\",\"body7\":\"\",\"body8\":\"\"}",
+      "music_mood": "none",
+      "image_allocation_mode": "single_for_all",
+      "text_position": "bottom",
+      "text_style": "white_background",
+      "title_area_mode": "keep",
+      "selected_bgm_path": "",
+      "use_test_files": false,
+      "uploaded_files": [
+        "1.mp4"
+      ],
+      "title_font": "BMYEONSUNG_otf.otf",
+      "body_font": "BMYEONSUNG_otf.otf",
+      "voice_narration": "disabled",
+      "cross_dissolve": "enabled",
+      "subtitle_duration": 3.0
+    },
+    "result": {
+      "video_path": "/zstus/backend/output_videos/202509/reels_021a6b28.mp4",
+      "duration": "약 10-30초",
+      "completed_at": "2025-09-30T15:10:49.491475"
+    },
+    "error_message": null,
+    "retry_count": 0,
+    "max_retries": 2
+  },
+  "job_1pyi7tbjg_mg6qspbm": {
+    "job_id": "job_1pyi7tbjg_mg6qspbm",
+    "user_email": "xystus@gmail.com",
+    "status": "completed",
+    "created_at": "2025-09-30T16:04:07.640569",
+    "updated_at": "2025-09-30T16:11:24.264057",
+    "video_params": {
+      "content_data": "{\"title\":\"히키코모리에서 일본 아이콘으로!\",\"body1\":\"중학교 때부터 학교 폭력에 시달린 한 소녀가 있었어. 교실 대신 보건실에 숨어 지내야 했고, 학교는 그녀에게 지옥과도 같았지. 고등학교에 진학해서도 상황은 나아지지 않았어.\",\"body2\":\"결국 고등학교 자퇴 후 히키코모리로 지냈어. 방문 앞에 배달된 밥만 먹을 정도로 인간 혐오에 빠졌던 아노. 세상이 싫었지만, 어떻게든 적응하려 슈퍼마켓 알바에 도전했지.\",\"body3\":\"하지만 세상은 녹록지 않았어. 알바 3일 만에 손님에게 화를 내고 그만뒀지. 그런데 그 3일 동안 파트타임 선배들에게 '아이돌 해보는 건 어때?'라는 뜻밖의 권유를 받게 돼.\",\"body4\":\"다시 방으로 돌아온 아노는 트위터에서 아이돌 모집 공고를 보고 응모해. 면접 메일을 무시했지만, 프로듀서의 끈질긴 권유로 용기를 내 라이브장에 갔고, 지하 아이돌 '유르메루모!'로 활동을 시작했지.\",\"body5\":\"초기 활동은 괴짜에 가까웠어. 일반 아이돌과는 거리가 멀었지. 6년여 활동후 다시 히키코모리로. 하지만 다시 솔로로 돌아와 스스로 작사/작곡한 '딜리트'로 활동재개.\",\"body6\":\"열등감으로 가득 차 '바보'라고 외치던 그녀의 모습은 화려하게 포장된 성공 스토리가 아닌, 하루하루를 버텨내는 현실의 외침이었고, 이게 오히려 그녀를 시대의 아이콘으로 만들었어. 아노의 갤럭시 CF 넌 어때?\",\"body7\":\"\",\"body8\":\"\"}",
+      "music_mood": "none",
+      "image_allocation_mode": "single_for_all",
+      "text_position": "bottom",
+      "text_style": "white_background",
+      "title_area_mode": "keep",
+      "selected_bgm_path": "",
+      "use_test_files": false,
+      "uploaded_files": [
+        "1.mp4"
+      ],
+      "title_font": "BMHANNAPro.ttf",
+      "body_font": "BMYEONSUNG_otf.otf",
+      "voice_narration": "disabled",
+      "cross_dissolve": "enabled",
+      "subtitle_duration": 3.0
+    },
+    "result": {
+      "video_path": "/zstus/backend/output_videos/202509/reels_d28a2e6e.mp4",
+      "duration": "약 10-30초",
+      "completed_at": "2025-09-30T16:11:24.262184"
+    },
+    "error_message": null,
+    "retry_count": 0,
+    "max_retries": 2
+  },
+  "job_ytlmgsfkf_mg6rwf0a": {
+    "job_id": "job_ytlmgsfkf_mg6rwf0a",
+    "user_email": "xystus@gmail.com",
+    "status": "completed",
+    "created_at": "2025-09-30T16:30:32.477388",
+    "updated_at": "2025-09-30T16:37:07.423643",
+    "video_params": {
+      "content_data": "{\"title\":\"히키코모리에서 일본 아이콘으로!\",\"body1\":\"중학교 때부터 학교 폭력에 시달린 한 소녀가 있었어. 교실 대신 보건실에 숨어 지내야 했고, 학교는 그녀에게 지옥과도 같았지. 고등학교에 진학해서도 상황은 나아지지 않았어.\",\"body2\":\"결국 고등학교 자퇴 후 히키코모리로 지냈어. 방문 앞에 배달된 밥만 먹을 정도로 인간 혐오에 빠졌던 아노. 세상이 싫었지만, 어떻게든 적응하려 슈퍼마켓 알바에 도전했지.\",\"body3\":\"하지만 세상은 녹록지 않았어. 알바 3일 만에 손님에게 화를 내고 그만뒀지. 그런데 그 3일 동안 파트타임 선배들에게 '아이돌 해보는 건 어때?'라는 뜻밖의 권유를 받게 돼.\",\"body4\":\"다시 방으로 돌아온 아노는 트위터에서 아이돌 모집 공고를 보고 응모해. 면접 메일을 무시했지만, 프로듀서의 끈질긴 권유로 용기를 내 라이브장에 갔고, 지하 아이돌 '유르메루모!'로 활동을 시작했지.\",\"body5\":\"초기 활동은 괴짜에 가까웠어. 일반 아이돌과는 거리가 멀었지. 6년여 활동후 다시 히키코모리로. 하지만 다시 솔로로 돌아와 스스로 작사/작곡한 '딜리트'로 활동재개.\",\"body6\":\"열등감으로 가득 차 '바보'라고 외치던 그녀의 모습은 화려하게 포장된 성공 스토리가 아닌, 하루하루를 버텨내는 현실의 외침이었고, 이게 오히려 그녀를 시대의 아이콘으로 만들었어. 아노의 갤럭시 CF 넌 어때?\",\"body7\":\"\",\"body8\":\"\"}",
+      "music_mood": "none",
+      "image_allocation_mode": "single_for_all",
+      "text_position": "bottom",
+      "text_style": "white_background",
+      "title_area_mode": "keep",
+      "selected_bgm_path": "",
+      "use_test_files": false,
+      "uploaded_files": [
+        "1.mp4"
+      ],
+      "title_font": "BMHANNAPro.ttf",
+      "body_font": "BMYEONSUNG_otf.otf",
+      "voice_narration": "disabled",
+      "cross_dissolve": "enabled",
+      "subtitle_duration": 3.0
+    },
+    "result": {
+      "video_path": "/zstus/backend/output_videos/202509/reels_0a9eacae.mp4",
+      "duration": "약 10-30초",
+      "completed_at": "2025-09-30T16:37:07.421689"
+    },
+    "error_message": null,
+    "retry_count": 0,
+    "max_retries": 2
+  },
+  "job_kv5v00cnj_mg73dkuu": {
+    "job_id": "job_kv5v00cnj_mg73dkuu",
+    "user_email": "xystus@gmail.com",
+    "status": "completed",
+    "created_at": "2025-09-30T21:51:41.698767",
+    "updated_at": "2025-09-30T22:01:30.734892",
+    "video_params": {
+      "content_data": "{\"title\":\"히키코모리에서 일본 아이콘으로!\",\"body1\":\"중학교 때부터 학교 폭력에 시달린 한 소녀가 있었어. 교실 대신 보건실에 숨어 지내야 했고, 학교는 그녀에게 지옥과도 같았지. 고등학교에 진학해서도 상황은 나아지지 않았어.\",\"body2\":\"결국 고등학교 자퇴 후 히키코모리로 지냈어. 방문 앞에 배달된 밥만 먹을 정도로 인간 혐오에 빠졌던 아노. 세상이 싫었지만, 어떻게든 적응하려 슈퍼마켓 알바에 도전했지.\",\"body3\":\"하지만 세상은 녹록지 않았어. 알바 3일 만에 손님에게 화를 내고 그만뒀지. 그런데 그 3일 동안 파트타임 선배들에게 '아이돌 해보는 건 어때?'라는 뜻밖의 권유를 받게 돼.\",\"body4\":\"다시 방으로 돌아온 아노는 트위터에서 아이돌 모집 공고를 보고 응모해. 면접 메일을 무시했지만, 프로듀서의 끈질긴 권유로 용기를 내 라이브장에 갔고, 지하 아이돌 '유르메루모!'로 활동을 시작했지.\",\"body5\":\"초기 활동은 괴짜에 가까웠어. 일반 아이돌과는 거리가 멀었지. 6년여 활동후 다시 히키코모리로. 하지만 다시 솔로로 돌아와 스스로 작사/작곡한 '딜리트'로 활동재개.\",\"body6\":\"열등감으로 가득 차 '바보'라고 외치던 그녀의 모습은 화려하게 포장된 성공 스토리가 아닌, 하루하루를 버텨내는 현실의 외침이었고, 이게 오히려 그녀를 시대의 아이콘으로 만들었어. 아노의 갤럭시 CF 넌 어때?\",\"body7\":\"\",\"body8\":\"\"}",
+      "music_mood": "none",
+      "image_allocation_mode": "single_for_all",
+      "text_position": "bottom",
+      "text_style": "white_background",
+      "title_area_mode": "keep",
+      "selected_bgm_path": "",
+      "use_test_files": false,
+      "uploaded_files": [
+        "1.mp4"
+      ],
+      "title_font": "BMHANNAPro.ttf",
+      "body_font": "BMYEONSUNG_otf.otf",
+      "voice_narration": "disabled",
+      "cross_dissolve": "enabled",
+      "subtitle_duration": 3.0
+    },
+    "result": {
+      "video_path": "/zstus/backend/output_videos/202509/reels_4474ce7e.mp4",
+      "duration": "약 10-30초",
+      "completed_at": "2025-09-30T22:01:30.732995"
+    },
+    "error_message": null,
+    "retry_count": 0,
+    "max_retries": 2
+  },
+  "job_oqy126gux_mg74hotx": {
+    "job_id": "job_oqy126gux_mg74hotx",
+    "user_email": "xystus@gmail.com",
+    "status": "failed",
+    "created_at": "2025-09-30T22:22:48.545275",
+    "updated_at": "2025-09-30T22:23:05.846711",
+    "video_params": {
+      "content_data": "{\"title\":\"히키코모리에서 일본 아이콘으로!\",\"body1\":\"중학교 때부터 학교 폭력에 시달린 한 소녀가 있었어. 교실 대신 보건실에 숨어 지내야 했고, 학교는 그녀에게 지옥과도 같았지. 고등학교에 진학해서도 상황은 나아지지 않았어.\",\"body2\":\"결국 고등학교 자퇴 후 히키코모리로 지냈어. 방문 앞에 배달된 밥만 먹을 정도로 인간 혐오에 빠졌던 아노. 세상이 싫었지만, 어떻게든 적응하려 슈퍼마켓 알바에 도전했지.\",\"body3\":\"하지만 세상은 녹록지 않았어. 알바 3일 만에 손님에게 화를 내고 그만뒀지. 그런데 그 3일 동안 파트타임 선배들에게 '아이돌 해보는 건 어때?'라는 뜻밖의 권유를 받게 돼.\",\"body4\":\"다시 방으로 돌아온 아노는 트위터에서 아이돌 모집 공고를 보고 응모해. 면접 메일을 무시했지만, 프로듀서의 끈질긴 권유로 용기를 내 라이브장에 갔고, 지하 아이돌 '유르메루모!'로 활동을 시작했지.\",\"body5\":\"초기 활동은 괴짜에 가까웠어. 일반 아이돌과는 거리가 멀었지. 6년여 활동후 다시 히키코모리로. 하지만 다시 솔로로 돌아와 스스로 작사/작곡한 '딜리트'로 활동재개.\",\"body6\":\"열등감으로 가득 차 '바보'라고 외치던 그녀의 모습은 화려하게 포장된 성공 스토리가 아닌, 하루하루를 버텨내는 현실의 외침이었고, 이게 오히려 그녀를 시대의 아이콘으로 만들었어. 아노의 갤럭시 CF 넌 어때?\",\"body7\":\"\",\"body8\":\"\"}",
+      "music_mood": "none",
+      "image_allocation_mode": "single_for_all",
+      "text_position": "bottom",
+      "text_style": "white_background",
+      "title_area_mode": "keep",
+      "selected_bgm_path": "",
+      "use_test_files": false,
+      "uploaded_files": [
+        "1.mp4"
+      ],
+      "title_font": "BMHANNAPro.ttf",
+      "body_font": "BMYEONSUNG_otf.otf",
+      "voice_narration": "disabled",
+      "cross_dissolve": "enabled",
+      "subtitle_duration": 3.0
+    },
+    "result": null,
+    "error_message": "uploads 폴더 기반 영상 생성 실패: 이미지 파일이 없습니다",
+    "retry_count": 2,
+    "max_retries": 2
+  },
+  "job_zp0iotupr_mg751n1g": {
+    "job_id": "job_zp0iotupr_mg751n1g",
+    "user_email": "xystus@gmail.com",
+    "status": "completed",
+    "created_at": "2025-09-30T22:39:36.262031",
+    "updated_at": "2025-09-30T22:42:15.193657",
+    "video_params": {
+      "content_data": "{\"title\":\"히키코모리에서 일본 아이콘으로!\",\"body1\":\"중학교 때부터 학교 폭력에 시달린 한 소녀가 있었어. 교실 대신 보건실에 숨어 지내야 했고, 학교는 그녀에게 지옥과도 같았지. 고등학교에 진학해서도 상황은 나아지지 않았어.\",\"body2\":\"결국 고등학교 자퇴 후 히키코모리로 지냈어. 방문 앞에 배달된 밥만 먹을 정도로 인간 혐오에 빠졌던 아노. 세상이 싫었지만, 어떻게든 적응하려 슈퍼마켓 알바에 도전했지.\",\"body3\":\"하지만 세상은 녹록지 않았어. 알바 3일 만에 손님에게 화를 내고 그만뒀지. 그런데 그 3일 동안 파트타임 선배들에게 '아이돌 해보는 건 어때?'라는 뜻밖의 권유를 받게 돼.\",\"body4\":\"다시 방으로 돌아온 아노는 트위터에서 아이돌 모집 공고를 보고 응모해. 면접 메일을 무시했지만, 프로듀서의 끈질긴 권유로 용기를 내 라이브장에 갔고, 지하 아이돌 '유르메루모!'로 활동을 시작했지.\",\"body5\":\"초기 활동은 괴짜에 가까웠어. 일반 아이돌과는 거리가 멀었지. 6년여 활동후 다시 히키코모리로. 하지만 다시 솔로로 돌아와 스스로 작사/작곡한 '딜리트'로 활동재개.\",\"body6\":\"열등감으로 가득 차 '바보'라고 외치던 그녀의 모습은 화려하게 포장된 성공 스토리가 아닌, 하루하루를 버텨내는 현실의 외침이었고, 이게 오히려 그녀를 시대의 아이콘으로 만들었어. 아노의 갤럭시 CF 넌 어때?\",\"body7\":\"\",\"body8\":\"\"}",
+      "music_mood": "none",
+      "image_allocation_mode": "single_for_all",
+      "text_position": "bottom",
+      "text_style": "white_background",
+      "title_area_mode": "keep",
+      "selected_bgm_path": "",
+      "use_test_files": false,
+      "uploaded_files": [
+        "1.mp4"
+      ],
+      "title_font": "BMHANNAPro.ttf",
+      "body_font": "BMYEONSUNG_otf.otf",
+      "voice_narration": "disabled",
+      "cross_dissolve": "enabled",
+      "subtitle_duration": 4.0
+    },
+    "result": {
+      "video_path": "/zstus/backend/output_videos/202509/reels_9fd23b04.mp4",
+      "duration": "약 10-30초",
+      "completed_at": "2025-09-30T22:42:15.191635"
+    },
+    "error_message": null,
+    "retry_count": 0,
+    "max_retries": 2
+  },
+  "job_d6ofs8g6r_mg763o1o": {
+    "job_id": "job_d6ofs8g6r_mg763o1o",
+    "user_email": "xystus@gmail.com",
+    "status": "completed",
+    "created_at": "2025-09-30T23:07:59.252760",
+    "updated_at": "2025-09-30T23:10:40.407965",
+    "video_params": {
+      "content_data": "{\"title\":\"히키코모리에서 일본 아이콘으로!\",\"body1\":\"중학교 때부터 학교 폭력에 시달린 한 소녀가 있었어. 교실 대신 보건실에 숨어 지내야 했고, 학교는 그녀에게 지옥과도 같았지. 고등학교에 진학해서도 상황은 나아지지 않았어.\",\"body2\":\"결국 고등학교 자퇴 후 히키코모리로 지냈어. 방문 앞에 배달된 밥만 먹을 정도로 인간 혐오에 빠졌던 아노. 세상이 싫었지만, 어떻게든 적응하려 슈퍼마켓 알바에 도전했지.\",\"body3\":\"하지만 세상은 녹록지 않았어. 알바 3일 만에 손님에게 화를 내고 그만뒀지. 그런데 그 3일 동안 파트타임 선배들에게 '아이돌 해보는 건 어때?'라는 뜻밖의 권유를 받게 돼.\",\"body4\":\"다시 방으로 돌아온 아노는 트위터에서 아이돌 모집 공고를 보고 응모해. 면접 메일을 무시했지만, 프로듀서의 끈질긴 권유로 용기를 내 라이브장에 갔고, 지하 아이돌 '유르메루모!'로 활동을 시작했지.\",\"body5\":\"초기 활동은 괴짜에 가까웠어. 일반 아이돌과는 거리가 멀었지. 6년여 활동후 다시 히키코모리로. 하지만 다시 솔로로 돌아와 스스로 작사/작곡한 '딜리트'로 활동재개.\",\"body6\":\"열등감으로 가득 차 '바보'라고 외치던 그녀의 모습은 화려하게 포장된 성공 스토리가 아닌, 하루하루를 버텨내는 현실의 외침이었고, 이게 오히려 그녀를 시대의 아이콘으로 만들었어. 아노의 갤럭시 CF 넌 어때?\",\"body7\":\"\",\"body8\":\"\"}",
+      "music_mood": "none",
+      "image_allocation_mode": "single_for_all",
+      "text_position": "bottom-edge",
+      "text_style": "white_background",
+      "title_area_mode": "keep",
+      "selected_bgm_path": "",
+      "use_test_files": false,
+      "uploaded_files": [
+        "1.mp4"
+      ],
+      "title_font": "BMHANNAPro.ttf",
+      "body_font": "BMYEONSUNG_otf.otf",
+      "voice_narration": "disabled",
+      "cross_dissolve": "enabled",
+      "subtitle_duration": 4.15
+    },
+    "result": {
+      "video_path": "/zstus/backend/output_videos/202509/reels_42cbae76.mp4",
+      "duration": "약 10-30초",
+      "completed_at": "2025-09-30T23:10:40.405790"
+    },
+    "error_message": null,
+    "retry_count": 0,
+    "max_retries": 2
+  },
+  "job_g13pje456_mg7gudbq": {
+    "job_id": "job_g13pje456_mg7gudbq",
+    "user_email": "xystus@gmail.com",
+    "status": "completed",
+    "created_at": "2025-10-01T04:10:10.774871",
+    "updated_at": "2025-10-01T04:11:34.845524",
+    "video_params": {
+      "content_data": "{\"title\":\"결혼 5개월 전\",\"body1\":\"펜션에서 컵라면 먹으려다, 커피포트 물이 튀어 발등 화상!\",\"body2\":\"너무 아파서 주저앉았는데… 예비신랑? 그냥 '헐' 한마디 하고 소파 가서 유튜브\",\"body3\":\"심지어 '괜찮아?' 이 한마디도 없음. 동태눈으로 빤히 쳐다본 게 다임\",\"body4\":\"이전에도 공감 제로, 내 얘기하면 무반응, 웃겨도 정색… 이번엔 진짜 터짐.\",\"body5\":\"따지니까 '내가 괜찮냐고 물으면 낫냐? 여자들은 너무 기대가 크다' 이딴 소리\",\"body6\":\"결혼 약속하니까 이제 보인다. 이기적이고 공감 없는 남자라는 거.\",\"body7\":\"백년해로? 아니, 예식장 취소부터 검색 중ㅋㅋ 내가 너무한 걸까?\",\"body8\":\"\"}",
+      "music_mood": "none",
+      "image_allocation_mode": "single_for_all",
+      "text_position": "bottom-edge",
+      "text_style": "outline",
+      "title_area_mode": "keep",
+      "selected_bgm_path": "",
+      "use_test_files": false,
+      "uploaded_files": [
+        "1.jpg"
+      ],
+      "title_font": "BMYEONSUNG_otf.otf",
+      "body_font": "BMYEONSUNG_otf.otf",
+      "voice_narration": "disabled",
+      "cross_dissolve": "enabled",
+      "subtitle_duration": 0.0
+    },
+    "result": {
+      "video_path": "/zstus/backend/output_videos/202510/reels_af16eafb.mp4",
+      "duration": "약 10-30초",
+      "completed_at": "2025-10-01T04:11:34.843485"
     },
     "error_message": null,
     "retry_count": 0,

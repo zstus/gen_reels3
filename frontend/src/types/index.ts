@@ -22,8 +22,8 @@ export interface ReelsContent {
 // 이미지 업로드 모드
 export type ImageUploadMode = 'per-script' | 'per-two-scripts' | 'single-for-all';
 
-// 텍스트 위치 타입 (2단계 시스템)
-export type TextPosition = 'top' | 'bottom';
+// 텍스트 위치 타입 (3단계 시스템)
+export type TextPosition = 'top' | 'bottom' | 'bottom-edge';
 
 // 텍스트 스타일 타입
 export type TextStyle = 'outline' | 'background' | 'white_background' | 'black_text_white_outline';
@@ -110,6 +110,7 @@ export interface GenerateVideoRequest {
   body_font?: string;
   voice_narration: VoiceNarration;
   cross_dissolve: CrossDissolve;
+  subtitle_duration?: number;
 }
 
 // 영상 생성 상태 타입
@@ -146,6 +147,7 @@ export interface AsyncVideoRequest {
   images?: File[];
   voice_narration: VoiceNarration;
   cross_dissolve: CrossDissolve;
+  subtitle_duration?: number;
 }
 
 // 비동기 영상 생성 응답 타입

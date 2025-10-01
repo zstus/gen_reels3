@@ -41,12 +41,18 @@ except ImportError as e:
     folder_manager = None
     FOLDER_MANAGER_AVAILABLE = False
 
-# 로깅 설정
+# 로깅 설정 - api.log에 append 모드로 기록
+API_LOG_FILE = "api.log"
 logging.basicConfig(
     level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    format='%(asctime)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.FileHandler(API_LOG_FILE, mode='a', encoding='utf-8')  # append 모드
+    ],
+    force=True
 )
 logger = logging.getLogger(__name__)
+logger.info("🤖 Worker 프로세스 시작 - api.log에 기록")
 
 class VideoWorker:
     def __init__(self, worker_id: str = "worker-1"):
@@ -110,8 +116,18 @@ class VideoWorker:
             voice_narration = video_params.get('voice_narration', 'enabled')
             # 크로스 디졸브 파라미터 추출
             cross_dissolve = video_params.get('cross_dissolve', 'enabled')
+            # 자막 지속 시간 파라미터 추출
+            subtitle_duration = video_params.get('subtitle_duration', 0.0)
 
-            logger.info(f"📋 영상 파라미터: 음악={music_mood}, 테스트파일={use_test_files}, 텍스트위치={text_position}, 타이틀폰트={title_font}, 본문폰트={body_font}, 자막음성={voice_narration}, 크로스디졸브={cross_dissolve}")
+            # Print로 worker.log에 출력
+            print(f"📋 영상 파라미터: 음악={music_mood}, 테스트파일={use_test_files}, 텍스트위치={text_position}, 타이틀폰트={title_font}, 본문폰트={body_font}, 자막음성={voice_narration}, 크로스디졸브={cross_dissolve}, 자막지속시간={subtitle_duration}초")
+            print(f"🔍 [Worker 디버깅] voice_narration='{voice_narration}' (타입: {type(voice_narration).__name__})")
+            print(f"🔍 [Worker 디버깅] subtitle_duration={subtitle_duration} (타입: {type(subtitle_duration).__name__})")
+
+            # 로거에도 기록 (api.log용, 작동 안할 수 있음)
+            logger.info(f"📋 영상 파라미터: 음악={music_mood}, 테스트파일={use_test_files}, 텍스트위치={text_position}, 타이틀폰트={title_font}, 본문폰트={body_font}, 자막음성={voice_narration}, 크로스디졸브={cross_dissolve}, 자막지속시간={subtitle_duration}초")
+            logger.info(f"🔍 [Worker 디버깅] voice_narration='{voice_narration}' (타입: {type(voice_narration).__name__})")
+            logger.info(f"🔍 [Worker 디버깅] subtitle_duration={subtitle_duration} (타입: {type(subtitle_duration).__name__})")
 
             # 콘텐츠 데이터 파싱
             try:
@@ -175,7 +191,8 @@ class VideoWorker:
                     body_font=body_font,
                     music_mood=music_mood,
                     voice_narration=voice_narration,
-                    cross_dissolve=cross_dissolve
+                    cross_dissolve=cross_dissolve,
+                    subtitle_duration=subtitle_duration
                 )
             else:
                 # 업로드된 파일 사용
@@ -192,7 +209,8 @@ class VideoWorker:
                     body_font=body_font,
                     music_mood=music_mood,
                     voice_narration=voice_narration,
-                    cross_dissolve=cross_dissolve
+                    cross_dissolve=cross_dissolve,
+                    subtitle_duration=subtitle_duration
                 )
 
             if result and isinstance(result, str):
@@ -258,12 +276,8 @@ class VideoWorker:
                     error_message=error_msg
                 )
 
-                # 실패 이메일 발송
-                email_service.send_error_email(
-                    user_email=user_email,
-                    job_id=job_id,
-                    error_message=error_msg
-                )
+                # 실패 이메일 발송은 재시도 불가능할 때만 (run 메서드에서 처리)
+                # 이렇게 하면 재시도마다 이메일이 발송되지 않음
 
                 return False
 
@@ -285,12 +299,8 @@ class VideoWorker:
                 error_message=str(e)
             )
 
-            # 실패 이메일 발송
-            email_service.send_error_email(
-                user_email=user_email,
-                job_id=job_id,
-                error_message=str(e)
-            )
+            # 실패 이메일 발송은 재시도 불가능할 때만 (run 메서드에서 처리)
+            # 이렇게 하면 재시도마다 이메일이 발송되지 않음
 
             return False
 
@@ -342,8 +352,28 @@ class VideoWorker:
                         logger.error(f"❌ 작업 처리 실패: {job_id}")
 
                         # 재시도 가능한 경우 재시도 큐에 추가
-                        if job_queue.retry_job(job_id):
+                        can_retry = job_queue.retry_job(job_id)
+                        if can_retry:
                             logger.info(f"🔄 작업 재시도 큐에 추가: {job_id}")
+                        else:
+                            # 최대 재시도 횟수 초과 - 최종 실패 이메일 발송
+                            logger.error(f"💀 최종 실패: {job_id} - 실패 이메일 발송")
+                            try:
+                                # job_data에서 user_email 추출
+                                user_email = job_data.get('user_email', 'unknown')
+
+                                # job_queue에서 최신 error_message 가져오기
+                                latest_job_data = job_queue.get_job(job_id)
+                                error_msg = latest_job_data.get('error_message', '알 수 없는 오류') if latest_job_data else '작업 처리 실패'
+
+                                email_service.send_error_email(
+                                    user_email=user_email,
+                                    job_id=job_id,
+                                    error_message=error_msg
+                                )
+                                logger.info(f"📧 최종 실패 이메일 발송 완료: {user_email}")
+                            except Exception as email_error:
+                                logger.error(f"❌ 실패 이메일 발송 실패: {email_error}")
 
                 else:
                     # 작업이 없으면 대기

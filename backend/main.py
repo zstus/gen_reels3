@@ -92,6 +92,24 @@ except ImportError as e:
 # .env 파일 로드
 load_dotenv()
 
+# API 로깅 설정 - 서버 재시작 시 기존 로그 삭제
+API_LOG_FILE = "api.log"
+if os.path.exists(API_LOG_FILE):
+    os.remove(API_LOG_FILE)
+    print(f"🗑️ 기존 로그 파일 삭제: {API_LOG_FILE}")
+
+# 로거 설정 - api.log 파일에만 출력 (콘솔 출력 제거)
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.FileHandler(API_LOG_FILE, encoding='utf-8')
+    ],
+    force=True  # 기존 설정 강제 재설정
+)
+logger = logging.getLogger(__name__)
+logger.info(f"✅ API 로그 파일 생성: {API_LOG_FILE}")
+
 app = FastAPI(title="Reels Video Generator", version="1.0.0")
 
 # uploads 디렉토리 생성 (정적 파일 마운트는 nginx에서 처리)
@@ -157,10 +175,6 @@ class CleanupJobFolderResponse(BaseModel):
     message: str
     job_id: str
     cleaned: bool
-
-# 로깅 설정
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
 
 # OpenAI import 상태 로깅
 if OPENAI_AVAILABLE:
@@ -486,7 +500,7 @@ async def generate_video(
     image_allocation_mode: str = Form(default="2_per_image"),  # "2_per_image" 또는 "1_per_image"
     
     # 텍스트 위치 선택
-    text_position: str = Form(default="bottom"),  # "top", "bottom"
+    text_position: str = Form(default="bottom"),  # "top", "bottom", "bottom-edge"
     
     # 텍스트 스타일 선택
     text_style: str = Form(default="outline"),  # "outline" (외곽선) 또는 "background" (반투명 배경)
@@ -503,6 +517,9 @@ async def generate_video(
 
     # 크로스 디졸브 설정
     cross_dissolve: str = Form(default="enabled"),          # "enabled" (적용) 또는 "disabled" (미적용)
+
+    # 자막 지속 시간 설정 (초 단위)
+    subtitle_duration: float = Form(default=0.0),           # 0: 음성 길이 사용, 0 초과: 지정 시간 사용
 
     # 이미지 파일 업로드 (최대 8개)
     image_1: Optional[UploadFile] = File(None),
@@ -601,7 +618,7 @@ async def generate_video(
             print(f"⚠️ 잘못된 이미지 할당 모드, 기본값 사용: {image_allocation_mode}")
         
         # 텍스트 위치 검증
-        if text_position not in ["top", "bottom"]:
+        if text_position not in ["top", "bottom", "bottom-edge"]:
             text_position = "bottom"  # 기본값
             print(f"⚠️ 잘못된 텍스트 위치, 기본값 사용: {text_position}")
         
@@ -618,6 +635,7 @@ async def generate_video(
         print(f"📝 본문 폰트: {body_font}")
         print(f"🎤 자막 읽어주기: {voice_narration}")
         print(f"🎬 크로스 디졸브: {cross_dissolve}")
+        print(f"⏱️ 자막 지속 시간: {subtitle_duration}초 (0=음성길이)")
 
         output_path = video_gen.create_video_from_uploads(
             OUTPUT_FOLDER,
@@ -631,7 +649,8 @@ async def generate_video(
             "uploads",
             music_mood,
             voice_narration,
-            cross_dissolve
+            cross_dissolve,
+            subtitle_duration
         )
 
         # 영상 생성 성공 시 job 폴더 정리
@@ -2714,6 +2733,9 @@ async def generate_video_async(
     # 크로스 디졸브 설정
     cross_dissolve: str = Form(default="enabled"),          # "enabled" (적용) 또는 "disabled" (미적용)
 
+    # 자막 지속 시간 설정 (초 단위)
+    subtitle_duration: float = Form(default=0.0),           # 0: 음성 길이 사용, 0 초과: 지정 시간 사용
+
     # Job ID (선택적)
     job_id: Optional[str] = Form(None),  # Job ID 추가
 
@@ -2816,7 +2838,9 @@ async def generate_video_async(
             # 자막 읽어주기 파라미터 추가
             'voice_narration': voice_narration,
             # 크로스 디졸브 파라미터 추가
-            'cross_dissolve': cross_dissolve
+            'cross_dissolve': cross_dissolve,
+            # 자막 지속 시간 파라미터 추가
+            'subtitle_duration': subtitle_duration
         }
 
         # 3. 작업을 큐에 추가 (미리 생성된 job_id 사용)

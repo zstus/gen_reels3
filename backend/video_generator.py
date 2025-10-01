@@ -14,6 +14,9 @@ import math
 import logging
 from datetime import datetime
 
+# API 로거 설정 - api.log에 통합
+logger = logging.getLogger(__name__)
+
 # 로깅 설정 - 파일에만 저장
 def setup_crossfade_logging():
     """크로스 디졸브 전용 로깅 설정"""
@@ -364,7 +367,7 @@ class VideoGenerator:
         current_time = 0.0
 
         for body_key, body_text, tts_path, clip_duration in group_segments:
-            text_image_path = self.create_text_image(body_text, self.video_width, self.video_height, text_position, text_style, is_title=False, title_font=title_font, body_font=body_font)
+            text_image_path = self.create_text_image(body_text, self.video_width, self.video_height, text_position, text_style, is_title=False, title_font=title_font, body_font=body_font, title_area_mode=title_area_mode)
             text_clip = ImageClip(text_image_path).set_start(current_time).set_duration(clip_duration).set_position((0, 0))
             text_clips.append(text_clip)
             current_time += clip_duration
@@ -398,7 +401,7 @@ class VideoGenerator:
         current_time = 0.0
 
         for body_key, body_text, tts_path, clip_duration in group_segments:
-            text_image_path = self.create_text_image(body_text, self.video_width, self.video_height, text_position, text_style, is_title=False, title_font=title_font, body_font=body_font)
+            text_image_path = self.create_text_image(body_text, self.video_width, self.video_height, text_position, text_style, is_title=False, title_font=title_font, body_font=body_font, title_area_mode=title_area_mode)
             text_clip = ImageClip(text_image_path).set_start(current_time).set_duration(clip_duration).set_position((0, 0))
             text_clips.append(text_clip)
             current_time += clip_duration
@@ -412,7 +415,7 @@ class VideoGenerator:
         
         return group_final
     
-    def create_text_image(self, text, width, height, text_position="bottom", text_style="outline", is_title=False, title_font="BMYEONSUNG_otf.otf", body_font="BMYEONSUNG_otf.otf"):
+    def create_text_image(self, text, width, height, text_position="bottom", text_style="outline", is_title=False, title_font="BMYEONSUNG_otf.otf", body_font="BMYEONSUNG_otf.otf", title_area_mode="keep"):
         """텍스트 이미지 생성 (배경 박스 포함)"""
         # 투명 배경 이미지 생성
         img = Image.new('RGBA', (width, height), color=(0, 0, 0, 0))
@@ -472,20 +475,26 @@ class VideoGenerator:
         # 전체 해상도: 504x890, 타이틀 영역: 220px
         # 상단 텍스트 영역: 340-520 (중앙: 430px)
         # 하단 텍스트 영역: 520-700 (중앙: 610px)
-        
+
         title_height = 220  # 타이틀 영역 높이 (고정)
-        
+
         if text_position == "top":
             # 상단 텍스트 영역 중앙: 340-520 (중앙 430px)
             zone_center_y = 430
             start_y = zone_center_y - (total_height // 2)
+        elif text_position == "bottom-edge":
+            # 최하단: 바닥에서 80px 위
+            # 타이틀 유지 모드: 890px 기준 (전체 높이)
+            # 타이틀 제거 모드: 890px 기준 (전체 높이 동일)
+            start_y = 890 - 80 - total_height
         else:  # bottom (middle도 bottom과 동일하게 처리)
             # 하단 텍스트 영역 중앙: 520-700 (중앙 610px)
             zone_center_y = 610
             start_y = zone_center_y - (total_height // 2)
-        
-        # 최소값 보장 (타이틀 영역 침범 방지)
-        start_y = max(start_y, title_height + padding)
+
+        # 최소값 보장 (타이틀 영역 침범 방지) - bottom-edge는 예외
+        if text_position != "bottom-edge":
+            start_y = max(start_y, title_height + padding)
         
         # 이모지 폰트 준비 (본문 폰트 크기에 맞춤)
         emoji_font_path = self.get_emoji_font()
@@ -1496,7 +1505,7 @@ class VideoGenerator:
         
         return image_files
     
-    def create_video_with_local_images(self, content, music_path, output_folder, image_allocation_mode="2_per_image", text_position="bottom", text_style="outline", title_area_mode="keep", title_font="BMYEONSUNG_otf.otf", body_font="BMYEONSUNG_otf.otf", music_mood="bright", media_files=None, voice_narration="enabled", cross_dissolve="enabled"):
+    def create_video_with_local_images(self, content, music_path, output_folder, image_allocation_mode="2_per_image", text_position="bottom", text_style="outline", title_area_mode="keep", title_font="BMYEONSUNG_otf.otf", body_font="BMYEONSUNG_otf.otf", music_mood="bright", media_files=None, voice_narration="enabled", cross_dissolve="enabled", subtitle_duration=0.0):
         """로컬 이미지 파일들을 사용한 릴스 영상 생성"""
         try:
             # 디버깅: 파라미터 확인
@@ -1558,18 +1567,27 @@ class VideoGenerator:
             # 각 body별로 개별 TTS 생성 (빈 값 제외, 순서 보장)
             body_keys = [key for key in content.keys() if key.startswith('body') and content[key].strip()]
             body_keys.sort(key=lambda x: int(x.replace('body', '')))  # body1, body2, ... 순서로 정렬
-            print(f"🎯 body 순서 확인: {body_keys}")
+            logger.info(f"🎯 body 순서 확인: {body_keys}")
+            logger.info(f"🔍 [디버깅] voice_narration='{voice_narration}' (타입: {type(voice_narration).__name__})")
+            logger.info(f"🔍 [디버깅] subtitle_duration={subtitle_duration} (타입: {type(subtitle_duration).__name__})")
+            logger.info(f"🔍 [디버깅] 조건 체크: voice_narration == 'disabled' = {voice_narration == 'disabled'}")
+            logger.info(f"🔍 [디버깅] 조건 체크: subtitle_duration > 0 = {subtitle_duration > 0}")
             tts_files = []
-            
+
             for body_key in body_keys:
-                print(f"🎙️ {body_key} TTS 생성 중... 내용: '{content[body_key][:50]}...'")
-                body_tts = self.create_tts_audio(content[body_key])
-                if body_tts:
-                    body_duration = self.get_audio_duration(body_tts)
-                    tts_files.append((body_key, body_tts, body_duration))
-                    print(f"✅ {body_key} TTS 완료: {body_duration:.1f}초")
+                # 자막 지속 시간 최적화: voice_narration=disabled이고 subtitle_duration > 0이면 TTS 생성 건너뜀
+                if voice_narration == "disabled" and subtitle_duration > 0:
+                    logger.info(f"⏱️ {body_key} TTS 건너뜀 (자막 지속 시간 {subtitle_duration}초 사용)")
+                    tts_files.append((body_key, None, subtitle_duration))
                 else:
-                    print(f"❌ {body_key} TTS 생성 실패")
+                    logger.info(f"🎙️ {body_key} TTS 생성 중... 내용: '{content[body_key][:50]}...'")
+                    body_tts = self.create_tts_audio(content[body_key])
+                    if body_tts:
+                        body_duration = self.get_audio_duration(body_tts)
+                        tts_files.append((body_key, body_tts, body_duration))
+                        logger.info(f"✅ {body_key} TTS 완료: {body_duration:.1f}초")
+                    else:
+                        logger.error(f"❌ {body_key} TTS 생성 실패")
             
             # 이미지 할당 모드에 따른 처리 분기
             print(f"🎬 이미지 할당 모드: {image_allocation_mode}")
@@ -1616,7 +1634,7 @@ class VideoGenerator:
                         title_clip = ImageClip(title_image_path).set_duration(body_duration).set_position((0, 0))
 
                         # 텍스트 클립 (기존 위치)
-                        text_image_path = self.create_text_image(content[body_key], self.video_width, self.video_height, text_position, text_style, is_title=False, title_font=title_font, body_font=body_font)
+                        text_image_path = self.create_text_image(content[body_key], self.video_width, self.video_height, text_position, text_style, is_title=False, title_font=title_font, body_font=body_font, title_area_mode=title_area_mode)
                         text_clip = ImageClip(text_image_path).set_duration(body_duration).set_position((0, 0))
 
                         # 기존 방식 합성
@@ -1629,7 +1647,7 @@ class VideoGenerator:
                             bg_clip = self.create_fullscreen_background_clip(current_image_path, body_duration)
 
                         # 텍스트 클립 (기존과 동일한 위치 유지)
-                        text_image_path = self.create_text_image(content[body_key], self.video_width, self.video_height, text_position, text_style, is_title=False, title_font=title_font, body_font=body_font)
+                        text_image_path = self.create_text_image(content[body_key], self.video_width, self.video_height, text_position, text_style, is_title=False, title_font=title_font, body_font=body_font, title_area_mode=title_area_mode)
                         text_clip = ImageClip(text_image_path).set_duration(body_duration).set_position((0, 0))
 
                         # 전체 화면 합성 (타이틀 없음)
@@ -1637,8 +1655,8 @@ class VideoGenerator:
                     group_clips.append(individual_clip)
                     print(f"    ✅ {body_key} 완료: 개별 이미지 적용")
                     
-                    # 오디오 추가
-                    if body_tts_info[2]:  # tts_path가 있으면
+                    # 오디오 추가 (voice_narration이 enabled일 때만)
+                    if body_tts_info[2] and voice_narration == "enabled":  # tts_path가 있고 자막 읽어주기가 활성화된 경우에만
                         audio_segments.append(AudioFileClip(body_tts_info[2]))
 
             elif image_allocation_mode == "2_per_image":
@@ -1687,7 +1705,7 @@ class VideoGenerator:
                         text_clips = []
                         current_time = 0.0
                         for body_key, body_text, tts_path, duration in group_tts_info:
-                            text_image_path = self.create_text_image(body_text, self.video_width, self.video_height, text_position, text_style, is_title=False, title_font=title_font, body_font=body_font)
+                            text_image_path = self.create_text_image(body_text, self.video_width, self.video_height, text_position, text_style, is_title=False, title_font=title_font, body_font=body_font, title_area_mode=title_area_mode)
                             text_clip = ImageClip(text_image_path).set_start(current_time).set_duration(duration).set_position((0, 0))
                             text_clips.append(text_clip)
                             print(f"      {body_key}: {current_time:.1f}~{current_time + duration:.1f}초")
@@ -1706,7 +1724,7 @@ class VideoGenerator:
                         text_clips = []
                         current_time = 0.0
                         for body_key, body_text, tts_path, duration in group_tts_info:
-                            text_image_path = self.create_text_image(body_text, self.video_width, self.video_height, text_position, text_style, is_title=False, title_font=title_font, body_font=body_font)
+                            text_image_path = self.create_text_image(body_text, self.video_width, self.video_height, text_position, text_style, is_title=False, title_font=title_font, body_font=body_font, title_area_mode=title_area_mode)
                             text_clip = ImageClip(text_image_path).set_start(current_time).set_duration(duration).set_position((0, 0))
                             text_clips.append(text_clip)
                             print(f"      {body_key}: {current_time:.1f}~{current_time + duration:.1f}초")
@@ -1717,9 +1735,9 @@ class VideoGenerator:
                     group_clips.append(group_clip)
                     print(f"    ✅ 그룹 {group_idx//2 + 1} 완료: 배경 연속 보장")
                     
-                    # 오디오 추가
+                    # 오디오 추가 (voice_narration이 enabled일 때만)
                     for _, _, tts_path, _ in group_tts_info:
-                        if tts_path:
+                        if tts_path and voice_narration == "enabled":
                             audio_segments.append(AudioFileClip(tts_path))
 
             else:  # image_allocation_mode == "single_for_all"
@@ -1766,7 +1784,7 @@ class VideoGenerator:
                         text_clips = []
                         current_time = 0.0
                         for body_key, body_text, tts_path, duration in all_tts_info:
-                            text_image_path = self.create_text_image(body_text, self.video_width, self.video_height, text_position, text_style, is_title=False, title_font=title_font, body_font=body_font)
+                            text_image_path = self.create_text_image(body_text, self.video_width, self.video_height, text_position, text_style, is_title=False, title_font=title_font, body_font=body_font, title_area_mode=title_area_mode)
                             text_clip = ImageClip(text_image_path).set_start(current_time).set_duration(duration).set_position((0, 0))
                             text_clips.append(text_clip)
                             print(f"      {body_key}: {current_time:.1f}~{current_time + duration:.1f}초")
@@ -1785,7 +1803,7 @@ class VideoGenerator:
                         text_clips = []
                         current_time = 0.0
                         for body_key, body_text, tts_path, duration in all_tts_info:
-                            text_image_path = self.create_text_image(body_text, self.video_width, self.video_height, text_position, text_style, is_title=False, title_font=title_font, body_font=body_font)
+                            text_image_path = self.create_text_image(body_text, self.video_width, self.video_height, text_position, text_style, is_title=False, title_font=title_font, body_font=body_font, title_area_mode=title_area_mode)
                             text_clip = ImageClip(text_image_path).set_start(current_time).set_duration(duration).set_position((0, 0))
                             text_clips.append(text_clip)
                             print(f"      {body_key}: {current_time:.1f}~{current_time + duration:.1f}초")
@@ -1797,9 +1815,9 @@ class VideoGenerator:
                     group_clips.append(single_clip)
                     print(f"    ✅ 모든 대사 완료: 단일 미디어 연속 적용 ({total_duration:.1f}초)")
 
-                    # 오디오 추가
+                    # 오디오 추가 (voice_narration이 enabled일 때만)
                     for _, _, tts_path, _ in all_tts_info:
-                        if tts_path:
+                        if tts_path and voice_narration == "enabled":
                             audio_segments.append(AudioFileClip(tts_path))
 
             # 그룹들 연결 (크로스 디졸브 옵션에 따라 처리)
@@ -1817,6 +1835,7 @@ class VideoGenerator:
                 final_video = concatenate_videoclips(group_clips, method="compose")
             
             # 8. TTS 오디오들 연결
+            final_audio = None
             if audio_segments:
                 final_audio = concatenate_audioclips(audio_segments)
 
@@ -1824,73 +1843,81 @@ class VideoGenerator:
                 if voice_narration == "disabled":
                     print("🔇 자막 읽어주기 제거: TTS 볼륨을 0으로 설정")
                     final_audio = final_audio.volumex(0)  # TTS 음성 무음 처리
-                
-                # 9. 배경음악 또는 원본 비디오 소리 추가
-                if music_mood == "none":
-                    # 음악 선택 안함: 비디오 원본 소리 사용
-                    print("🔇 음악 선택 안함 모드: 비디오 원본 소리 사용")
-                    video_audio_segments = []
+            else:
+                print("📢 TTS 오디오 없음 (자막 지속 시간 모드 또는 생성 실패)")
 
-                    # 각 클립에서 비디오 오디오 추출
-                    for i, group_clip in enumerate(group_clips):
-                        try:
-                            # 비디오 클립에 오디오가 있는지 확인
-                            if hasattr(group_clip, 'audio') and group_clip.audio is not None:
-                                video_audio = group_clip.audio
-                                video_audio_segments.append(video_audio)
-                                print(f"📹 클립 {i+1}: 비디오 원본 오디오 추출됨")
-                            else:
-                                # 오디오가 없는 경우 무음 추가
-                                silent_audio = AudioFileClip(None).set_duration(group_clip.duration) if hasattr(group_clip, 'duration') else None
-                                if silent_audio:
-                                    video_audio_segments.append(silent_audio)
-                                print(f"📸 클립 {i+1}: 이미지 - 무음 처리")
-                        except Exception as e:
-                            print(f"⚠️ 클립 {i+1} 오디오 추출 실패: {e}")
+            # 9. 배경음악 또는 원본 비디오 소리 추가
+            if music_mood == "none":
+                # 음악 선택 안함: 비디오 원본 소리 사용
+                print("🔇 음악 선택 안함 모드: 비디오 원본 소리 사용")
+                video_audio_segments = []
 
-                    # 비디오 오디오와 TTS 합성
-                    if video_audio_segments:
-                        combined_video_audio = concatenate_audioclips(video_audio_segments)
-
-                        if voice_narration == "disabled":
-                            # 자막 읽어주기 제거: 원본 비디오 소리 100%
-                            final_audio = combined_video_audio.volumex(1.0)  # 비디오 원본 소리 100%
-                            print("🔇 자막 읽어주기 제거: 원본 비디오 소리 100%")
+                # 각 클립에서 비디오 오디오 추출
+                for i, group_clip in enumerate(group_clips):
+                    try:
+                        # 비디오 클립에 오디오가 있는지 확인
+                        if hasattr(group_clip, 'audio') and group_clip.audio is not None:
+                            video_audio = group_clip.audio
+                            video_audio_segments.append(video_audio)
+                            print(f"📹 클립 {i+1}: 비디오 원본 오디오 추출됨")
                         else:
-                            # 자막 읽어주기 추가: TTS(70%) + 원본 비디오 소리(30%) 믹싱
-                            final_audio = CompositeAudioClip([
-                                final_audio.volumex(0.7),  # TTS 볼륨 70%
-                                combined_video_audio.volumex(0.3)  # 비디오 원본 소리 30%
-                            ])
-                            print("🎵 TTS + 비디오 원본 오디오 합성 완료")
+                            # 오디오가 없는 경우 무음 추가
+                            silent_audio = AudioFileClip(None).set_duration(group_clip.duration) if hasattr(group_clip, 'duration') else None
+                            if silent_audio:
+                                video_audio_segments.append(silent_audio)
+                            print(f"📸 클립 {i+1}: 이미지 - 무음 처리")
+                    except Exception as e:
+                        print(f"⚠️ 클립 {i+1} 오디오 추출 실패: {e}")
+
+                # 비디오 오디오와 TTS 합성
+                if video_audio_segments:
+                    combined_video_audio = concatenate_audioclips(video_audio_segments)
+
+                    if voice_narration == "disabled" or final_audio is None:
+                        # 자막 읽어주기 제거: 원본 비디오 소리 100%
+                        final_audio = combined_video_audio.volumex(1.0)  # 비디오 원본 소리 100%
+                        print("🔇 자막 읽어주기 제거: 원본 비디오 소리 100%")
                     else:
-                        if voice_narration == "disabled":
-                            # 자막 읽어주기 제거 + 비디오 오디오 없음: 완전 무음
-                            print("🔇 자막 읽어주기 제거 + 비디오 오디오 없음: 완전 무음")
-                        else:
-                            print("🔇 비디오 오디오 없음: TTS만 사용")
-
-                elif music_path and os.path.exists(music_path):
-                    # 배경음악 사용
-                    background_music = AudioFileClip(music_path)
-
-                    # 배경음악이 영상보다 짧으면 반복, 길면 자르기
-                    if background_music.duration < final_audio.duration:
-                        background_music = background_music.loop(duration=final_audio.duration)
+                        # 자막 읽어주기 추가: TTS(70%) + 원본 비디오 소리(30%) 믹싱
+                        final_audio = CompositeAudioClip([
+                            final_audio.volumex(0.7),  # TTS 볼륨 70%
+                            combined_video_audio.volumex(0.3)  # 비디오 원본 소리 30%
+                        ])
+                        print("🎵 TTS + 비디오 원본 오디오 합성 완료")
+                else:
+                    if voice_narration == "disabled" or final_audio is None:
+                        # 자막 읽어주기 제거 + 비디오 오디오 없음: 완전 무음
+                        print("🔇 자막 읽어주기 제거 + 비디오 오디오 없음: 완전 무음")
                     else:
-                        background_music = background_music.subclip(0, final_audio.duration)
+                        print("🔇 비디오 오디오 없음: TTS만 사용")
 
-                    if voice_narration == "disabled":
-                        # 자막 읽어주기 제거: 배경음악 100%
-                        final_audio = background_music.volumex(1.0)  # 배경음악 볼륨 100%
-                        print("🔇 자막 읽어주기 제거: 배경음악 100%")
-                    else:
-                        # 자막 읽어주기 추가: TTS + 배경음악 합성
-                        background_music = background_music.volumex(0.17)  # 볼륨 17%
-                        final_audio = CompositeAudioClip([final_audio, background_music])
-                        print("🎵 TTS + 배경음악 합성 완료")
+            elif music_path and os.path.exists(music_path):
+                # 배경음악 사용
+                background_music = AudioFileClip(music_path)
 
+                # 배경음악 길이 조정 기준: final_audio가 있으면 그 길이, 없으면 영상 길이
+                target_duration = final_audio.duration if final_audio else final_video.duration
+
+                # 배경음악이 영상보다 짧으면 반복, 길면 자르기
+                if background_music.duration < target_duration:
+                    background_music = background_music.loop(duration=target_duration)
+                else:
+                    background_music = background_music.subclip(0, target_duration)
+
+                if voice_narration == "disabled" or final_audio is None:
+                    # 자막 읽어주기 제거: 배경음악 100%
+                    final_audio = background_music.volumex(1.0)  # 배경음악 볼륨 100%
+                    print("🔇 자막 읽어주기 제거: 배경음악 100%")
+                else:
+                    # 자막 읽어주기 추가: TTS + 배경음악 합성
+                    background_music = background_music.volumex(0.17)  # 볼륨 17%
+                    final_audio = CompositeAudioClip([final_audio, background_music])
+                    print("🎵 TTS + 배경음악 합성 완료")
+
+            if final_audio:
                 final_video = final_video.set_audio(final_audio)
+            else:
+                print("🔇 최종 오디오 없음: 무음 영상 생성")
             
             # 10. 최종 영상 저장
             video_id = str(uuid.uuid4())[:8]
@@ -1904,7 +1931,9 @@ class VideoGenerator:
                 codec='libx264',
                 audio_codec='aac',
                 temp_audiofile='temp-audio.m4a',
-                remove_temp=True
+                remove_temp=True,
+                verbose=False,
+                logger=None
             )
             
             print(f"영상 생성 완료: {output_path}")
@@ -1946,15 +1975,22 @@ class VideoGenerator:
                 print(f"제목 TTS 완료: {title_duration:.1f}초")
             
             # 각 body TTS 생성
+            logger.info(f"🔍 [디버깅-1per] voice_narration='{voice_narration}' (타입: {type(voice_narration).__name__})")
+            logger.info(f"🔍 [디버깅-1per] subtitle_duration={subtitle_duration} (타입: {type(subtitle_duration).__name__})")
             for body_key in body_keys:
-                print(f"🎙️ {body_key} TTS 생성 중... 내용: '{content[body_key][:50]}...'")
-                body_tts = self.create_tts_audio(content[body_key])
-                if body_tts:
-                    body_duration = self.get_audio_duration(body_tts)
-                    tts_files.append((body_key, body_tts, body_duration))
-                    print(f"✅ {body_key} TTS 완료: {body_duration:.1f}초")
+                # 자막 지속 시간 최적화: voice_narration=disabled이고 subtitle_duration > 0이면 TTS 생성 건너뜀
+                if voice_narration == "disabled" and subtitle_duration > 0:
+                    logger.info(f"⏱️ {body_key} TTS 건너뜀 (자막 지속 시간 {subtitle_duration}초 사용)")
+                    tts_files.append((body_key, None, subtitle_duration))
                 else:
-                    print(f"❌ {body_key} TTS 생성 실패")
+                    logger.info(f"🎙️ {body_key} TTS 생성 중... 내용: '{content[body_key][:50]}...'")
+                    body_tts = self.create_tts_audio(content[body_key])
+                    if body_tts:
+                        body_duration = self.get_audio_duration(body_tts)
+                        tts_files.append((body_key, body_tts, body_duration))
+                        logger.info(f"✅ {body_key} TTS 완료: {body_duration:.1f}초")
+                    else:
+                        logger.error(f"❌ {body_key} TTS 생성 실패")
             
             # 이미지 할당 모드에 따른 처리 분기
             print(f"🎬 이미지 할당 모드: {image_allocation_mode}")
@@ -1992,7 +2028,7 @@ class VideoGenerator:
                     black_top = ColorClip(size=(self.video_width, 220), color=(0,0,0)).set_duration(clip_duration).set_position((0, 0))
                     title_clip = ImageClip(title_image_path).set_duration(clip_duration).set_position((0, 0))
 
-                    text_image_path = self.create_text_image(content[body_key], self.video_width, self.video_height, text_position, text_style, is_title=False, title_font=title_font, body_font=body_font)
+                    text_image_path = self.create_text_image(content[body_key], self.video_width, self.video_height, text_position, text_style, is_title=False, title_font=title_font, body_font=body_font, title_area_mode=title_area_mode)
                     text_clip = ImageClip(text_image_path).set_duration(clip_duration).set_position((0, 0))
                     
                     # 개별 클립 합성
@@ -2036,7 +2072,7 @@ class VideoGenerator:
                     black_top = ColorClip(size=(self.video_width, 220), color=(0,0,0)).set_duration(clip_duration).set_position((0, 0))
                     title_clip = ImageClip(title_image_path).set_duration(clip_duration).set_position((0, 0))
 
-                    text_image_path = self.create_text_image(content[body_key], self.video_width, self.video_height, text_position, text_style, is_title=False, title_font=title_font, body_font=body_font)
+                    text_image_path = self.create_text_image(content[body_key], self.video_width, self.video_height, text_position, text_style, is_title=False, title_font=title_font, body_font=body_font, title_area_mode=title_area_mode)
                     text_clip = ImageClip(text_image_path).set_duration(clip_duration).set_position((0, 0))
                     
                     # 클립 합성
@@ -2127,6 +2163,7 @@ class VideoGenerator:
             print(f"최종 비디오 길이: {final_video.duration:.1f}초")
             
             # TTS 오디오 세그먼트들을 순서대로 연결
+            combined_tts = None
             if audio_segments:
                 print(f"TTS 오디오 세그먼트 개수: {len(audio_segments)}")
                 combined_tts = concatenate_audioclips(audio_segments)
@@ -2139,6 +2176,9 @@ class VideoGenerator:
 
                 # 배경음악 또는 원본 비디오 소리 추가
                 audio_tracks = [combined_tts]
+            else:
+                print("📢 TTS 오디오 없음 (자막 지속 시간 모드 또는 생성 실패)")
+                audio_tracks = []
 
                 if music_mood == "none":
                     print("음악 선택 안함 - 원본 비디오 소리 추출 및 추가 중...")
@@ -2151,11 +2191,12 @@ class VideoGenerator:
                                 try:
                                     video_audio = VideoFileClip(media_path).audio
                                     if video_audio is not None:
-                                        # 비디오 오디오 길이를 TTS에 맞춤
-                                        if video_audio.duration < combined_tts.duration:
-                                            video_audio = video_audio.loop(duration=combined_tts.duration)
+                                        # 비디오 오디오 길이 조정: TTS가 있으면 TTS 길이에, 없으면 영상 길이에 맞춤
+                                        target_duration = combined_tts.duration if combined_tts else final_video.duration
+                                        if video_audio.duration < target_duration:
+                                            video_audio = video_audio.loop(duration=target_duration)
                                         else:
-                                            video_audio = video_audio.subclip(0, combined_tts.duration)
+                                            video_audio = video_audio.subclip(0, target_duration)
                                         # 자막 읽어주기 설정에 따른 비디오 볼륨 조절
                                         if voice_narration == "disabled":
                                             # TTS 음성이 꺼진 경우 원본 비디오 소리를 100%로 설정
@@ -2176,60 +2217,37 @@ class VideoGenerator:
                 elif os.path.exists(music_path):
                     print("배경음악 추가 중...")
                     # 자막 읽어주기 설정에 따른 배경음악 볼륨 조절
-                    if voice_narration == "disabled":
-                        # TTS 음성이 꺼진 경우 배경음악을 100%로 설정
+                    if voice_narration == "disabled" or combined_tts is None:
+                        # TTS 음성이 꺼진 경우 또는 TTS 없는 경우 배경음악을 100%로 설정
                         bg_music = AudioFileClip(music_path).volumex(1.0)
                         print("🎵 자막 읽어주기 꺼짐 - 배경음악 100%")
                     else:
                         # TTS가 더 잘 들리도록 17%로 낮춤
                         bg_music = AudioFileClip(music_path).volumex(0.17)
                         print("🎵 자막 읽어주기 켜짐 - 배경음악 17%")
-                    if bg_music.duration < combined_tts.duration:
-                        bg_music = bg_music.loop(duration=combined_tts.duration)
+
+                    # 배경음악 길이 조정: TTS가 있으면 TTS 길이에, 없으면 영상 길이에 맞춤
+                    target_duration = combined_tts.duration if combined_tts else final_video.duration
+                    if bg_music.duration < target_duration:
+                        bg_music = bg_music.loop(duration=target_duration)
                     else:
-                        bg_music = bg_music.subclip(0, combined_tts.duration)
+                        bg_music = bg_music.subclip(0, target_duration)
                     audio_tracks.append(bg_music)
                 
                 # 오디오 합성
                 if len(audio_tracks) > 1:
                     print("TTS + 배경음악 합성 중...")
                     final_audio = CompositeAudioClip(audio_tracks)
-                else:
-                    print("TTS만 사용")
+                    final_video = final_video.set_audio(final_audio)
+                    print("최종 비디오에 오디오 추가 완료")
+                elif len(audio_tracks) == 1:
+                    print("단일 오디오 트랙 사용")
                     final_audio = audio_tracks[0]
-                
-                final_video = final_video.set_audio(final_audio)
-                print("최종 비디오에 오디오 추가 완료")
-                
-            else:
-                print("TTS 오디오가 없어서 배경음악 또는 원본 비디오 소리만 사용")
-                if music_mood == "none":
-                    print("음악 선택 안함 - 원본 비디오 소리만 사용")
-                    # 원본 비디오 소리 추출
-                    video_extensions = ['.mp4', '.mov', '.avi', '.webm', '.mkv']
-                    if media_files:
-                        for media_file in media_files:
-                            media_path, file_type = media_file
-                            if file_type == "video" and any(media_path.lower().endswith(ext) for ext in video_extensions):
-                                try:
-                                    video_audio = VideoFileClip(media_path).audio
-                                    if video_audio is not None:
-                                        if video_audio.duration > final_video.duration:
-                                            video_audio = video_audio.subclip(0, final_video.duration)
-                                        final_video = final_video.set_audio(video_audio)
-                                        print(f"원본 비디오 소리 적용: {media_path}")
-                                        break
-                                except Exception as e:
-                                    print(f"비디오 오디오 추출 실패 ({media_path}): {e}")
-                                    continue
-                    else:
-                        print("⚠️ 미디어 파일 정보 없음 - 원본 비디오 소리 사용 불가")
-                elif os.path.exists(music_path):
-                    bg_music = AudioFileClip(music_path)
-                    if bg_music.duration > final_video.duration:
-                        bg_music = bg_music.subclip(0, final_video.duration)
-                    final_video = final_video.set_audio(bg_music)
-            
+                    final_video = final_video.set_audio(final_audio)
+                    print("최종 비디오에 오디오 추가 완료")
+                else:
+                    print("🔇 오디오 트랙 없음: 무음 영상 생성")
+
             # 출력 파일 경로 생성
             output_filename = f"reels_{uuid.uuid4().hex[:8]}.mp4"
             output_path = os.path.join(output_folder, output_filename)
@@ -2241,7 +2259,9 @@ class VideoGenerator:
                 codec='libx264',
                 audio_codec='aac',
                 temp_audiofile='temp-audio.m4a',
-                remove_temp=True
+                remove_temp=True,
+                verbose=False,
+                logger=None
             )
             
             # 임시 파일 정리
@@ -2321,26 +2341,26 @@ class VideoGenerator:
         
         return scan_result
     
-    def create_video_from_uploads(self, output_folder, bgm_file_path=None, image_allocation_mode="2_per_image", text_position="bottom", text_style="outline", title_area_mode="keep", title_font="BMYEONSUNG_otf.otf", body_font="BMYEONSUNG_otf.otf", uploads_folder="uploads", music_mood="bright", voice_narration="enabled", cross_dissolve="enabled"):
+    def create_video_from_uploads(self, output_folder, bgm_file_path=None, image_allocation_mode="2_per_image", text_position="bottom", text_style="outline", title_area_mode="keep", title_font="BMYEONSUNG_otf.otf", body_font="BMYEONSUNG_otf.otf", uploads_folder="uploads", music_mood="bright", voice_narration="enabled", cross_dissolve="enabled", subtitle_duration=0.0):
         """uploads 폴더의 파일들을 사용하여 영상 생성 (기존 메서드 재사용)"""
         try:
             print("🚀 uploads 폴더 기반 영상 생성 시작")
-            
+
             # uploads 폴더 스캔
             scan_result = self.scan_uploads_folder(uploads_folder)
-            
+
             # 필수 파일 검증
             if not scan_result['json_file']:
                 raise Exception("text.json 파일이 없습니다")
-            
+
             if not scan_result['image_files']:
                 raise Exception("이미지 파일이 없습니다")
-            
+
             # JSON 내용 로드
             with open(scan_result['json_file'], 'r', encoding='utf-8') as f:
                 content = json.load(f)
             print(f"✅ JSON 내용 로드: {scan_result['json_file']}")
-            
+
             # 음악 파일 설정 (bgm_file_path 직접 사용)
             music_path = bgm_file_path or ""
             if music_path and os.path.exists(music_path):
@@ -2348,14 +2368,14 @@ class VideoGenerator:
             else:
                 print("⚠️  음악 파일 없음 - 음성만 사용")
                 music_path = ""
-            
+
             # 기존 create_video_with_local_images 방식 재사용
             # 스캔된 이미지 파일들로 로컬 이미지 리스트 대체
             self._temp_local_images = scan_result['image_files']
-            
-            # 기존 메서드 호출 (이미지 할당 모드, 텍스트 위치, 텍스트 스타일, 타이틀 영역 모드, 폰트 설정, 자막 읽어주기 전달)
-            return self.create_video_with_local_images(content, music_path, output_folder, image_allocation_mode, text_position, text_style, title_area_mode, title_font, body_font, music_mood, scan_result['media_files'], voice_narration, cross_dissolve)
-            
+
+            # 기존 메서드 호출 (이미지 할당 모드, 텍스트 위치, 텍스트 스타일, 타이틀 영역 모드, 폰트 설정, 자막 읽어주기, 자막 지속 시간 전달)
+            return self.create_video_with_local_images(content, music_path, output_folder, image_allocation_mode, text_position, text_style, title_area_mode, title_font, body_font, music_mood, scan_result['media_files'], voice_narration, cross_dissolve, subtitle_duration)
+
         except Exception as e:
             raise Exception(f"uploads 폴더 기반 영상 생성 실패: {str(e)}")
     
