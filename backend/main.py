@@ -20,6 +20,7 @@ try:
     from openai import OpenAI
     OPENAI_AVAILABLE = True
 except ImportError as e:
+    # logger는 아직 초기화 전이므로 임시로 print 사용
     print(f"OpenAI import 오류: {e}")
     OpenAI = None
     OPENAI_AVAILABLE = False
@@ -28,12 +29,20 @@ import re
 import uuid
 from urllib.parse import urlparse, parse_qs
 from dotenv import load_dotenv
+
+# .env 파일 먼저 로드
+load_dotenv()
+
+# 통합 로깅 시스템 import
+from utils.logger_config import get_logger
+logger = get_logger('main')
+
 try:
     from youtube_transcript_api import YouTubeTranscriptApi
     YOUTUBE_TRANSCRIPT_AVAILABLE = True
 except ImportError as e:
-    print(f"YouTube Transcript API import 오류: {e}")
-    print("pip install youtube-transcript-api==0.6.1 로 라이브러리를 설치해주세요.")
+    logger.error(f"YouTube Transcript API import 오류: {e}")
+    logger.info("pip install youtube-transcript-api==0.6.1 로 라이브러리를 설치해주세요.")
     YouTubeTranscriptApi = None
     YOUTUBE_TRANSCRIPT_AVAILABLE = False
 
@@ -41,8 +50,8 @@ try:
     import aiohttp
     AIOHTTP_AVAILABLE = True
 except ImportError as e:
-    print(f"aiohttp import 오류: {e}")
-    print("pip install aiohttp==3.9.1 로 라이브러리를 설치해주세요.")
+    logger.error(f"aiohttp import 오류: {e}")
+    logger.info("pip install aiohttp==3.9.1 로 라이브러리를 설치해주세요.")
     aiohttp = None
     AIOHTTP_AVAILABLE = False
 # Updated with create_simple_group_clip method
@@ -52,9 +61,9 @@ try:
     from job_queue import job_queue, JobStatus
     from email_service import email_service
     JOB_QUEUE_AVAILABLE = True
-    print("✅ 배치 작업 시스템 로드 성공")
+    logger.info("✅ 배치 작업 시스템 로드 성공")
 except ImportError as e:
-    print(f"⚠️ 배치 작업 시스템 로드 실패: {e}")
+    logger.warning(f"⚠️ 배치 작업 시스템 로드 실패: {e}")
     job_queue = None
     email_service = None
     JOB_QUEUE_AVAILABLE = False
@@ -63,9 +72,9 @@ except ImportError as e:
 try:
     from job_logger import job_logger
     JOB_LOGGER_AVAILABLE = True
-    print("✅ Job 로깅 시스템 로드 성공")
+    logger.info("✅ Job 로깅 시스템 로드 성공")
 except ImportError as e:
-    print(f"⚠️ Job 로깅 시스템 로드 실패: {e}")
+    logger.warning(f"⚠️ Job 로깅 시스템 로드 실패: {e}")
     job_logger = None
     JOB_LOGGER_AVAILABLE = False
 
@@ -73,9 +82,9 @@ except ImportError as e:
 try:
     from folder_manager import folder_manager
     FOLDER_MANAGER_AVAILABLE = True
-    print("✅ Folder 관리 시스템 로드 성공")
+    logger.info("✅ Folder 관리 시스템 로드 성공")
 except ImportError as e:
-    print(f"⚠️ Folder 관리 시스템 로드 실패: {e}")
+    logger.warning(f"⚠️ Folder 관리 시스템 로드 실패: {e}")
     folder_manager = None
     FOLDER_MANAGER_AVAILABLE = False
 
@@ -83,32 +92,14 @@ except ImportError as e:
 try:
     from thumbnail_generator import generate_missing_thumbnails
     THUMBNAIL_GENERATOR_AVAILABLE = True
-    print("✅ 썸네일 생성 시스템 로드 성공")
+    logger.info("✅ 썸네일 생성 시스템 로드 성공")
 except ImportError as e:
-    print(f"⚠️ 썸네일 생성 시스템 로드 실패: {e}")
+    logger.warning(f"⚠️ 썸네일 생성 시스템 로드 실패: {e}")
     generate_missing_thumbnails = None
     THUMBNAIL_GENERATOR_AVAILABLE = False
 
-# .env 파일 로드
-load_dotenv()
-
-# API 로깅 설정 - 서버 재시작 시 기존 로그 삭제
-API_LOG_FILE = "api.log"
-if os.path.exists(API_LOG_FILE):
-    os.remove(API_LOG_FILE)
-    print(f"🗑️ 기존 로그 파일 삭제: {API_LOG_FILE}")
-
-# 로거 설정 - api.log 파일에만 출력 (콘솔 출력 제거)
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(levelname)s - %(message)s',
-    handlers=[
-        logging.FileHandler(API_LOG_FILE, encoding='utf-8')
-    ],
-    force=True  # 기존 설정 강제 재설정
-)
-logger = logging.getLogger(__name__)
-logger.info(f"✅ API 로그 파일 생성: {API_LOG_FILE}")
+# 통합 로깅 시스템 초기화 완료
+logger.info("🚀 Main 서버 초기화 시작")
 
 app = FastAPI(title="Reels Video Generator", version="1.0.0")
 

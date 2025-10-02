@@ -7,12 +7,12 @@ import os
 import shutil
 import time
 import uuid
-import logging
 from datetime import datetime, timedelta
 from typing import Optional, List, Tuple
 from pathlib import Path
+from utils.logger_config import get_logger
 
-logger = logging.getLogger(__name__)
+logger = get_logger('folder_manager')
 
 class FolderManager:
     """Job별 격리된 폴더 관리 클래스"""

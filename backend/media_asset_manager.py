@@ -4,9 +4,10 @@
 import sqlite3
 import json
 import os
-import logging
 from datetime import datetime
 from typing import Dict, List, Optional, Any, Tuple
+from utils.logger_config import get_logger
+
 try:
     from moviepy.editor import VideoFileClip
     from PIL import Image
@@ -17,8 +18,7 @@ except ImportError as e:
     MOVIEPY_AVAILABLE = False
 
 # 로깅 설정
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+logger = get_logger('media_asset_manager')
 
 class MediaAssetManager:
     def __init__(self, db_path: str = "log/job_logs.db"):

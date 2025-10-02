@@ -6,7 +6,6 @@ Gmail SMTP 이메일 발송 서비스
 import smtplib
 import os
 import jwt
-import logging
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from email.mime.base import MIMEBase
@@ -15,13 +14,13 @@ from datetime import datetime, timedelta
 from typing import Optional, Dict, Any
 from jinja2 import Template
 from dotenv import load_dotenv
+from utils.logger_config import get_logger
 
 # 환경변수 로드
 load_dotenv()
 
 # 로깅 설정
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+logger = get_logger('email_service')
 
 class EmailService:
     def __init__(self):

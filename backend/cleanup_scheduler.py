@@ -6,12 +6,12 @@
 import os
 import time
 import threading
-import logging
 from datetime import datetime, timedelta
 from typing import Optional
 from folder_manager import folder_manager
+from utils.logger_config import get_logger
 
-logger = logging.getLogger(__name__)
+logger = get_logger('cleanup_scheduler')
 
 class CleanupScheduler:
     """주기적 임시 파일 정리 스케줄러"""

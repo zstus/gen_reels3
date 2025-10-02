@@ -14,35 +14,14 @@ import math
 import logging
 from datetime import datetime
 
-# API 로거 설정 - api.log에 통합
-logger = logging.getLogger(__name__)
-
-# 로깅 설정 - 파일에만 저장
-def setup_crossfade_logging():
-    """크로스 디졸브 전용 로깅 설정"""
-    log_filename = f"crossfade_debug_{datetime.now().strftime('%Y%m%d_%H%M%S')}.log"
-
-    logging.basicConfig(
-        level=logging.INFO,
-        format='%(asctime)s - %(levelname)s - %(message)s',
-        handlers=[
-            logging.FileHandler(log_filename, encoding='utf-8'),
-            logging.StreamHandler()  # 콘솔에도 출력
-        ]
-    )
-
-    print(f"🔍 크로스 디졸브 디버깅 로그 파일: {log_filename}")
-    return log_filename
-
-# 전역 로그 파일명 저장
-CROSSFADE_LOG_FILE = None
+# 통합 로깅 시스템 import
+from utils.logger_config import get_logger
+logger = get_logger('video_generator')
 
 class VideoGenerator:
     def __init__(self):
-        # 로깅 초기화
-        global CROSSFADE_LOG_FILE
-        if CROSSFADE_LOG_FILE is None:
-            CROSSFADE_LOG_FILE = setup_crossfade_logging()
+        # 통합 로깅 시스템 사용 (더 이상 개별 로그 파일 생성 안함)
+        logger.info("🎬 VideoGenerator 초기화")
 
         self.video_width = 504
         self.video_height = 890  # 쇼츠/릴스 해상도 (504x890)

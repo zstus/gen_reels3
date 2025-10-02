@@ -8,11 +8,10 @@ import shutil
 from datetime import datetime
 from typing import Dict, List, Optional, Any
 import uuid
-import logging
+from utils.logger_config import get_logger
 
 # 로깅 설정
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+logger = get_logger('job_logger')
 
 class JobLogger:
     def __init__(self, db_path: str = "log/job_logs.db"):

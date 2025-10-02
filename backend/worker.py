@@ -17,6 +17,10 @@ from typing import Dict, Any, Optional
 current_dir = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, current_dir)
 
+# 통합 로깅 시스템 import
+from utils.logger_config import get_logger
+logger = get_logger('worker')
+
 from job_queue import job_queue, JobStatus
 from email_service import email_service
 from video_generator import VideoGenerator
@@ -25,9 +29,9 @@ from video_generator import VideoGenerator
 try:
     from job_logger import job_logger
     JOB_LOGGER_AVAILABLE = True
-    print("✅ Worker: Job 로깅 시스템 로드 성공")
+    logger.info("✅ Worker: Job 로깅 시스템 로드 성공")
 except ImportError as e:
-    print(f"⚠️ Worker: Job 로깅 시스템 로드 실패: {e}")
+    logger.warning(f"⚠️ Worker: Job 로깅 시스템 로드 실패: {e}")
     job_logger = None
     JOB_LOGGER_AVAILABLE = False
 
@@ -35,24 +39,13 @@ except ImportError as e:
 try:
     from folder_manager import folder_manager
     FOLDER_MANAGER_AVAILABLE = True
-    print("✅ Worker: Folder 관리 시스템 로드 성공")
+    logger.info("✅ Worker: Folder 관리 시스템 로드 성공")
 except ImportError as e:
-    print(f"⚠️ Worker: Folder 관리 시스템 로드 실패: {e}")
+    logger.warning(f"⚠️ Worker: Folder 관리 시스템 로드 실패: {e}")
     folder_manager = None
     FOLDER_MANAGER_AVAILABLE = False
 
-# 로깅 설정 - api.log에 append 모드로 기록
-API_LOG_FILE = "api.log"
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(levelname)s - %(message)s',
-    handlers=[
-        logging.FileHandler(API_LOG_FILE, mode='a', encoding='utf-8')  # append 모드
-    ],
-    force=True
-)
-logger = logging.getLogger(__name__)
-logger.info("🤖 Worker 프로세스 시작 - api.log에 기록")
+logger.info("🤖 Worker 프로세스 시작")
 
 class VideoWorker:
     def __init__(self, worker_id: str = "worker-1"):
@@ -121,15 +114,10 @@ class VideoWorker:
             # 자막 지속 시간 파라미터 추출
             subtitle_duration = video_params.get('subtitle_duration', 0.0)
 
-            # Print로 worker.log에 출력
-            print(f"📋 영상 파라미터: 음악={music_mood}, 테스트파일={use_test_files}, 텍스트위치={text_position}, 타이틀폰트={title_font}({title_font_size}pt), 본문폰트={body_font}({body_font_size}pt), 자막음성={voice_narration}, 크로스디졸브={cross_dissolve}, 자막지속시간={subtitle_duration}초")
-            print(f"🔍 [Worker 디버깅] voice_narration='{voice_narration}' (타입: {type(voice_narration).__name__})")
-            print(f"🔍 [Worker 디버깅] subtitle_duration={subtitle_duration} (타입: {type(subtitle_duration).__name__})")
-
-            # 로거에도 기록 (api.log용, 작동 안할 수 있음)
+            # 영상 파라미터 로깅
             logger.info(f"📋 영상 파라미터: 음악={music_mood}, 테스트파일={use_test_files}, 텍스트위치={text_position}, 타이틀폰트={title_font}({title_font_size}pt), 본문폰트={body_font}({body_font_size}pt), 자막음성={voice_narration}, 크로스디졸브={cross_dissolve}, 자막지속시간={subtitle_duration}초")
-            logger.info(f"🔍 [Worker 디버깅] voice_narration='{voice_narration}' (타입: {type(voice_narration).__name__})")
-            logger.info(f"🔍 [Worker 디버깅] subtitle_duration={subtitle_duration} (타입: {type(subtitle_duration).__name__})")
+            logger.debug(f"🔍 voice_narration='{voice_narration}' (타입: {type(voice_narration).__name__})")
+            logger.debug(f"🔍 subtitle_duration={subtitle_duration} (타입: {type(subtitle_duration).__name__})")
 
             # 콘텐츠 데이터 파싱
             try:

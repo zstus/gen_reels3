@@ -1,72 +1,4 @@
 {
-  "6469662d-29ea-4b04-abf0-9defcf56cba2": {
-    "job_id": "6469662d-29ea-4b04-abf0-9defcf56cba2",
-    "user_email": "xystus@gmail.com",
-    "status": "completed",
-    "created_at": "2025-09-23T23:37:01.494583",
-    "updated_at": "2025-09-23T23:38:10.753277",
-    "video_params": {
-      "content_data": "{\"title\":\"나이가 벼슬이야?\",\"body1\":\"길거리 다니면서 담배피우는게 불법인데도 그런 사람들 꼭 있어. \",\"body2\":\"그런데 정말 백프로 나이든 할아버지, 아저씨들이야. \",\"body3\":\"갈라치기 하려는게 아니라 너무 펙트인게 놀라워서 말하는 거야\",\"body4\":\"길 다니는데 피할 수도 없이 담배연기를 마시고 있자니 정말 화가나서 그래. \",\"body5\":\"대체 그러는 이유가 뭐야? 법적으로 피울 수 있는 곳들이 있잖아. \",\"body6\":\"다른 사람들은 바보라서 그런 곳에서만 피우는 거야?\",\"body7\":\"이런 경험은 나만 하는 건지 궁금해. \",\"body8\":\"\"}",
-      "music_mood": "suspense",
-      "image_allocation_mode": "2_per_image",
-      "text_position": "bottom",
-      "text_style": "background",
-      "title_area_mode": "keep",
-      "selected_bgm_path": "Yacoby - Schwartzy.mp3",
-      "use_test_files": false,
-      "uploaded_files": [
-        "1.png",
-        "2.png",
-        "3.png",
-        "4.png"
-      ],
-      "title_font": "IBMPlexSansKR-Bold.ttf",
-      "body_font": "BMYEONSUNG_otf.otf",
-      "voice_narration": "enabled"
-    },
-    "result": {
-      "video_path": "/zstus/backend/output_videos/reels_92a3bb87.mp4",
-      "duration": "약 10-30초",
-      "completed_at": "2025-09-23T23:38:10.751627"
-    },
-    "error_message": null,
-    "retry_count": 0,
-    "max_retries": 2
-  },
-  "1f06c6ff-9643-4dae-8d5e-5e94005502ee": {
-    "job_id": "1f06c6ff-9643-4dae-8d5e-5e94005502ee",
-    "user_email": "xystus@gmail.com",
-    "status": "completed",
-    "created_at": "2025-09-24T03:25:08.546124",
-    "updated_at": "2025-09-24T03:26:27.691463",
-    "video_params": {
-      "content_data": "{\"title\":\"이길 수가 없다\",\"body1\":\"“이길 수가 없다.” 이 대사가 감탄처럼 튀어나오지 않냐?\",\"body2\":\"박지현, 은중과 상연에서 연기력 제대로 증명했어.\",\"body3\":\"모든 나이대와 감정선을 유려하게 펼치는 모습, 진짜 감탄만 나와.\",\"body4\":\"상연은 늘 결핍돼 있고, 엄마는 오빠만 칭찬하고 친구들은 은중만 좋아해.\",\"body5\":\"절교 후 같은 직장에서 파국을 택하는 상연, 진짜 처연했지.\",\"body6\":\"은중 시선에선 상연이 재능도, 마음도 다 가졌으니 자조만 남아.\",\"body7\":\"네가 날 받아주는구나, 끝내 네가… 이 감정, 너라면 이겨낼 수 있겠어?\",\"body8\":\"\"}",
-      "music_mood": "bright",
-      "image_allocation_mode": "2_per_image",
-      "text_position": "bottom",
-      "text_style": "background",
-      "title_area_mode": "keep",
-      "selected_bgm_path": "Treasure Hunt - Jeremy Korpas.mp3",
-      "use_test_files": false,
-      "uploaded_files": [
-        "1.png",
-        "2.png",
-        "3.png",
-        "4.png"
-      ],
-      "title_font": "IBMPlexSansKR-Bold.ttf",
-      "body_font": "BMYEONSUNG_otf.otf",
-      "voice_narration": "enabled"
-    },
-    "result": {
-      "video_path": "/zstus/backend/output_videos/reels_bb41c2a2.mp4",
-      "duration": "약 10-30초",
-      "completed_at": "2025-09-24T03:26:27.689721"
-    },
-    "error_message": null,
-    "retry_count": 0,
-    "max_retries": 2
-  },
   "4dab3ff4-c524-4435-a98d-082e6ac8f3c6": {
     "job_id": "4dab3ff4-c524-4435-a98d-082e6ac8f3c6",
     "user_email": "xystus@gmail.com",
@@ -1914,6 +1846,82 @@
       "video_path": "/zstus/backend/output_videos/202510/reels_d37ad1d9.mp4",
       "duration": "약 10-30초",
       "completed_at": "2025-10-01T22:39:27.205473"
+    },
+    "error_message": null,
+    "retry_count": 0,
+    "max_retries": 2
+  },
+  "job_y4lxst486_mg8x616e": {
+    "job_id": "job_y4lxst486_mg8x616e",
+    "user_email": "xystus@gmail.com",
+    "status": "completed",
+    "created_at": "2025-10-02T04:34:12.263304",
+    "updated_at": "2025-10-02T04:36:25.043171",
+    "video_params": {
+      "content_data": "{\"title\":\"결혼 5개월 전\",\"body1\":\"펜션에서 컵라면 먹으려다, 커피포트 물이 튀어 발등 화상!\",\"body2\":\"너무 아파서 주저앉았는데… 예비신랑? 그냥 '헐' 한마디 하고 소파 가서 유튜브\",\"body3\":\"심지어 '괜찮아?' 이 한마디도 없음. 동태눈으로 빤히 쳐다본 게 다임\",\"body4\":\"이전에도 공감 제로, 내 얘기하면 무반응, 웃겨도 정색… 이번엔 진짜 터짐.\",\"body5\":\"따지니까 '내가 괜찮냐고 물으면 낫냐? 여자들은 너무 기대가 크다' 이딴 소리\",\"body6\":\"결혼 약속하니까 이제 보인다. 이기적이고 공감 없는 남자라는 거.\",\"body7\":\"백년해로? 아니, 예식장 취소부터 검색 중ㅋㅋ 내가 너무한 걸까?\",\"body8\":\"\"}",
+      "music_mood": "bright",
+      "image_allocation_mode": "2_per_image",
+      "text_position": "bottom-edge",
+      "text_style": "white_background",
+      "title_area_mode": "keep",
+      "selected_bgm_path": "Lace Tablecloths - The Mini Vandals.mp3",
+      "use_test_files": false,
+      "uploaded_files": [
+        "1.mp4",
+        "2.mp4",
+        "3.png",
+        "4.jpg"
+      ],
+      "title_font": "BMHANNAPro.ttf",
+      "body_font": "BMYEONSUNG_otf.otf",
+      "title_font_size": 50,
+      "body_font_size": 36,
+      "voice_narration": "enabled",
+      "cross_dissolve": "enabled",
+      "subtitle_duration": 0.0
+    },
+    "result": {
+      "video_path": "/zstus/backend/output_videos/202510/reels_c3965d9f.mp4",
+      "duration": "약 10-30초",
+      "completed_at": "2025-10-02T04:36:25.040985"
+    },
+    "error_message": null,
+    "retry_count": 0,
+    "max_retries": 2
+  },
+  "job_sgp4aqnd8_mg907tx1": {
+    "job_id": "job_sgp4aqnd8_mg907tx1",
+    "user_email": "xystus@gmail.com",
+    "status": "completed",
+    "created_at": "2025-10-02T06:00:11.344415",
+    "updated_at": "2025-10-02T06:02:03.227206",
+    "video_params": {
+      "content_data": "{\"title\":\"결혼 5개월 전\",\"body1\":\"펜션에서 컵라면 먹으려다, 커피포트 물이 튀어 발등 화상!\",\"body2\":\"너무 아파서 주저앉았는데… 예비신랑? 그냥 '헐' 한마디 하고 소파 가서 유튜브\",\"body3\":\"심지어 '괜찮아?' 이 한마디도 없음. 동태눈으로 빤히 쳐다본 게 다임\",\"body4\":\"이전에도 공감 제로, 내 얘기하면 무반응, 웃겨도 정색… 이번엔 진짜 터짐.\",\"body5\":\"따지니까 '내가 괜찮냐고 물으면 낫냐? 여자들은 너무 기대가 크다' 이딴 소리\",\"body6\":\"결혼 약속하니까 이제 보인다. 이기적이고 공감 없는 남자라는 거.\",\"body7\":\"백년해로? 아니, 예식장 취소부터 검색 중ㅋㅋ 내가 너무한 걸까?\",\"body8\":\"\"}",
+      "music_mood": "bright",
+      "image_allocation_mode": "2_per_image",
+      "text_position": "bottom",
+      "text_style": "white_background",
+      "title_area_mode": "keep",
+      "selected_bgm_path": "Lace Tablecloths - The Mini Vandals.mp3",
+      "use_test_files": false,
+      "uploaded_files": [
+        "1.png",
+        "2.png",
+        "3.png",
+        "4.png"
+      ],
+      "title_font": "BMYEONSUNG_otf.otf",
+      "body_font": "BMYEONSUNG_otf.otf",
+      "title_font_size": 60,
+      "body_font_size": 36,
+      "voice_narration": "enabled",
+      "cross_dissolve": "enabled",
+      "subtitle_duration": 0.0
+    },
+    "result": {
+      "video_path": "/zstus/backend/output_videos/202510/reels_29812185.mp4",
+      "duration": "약 10-30초",
+      "completed_at": "2025-10-02T06:02:03.224958"
     },
     "error_message": null,
     "retry_count": 0,

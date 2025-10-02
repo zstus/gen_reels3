@@ -7,9 +7,9 @@
 
 import os
 import glob
-import logging
 from typing import List, Tuple
 from PIL import Image
+from utils.logger_config import get_logger
 
 # MoviePy import
 try:
@@ -20,7 +20,7 @@ except ImportError:
     MOVIEPY_AVAILABLE = False
 
 # 로거 설정
-logger = logging.getLogger(__name__)
+logger = get_logger('thumbnail_generator')
 
 
 class ThumbnailGenerator:

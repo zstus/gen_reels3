@@ -11,6 +11,9 @@ from datetime import datetime
 from typing import Dict, List, Optional, Any
 from enum import Enum
 import time
+from utils.logger_config import get_logger
+
+logger = get_logger('job_queue')
 
 class JobStatus(Enum):
     PENDING = "pending"
@@ -68,7 +71,7 @@ class JobQueue:
             queue_data[job_id] = job_data
             self._save_queue(queue_data)
 
-        print(f"✅ 새 작업 추가됨: {job_id} (이메일: {user_email})")
+        logger.info(f"✅ 새 작업 추가됨: {job_id} (이메일: {user_email})")
         return job_id
 
     def get_job(self, job_id: str) -> Optional[Dict[str, Any]]:
@@ -93,7 +96,7 @@ class JobQueue:
                     queue_data[job_id]['error_message'] = error_message
 
                 self._save_queue(queue_data)
-                print(f"🔄 작업 상태 업데이트: {job_id} → {status.value}")
+                logger.info(f"🔄 작업 상태 업데이트: {job_id} → {status.value}")
 
     def get_pending_jobs(self) -> List[Dict[str, Any]]:
         """대기 중인 작업 목록 조회"""
@@ -116,7 +119,7 @@ class JobQueue:
                 queue_data[job_id]['status'] = JobStatus.PROCESSING.value
                 queue_data[job_id]['updated_at'] = datetime.now().isoformat()
                 self._save_queue(queue_data)
-                print(f"🏃 작업 시작: {job_id}")
+                logger.info(f"🏃 작업 시작: {job_id}")
                 return True
             return False
 
@@ -132,10 +135,10 @@ class JobQueue:
                     job['updated_at'] = datetime.now().isoformat()
                     job['error_message'] = None
                     self._save_queue(queue_data)
-                    print(f"🔄 작업 재시도: {job_id} (시도 {job['retry_count']}/{job['max_retries']})")
+                    logger.info(f"🔄 작업 재시도: {job_id} (시도 {job['retry_count']}/{job['max_retries']})")
                     return True
                 else:
-                    print(f"❌ 최대 재시도 횟수 초과: {job_id}")
+                    logger.warning(f"❌ 최대 재시도 횟수 초과: {job_id}")
             return False
 
     def get_job_stats(self) -> Dict[str, int]:
@@ -171,11 +174,11 @@ class JobQueue:
 
             for job_id in jobs_to_remove:
                 del queue_data[job_id]
-                print(f"🗑️ 오래된 작업 정리: {job_id}")
+                logger.info(f"🗑️ 오래된 작업 정리: {job_id}")
 
             if jobs_to_remove:
                 self._save_queue(queue_data)
-                print(f"✅ {len(jobs_to_remove)}개 오래된 작업 정리 완료")
+                logger.info(f"✅ {len(jobs_to_remove)}개 오래된 작업 정리 완료")
 
 # 전역 인스턴스
 job_queue = JobQueue()
