@@ -511,6 +511,8 @@ async def generate_video(
     # 폰트 설정
     title_font: str = Form(default="BMYEONSUNG_otf.otf"),  # 타이틀 폰트
     body_font: str = Form(default="BMYEONSUNG_otf.otf"),   # 본문 폰트
+    title_font_size: int = Form(default=42),               # 타이틀 폰트 크기 (pt)
+    body_font_size: int = Form(default=36),                # 본문 폰트 크기 (pt)
 
     # 자막 읽어주기 설정
     voice_narration: str = Form(default="enabled"),        # "enabled" (추가) 또는 "disabled" (제거)
@@ -631,8 +633,8 @@ async def generate_video(
         print(f"📝 텍스트 위치: {text_position}")
         print(f"🎨 텍스트 스타일: {text_style}")
         print(f"🏠 타이틀 영역 모드: {title_area_mode}")
-        print(f"🔤 타이틀 폰트: {title_font}")
-        print(f"📝 본문 폰트: {body_font}")
+        print(f"🔤 타이틀 폰트: {title_font} ({title_font_size}pt)")
+        print(f"📝 본문 폰트: {body_font} ({body_font_size}pt)")
         print(f"🎤 자막 읽어주기: {voice_narration}")
         print(f"🎬 크로스 디졸브: {cross_dissolve}")
         print(f"⏱️ 자막 지속 시간: {subtitle_duration}초 (0=음성길이)")
@@ -646,6 +648,8 @@ async def generate_video(
             title_area_mode,
             title_font,
             body_font,
+            title_font_size,
+            body_font_size,
             "uploads",
             music_mood,
             voice_narration,
@@ -1294,6 +1298,8 @@ async def preview_video(
     title_area_mode: str = Form(default="keep"),
     title_font: str = Form(default="BMYEONSUNG_otf.otf"),
     body_font: str = Form(default="BMYEONSUNG_otf.otf"),
+    title_font_size: int = Form(default=42),
+    body_font_size: int = Form(default=36),
     image_1: Optional[UploadFile] = File(None),
     job_id: Optional[str] = Form(None),  # Job ID 추가
 ):
@@ -1399,7 +1405,8 @@ async def preview_video(
                 title,
                 504,
                 220,
-                title_font
+                title_font,
+                title_font_size
             )
 
             # 배경 이미지 처리 (670px 영역)
@@ -1430,7 +1437,10 @@ async def preview_video(
             text_style,
             is_title=False,
             title_font=title_font,
-            body_font=body_font
+            body_font=body_font,
+            title_area_mode=title_area_mode,
+            title_font_size=title_font_size,
+            body_font_size=body_font_size
         )
 
         # 본문 텍스트 이미지 합성 (오버레이)
@@ -2726,6 +2736,8 @@ async def generate_video_async(
     # 폰트 설정 추가
     title_font: str = Form(default="BMYEONSUNG_otf.otf"),  # 타이틀 폰트
     body_font: str = Form(default="BMYEONSUNG_otf.otf"),   # 본문 폰트
+    title_font_size: int = Form(default=42),               # 타이틀 폰트 크기 (pt)
+    body_font_size: int = Form(default=36),                # 본문 폰트 크기 (pt)
 
     # 자막 읽어주기 설정
     voice_narration: str = Form(default="enabled"),        # "enabled" (추가) 또는 "disabled" (제거)
@@ -2835,6 +2847,8 @@ async def generate_video_async(
             # 폰트 파라미터 추가
             'title_font': title_font,
             'body_font': body_font,
+            'title_font_size': title_font_size,
+            'body_font_size': body_font_size,
             # 자막 읽어주기 파라미터 추가
             'voice_narration': voice_narration,
             # 크로스 디졸브 파라미터 추가

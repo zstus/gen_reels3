@@ -112,6 +112,8 @@ class VideoWorker:
             # 폰트 파라미터 추출
             title_font = video_params.get('title_font', 'BMYEONSUNG_otf.otf')
             body_font = video_params.get('body_font', 'BMYEONSUNG_otf.otf')
+            title_font_size = video_params.get('title_font_size', 42)
+            body_font_size = video_params.get('body_font_size', 36)
             # 자막 읽어주기 파라미터 추출
             voice_narration = video_params.get('voice_narration', 'enabled')
             # 크로스 디졸브 파라미터 추출
@@ -120,12 +122,12 @@ class VideoWorker:
             subtitle_duration = video_params.get('subtitle_duration', 0.0)
 
             # Print로 worker.log에 출력
-            print(f"📋 영상 파라미터: 음악={music_mood}, 테스트파일={use_test_files}, 텍스트위치={text_position}, 타이틀폰트={title_font}, 본문폰트={body_font}, 자막음성={voice_narration}, 크로스디졸브={cross_dissolve}, 자막지속시간={subtitle_duration}초")
+            print(f"📋 영상 파라미터: 음악={music_mood}, 테스트파일={use_test_files}, 텍스트위치={text_position}, 타이틀폰트={title_font}({title_font_size}pt), 본문폰트={body_font}({body_font_size}pt), 자막음성={voice_narration}, 크로스디졸브={cross_dissolve}, 자막지속시간={subtitle_duration}초")
             print(f"🔍 [Worker 디버깅] voice_narration='{voice_narration}' (타입: {type(voice_narration).__name__})")
             print(f"🔍 [Worker 디버깅] subtitle_duration={subtitle_duration} (타입: {type(subtitle_duration).__name__})")
 
             # 로거에도 기록 (api.log용, 작동 안할 수 있음)
-            logger.info(f"📋 영상 파라미터: 음악={music_mood}, 테스트파일={use_test_files}, 텍스트위치={text_position}, 타이틀폰트={title_font}, 본문폰트={body_font}, 자막음성={voice_narration}, 크로스디졸브={cross_dissolve}, 자막지속시간={subtitle_duration}초")
+            logger.info(f"📋 영상 파라미터: 음악={music_mood}, 테스트파일={use_test_files}, 텍스트위치={text_position}, 타이틀폰트={title_font}({title_font_size}pt), 본문폰트={body_font}({body_font_size}pt), 자막음성={voice_narration}, 크로스디졸브={cross_dissolve}, 자막지속시간={subtitle_duration}초")
             logger.info(f"🔍 [Worker 디버깅] voice_narration='{voice_narration}' (타입: {type(voice_narration).__name__})")
             logger.info(f"🔍 [Worker 디버깅] subtitle_duration={subtitle_duration} (타입: {type(subtitle_duration).__name__})")
 
@@ -189,6 +191,8 @@ class VideoWorker:
                     uploads_folder=uploads_folder,
                     title_font=title_font,
                     body_font=body_font,
+                    title_font_size=title_font_size,
+                    body_font_size=body_font_size,
                     music_mood=music_mood,
                     voice_narration=voice_narration,
                     cross_dissolve=cross_dissolve,
@@ -207,6 +211,8 @@ class VideoWorker:
                     uploads_folder=uploads_folder,
                     title_font=title_font,
                     body_font=body_font,
+                    title_font_size=title_font_size,
+                    body_font_size=body_font_size,
                     music_mood=music_mood,
                     voice_narration=voice_narration,
                     cross_dissolve=cross_dissolve,

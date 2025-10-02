@@ -68,6 +68,8 @@ export interface FontFile {
 export interface FontSettings {
   titleFont: string;
   bodyFont: string;
+  titleFontSize: number;
+  bodyFontSize: number;
 }
 
 // 프로젝트 상태 타입
@@ -108,6 +110,8 @@ export interface GenerateVideoRequest {
   title_area_mode: TitleAreaMode;
   title_font?: string;
   body_font?: string;
+  title_font_size?: number;
+  body_font_size?: number;
   voice_narration: VoiceNarration;
   cross_dissolve: CrossDissolve;
   subtitle_duration?: number;
@@ -145,6 +149,10 @@ export interface AsyncVideoRequest {
   selected_bgm_path?: string;
   use_test_files?: boolean;
   images?: File[];
+  title_font?: string;
+  body_font?: string;
+  title_font_size?: number;
+  body_font_size?: number;
   voice_narration: VoiceNarration;
   cross_dissolve: CrossDissolve;
   subtitle_duration?: number;

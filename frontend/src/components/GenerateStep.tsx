@@ -96,6 +96,8 @@ const GenerateStep: React.FC<GenerateStepProps> = ({
   const [loadingFonts, setLoadingFonts] = useState(true);
   const [titleFont, setTitleFont] = useState<string>('BMYEONSUNG_otf.otf');
   const [bodyFont, setBodyFont] = useState<string>('BMYEONSUNG_otf.otf');
+  const [titleFontSize, setTitleFontSize] = useState<number>(42);
+  const [bodyFontSize, setBodyFontSize] = useState<number>(36);
   const [textPosition, setTextPosition] = useState<TextPosition>('bottom');
   const [textStyle, setTextStyle] = useState<TextStyle>('outline');
   const [titleAreaMode, setTitleAreaMode] = useState<TitleAreaMode>('keep');
@@ -111,6 +113,8 @@ const GenerateStep: React.FC<GenerateStepProps> = ({
   useEffect(() => {
     setTitleFont(projectData.fontSettings.titleFont);
     setBodyFont(projectData.fontSettings.bodyFont);
+    setTitleFontSize(projectData.fontSettings.titleFontSize);
+    setBodyFontSize(projectData.fontSettings.bodyFontSize);
     setTextPosition(projectData.textPosition);
     setTextStyle(projectData.textStyle);
     setTitleAreaMode(projectData.titleAreaMode);
@@ -172,6 +176,8 @@ const GenerateStep: React.FC<GenerateStepProps> = ({
         titleAreaMode: titleAreaMode,
         titleFont: titleFont,
         bodyFont: bodyFont,
+        titleFontSize: titleFontSize,
+        bodyFontSize: bodyFontSize,
         image: projectData.images[0] || undefined,
         jobId: projectData.jobId,  // Job ID 추가
       });
@@ -260,6 +266,8 @@ const GenerateStep: React.FC<GenerateStepProps> = ({
         musicMood: projectData.musicMood,
         titleFont: titleFont,
         bodyFont: bodyFont,
+        titleFontSize: titleFontSize,
+        bodyFontSize: bodyFontSize,
         voiceNarration: voiceNarration,
         crossDissolve: crossDissolve,
         subtitleDuration: subtitleDuration,
@@ -561,6 +569,20 @@ const GenerateStep: React.FC<GenerateStepProps> = ({
                     </FormControl>
                   </Grid>
                   <Grid item xs={12} sm={6}>
+                    <TextField
+                      fullWidth
+                      size="small"
+                      label="타이틀 폰트 크기 (pt)"
+                      type="number"
+                      value={titleFontSize}
+                      onChange={(e) => setTitleFontSize(Number(e.target.value))}
+                      InputProps={{
+                        inputProps: { min: 20, max: 80, step: 2 }
+                      }}
+                      helperText="기본: 42pt (20-80pt)"
+                    />
+                  </Grid>
+                  <Grid item xs={12} sm={6}>
                     <FormControl fullWidth size="small">
                       <InputLabel>본문 폰트</InputLabel>
                       <Select
@@ -583,6 +605,20 @@ const GenerateStep: React.FC<GenerateStepProps> = ({
                         )}
                       </Select>
                     </FormControl>
+                  </Grid>
+                  <Grid item xs={12} sm={6}>
+                    <TextField
+                      fullWidth
+                      size="small"
+                      label="본문 폰트 크기 (pt)"
+                      type="number"
+                      value={bodyFontSize}
+                      onChange={(e) => setBodyFontSize(Number(e.target.value))}
+                      InputProps={{
+                        inputProps: { min: 20, max: 72, step: 2 }
+                      }}
+                      helperText="기본: 36pt (20-72pt)"
+                    />
                   </Grid>
                 </Grid>
               </AccordionDetails>

@@ -1786,5 +1786,137 @@
     "error_message": null,
     "retry_count": 0,
     "max_retries": 2
+  },
+  "job_ak52k2uil_mg7ipcls": {
+    "job_id": "job_ak52k2uil_mg7ipcls",
+    "user_email": "xystus@gmail.com",
+    "status": "failed",
+    "created_at": "2025-10-01T05:01:42.528117",
+    "updated_at": "2025-10-01T05:01:45.641437",
+    "video_params": {
+      "content_data": "{\"title\":\"결혼 5개월 전\",\"body1\":\"펜션에서 컵라면 먹으려다, 커피포트 물이 튀어 발등 화상!\",\"body2\":\"너무 아파서 주저앉았는데… 예비신랑? 그냥 '헐' 한마디 하고 소파 가서 유튜브\",\"body3\":\"심지어 '괜찮아?' 이 한마디도 없음. 동태눈으로 빤히 쳐다본 게 다임\",\"body4\":\"이전에도 공감 제로, 내 얘기하면 무반응, 웃겨도 정색… 이번엔 진짜 터짐.\",\"body5\":\"따지니까 '내가 괜찮냐고 물으면 낫냐? 여자들은 너무 기대가 크다' 이딴 소리\",\"body6\":\"결혼 약속하니까 이제 보인다. 이기적이고 공감 없는 남자라는 거.\",\"body7\":\"백년해로? 아니, 예식장 취소부터 검색 중ㅋㅋ 내가 너무한 걸까?\",\"body8\":\"\"}",
+      "music_mood": "none",
+      "image_allocation_mode": "single_for_all",
+      "text_position": "bottom-edge",
+      "text_style": "white_background",
+      "title_area_mode": "keep",
+      "selected_bgm_path": "",
+      "use_test_files": false,
+      "uploaded_files": [
+        "1.webp"
+      ],
+      "title_font": "PretendardVariable.ttf",
+      "body_font": "BMYEONSUNG_otf.otf",
+      "title_font_size": 60,
+      "body_font_size": 20,
+      "voice_narration": "enabled",
+      "cross_dissolve": "enabled",
+      "subtitle_duration": 0.0
+    },
+    "result": null,
+    "error_message": "VideoGenerator.create_video_from_uploads() got an unexpected keyword argument 'title_font_size'",
+    "retry_count": 2,
+    "max_retries": 2
+  },
+  "job_qo0nzc1yp_mg7ivfsp": {
+    "job_id": "job_qo0nzc1yp_mg7ivfsp",
+    "user_email": "xystus@gmail.com",
+    "status": "failed",
+    "created_at": "2025-10-01T05:06:40.502465",
+    "updated_at": "2025-10-01T05:06:44.674750",
+    "video_params": {
+      "content_data": "{\"title\":\"히키코모리에서 일본 아이콘으로!\",\"body1\":\"중학교 때부터 학교 폭력에 시달린 한 소녀가 있었어. 교실 대신 보건실에 숨어 지내야 했고, 학교는 그녀에게 지옥과도 같았지. 고등학교에 진학해서도 상황은 나아지지 않았어.\",\"body2\":\"결국 고등학교 자퇴 후 히키코모리로 지냈어. 방문 앞에 배달된 밥만 먹을 정도로 인간 혐오에 빠졌던 아노. 세상이 싫었지만, 어떻게든 적응하려 슈퍼마켓 알바에 도전했지.\",\"body3\":\"하지만 세상은 녹록지 않았어. 알바 3일 만에 손님에게 화를 내고 그만뒀지. 그런데 그 3일 동안 파트타임 선배들에게 '아이돌 해보는 건 어때?'라는 뜻밖의 권유를 받게 돼.\",\"body4\":\"다시 방으로 돌아온 아노는 트위터에서 아이돌 모집 공고를 보고 응모해. 면접 메일을 무시했지만, 프로듀서의 끈질긴 권유로 용기를 내 라이브장에 갔고, 지하 아이돌 '유르메루모!'로 활동을 시작했지.\",\"body5\":\"초기 활동은 괴짜에 가까웠어. 일반 아이돌과는 거리가 멀었지. 6년여 활동후 다시 히키코모리로. 하지만 다시 솔로로 돌아와 스스로 작사/작곡한 '딜리트'로 활동재개.\",\"body6\":\"열등감으로 가득 차 '바보'라고 외치던 그녀의 모습은 화려하게 포장된 성공 스토리가 아닌, 하루하루를 버텨내는 현실의 외침이었고, 이게 오히려 그녀를 시대의 아이콘으로 만들었어. 아노의 갤럭시 CF 넌 어때?\",\"body7\":\"\",\"body8\":\"\"}",
+      "music_mood": "none",
+      "image_allocation_mode": "single_for_all",
+      "text_position": "bottom-edge",
+      "text_style": "white_background",
+      "title_area_mode": "keep",
+      "selected_bgm_path": "",
+      "use_test_files": false,
+      "uploaded_files": [
+        "1.mp4"
+      ],
+      "title_font": "BMHANNAPro.ttf",
+      "body_font": "BMYEONSUNG_otf.otf",
+      "title_font_size": 42,
+      "body_font_size": 36,
+      "voice_narration": "disabled",
+      "cross_dissolve": "enabled",
+      "subtitle_duration": 4.3
+    },
+    "result": null,
+    "error_message": "VideoGenerator.create_video_from_uploads() got an unexpected keyword argument 'title_font_size'",
+    "retry_count": 2,
+    "max_retries": 2
+  },
+  "job_yw0e8xp98_mg7rbgq0": {
+    "job_id": "job_yw0e8xp98_mg7rbgq0",
+    "user_email": "xystus@gmail.com",
+    "status": "completed",
+    "created_at": "2025-10-01T09:04:05.465048",
+    "updated_at": "2025-10-01T09:06:45.933500",
+    "video_params": {
+      "content_data": "{\"title\":\"히키코모리에서 일본 아이콘으로!\",\"body1\":\"중학교 때부터 학교 폭력에 시달린 한 소녀가 있었어. 교실 대신 보건실에 숨어 지내야 했고, 학교는 그녀에게 지옥과도 같았지. 고등학교에 진학해서도 상황은 나아지지 않았어.\",\"body2\":\"결국 고등학교 자퇴 후 히키코모리로 지냈어. 방문 앞에 배달된 밥만 먹을 정도로 인간 혐오에 빠졌던 아노. 세상이 싫었지만, 어떻게든 적응하려 슈퍼마켓 알바에 도전했지.\",\"body3\":\"하지만 세상은 녹록지 않았어. 알바 3일 만에 손님에게 화를 내고 그만뒀지. 그런데 그 3일 동안 파트타임 선배들에게 '아이돌 해보는 건 어때?'라는 뜻밖의 권유를 받게 돼.\",\"body4\":\"다시 방으로 돌아온 아노는 트위터에서 아이돌 모집 공고를 보고 응모해. 면접 메일을 무시했지만, 프로듀서의 끈질긴 권유로 용기를 내 라이브장에 갔고, 지하 아이돌 '유르메루모!'로 활동을 시작했지.\",\"body5\":\"초기 활동은 괴짜에 가까웠어. 일반 아이돌과는 거리가 멀었지. 6년여 활동후 다시 히키코모리로. 하지만 다시 솔로로 돌아와 스스로 작사/작곡한 '딜리트'로 활동재개.\",\"body6\":\"열등감으로 가득 차 '바보'라고 외치던 그녀의 모습은 화려하게 포장된 성공 스토리가 아닌, 하루하루를 버텨내는 현실의 외침이었고, 이게 오히려 그녀를 시대의 아이콘으로 만들었어. 아노의 갤럭시 CF 넌 어때?\",\"body7\":\"\",\"body8\":\"\"}",
+      "music_mood": "none",
+      "image_allocation_mode": "single_for_all",
+      "text_position": "bottom-edge",
+      "text_style": "white_background",
+      "title_area_mode": "keep",
+      "selected_bgm_path": "",
+      "use_test_files": false,
+      "uploaded_files": [
+        "1.mp4"
+      ],
+      "title_font": "BMHANNAPro.ttf",
+      "body_font": "SeoulHangangEB.ttf",
+      "title_font_size": 42,
+      "body_font_size": 28,
+      "voice_narration": "disabled",
+      "cross_dissolve": "enabled",
+      "subtitle_duration": 4.3
+    },
+    "result": {
+      "video_path": "/zstus/backend/output_videos/202510/reels_3ed5e9e4.mp4",
+      "duration": "약 10-30초",
+      "completed_at": "2025-10-01T09:06:45.931456"
+    },
+    "error_message": null,
+    "retry_count": 0,
+    "max_retries": 2
+  },
+  "job_5yp6r88k5_mg8k9uha": {
+    "job_id": "job_5yp6r88k5_mg8k9uha",
+    "user_email": "xystus@gmail.com",
+    "status": "completed",
+    "created_at": "2025-10-01T22:35:44.464003",
+    "updated_at": "2025-10-01T22:39:27.207658",
+    "video_params": {
+      "content_data": "{\"title\":\"🔥 충격! OpenAI가 'Sora 2'와 소셜 앱을 공개했다!\",\"body1\":\"얘들아, OpenAI가 영상 생성 모델 Sora 2를 드디어 공개했어! 기존 Sora가 'GPT-1'이었다면, 이번엔 영상계의 'GPT-3.5급 순간'이래. 성능이 역대급으로 올랐다고.\",\"body2\":\"가장 큰 변화는 물리학 법칙을 훨씬 더 잘 따른다는 거야. 이전 모델은 농구공이 슛 미스 나도 텔레포트했지만, Sora 2는 백보드 맞고 정확히 튕겨 나와. 실패까지 모델링하는 거야!\",\"body3\":\"사실성도 미쳤어. 음성 대화와 사운드 이펙트까지 동기화해서 만들어낸대. 게다가 올림픽 체조 루틴, 물에 뜨는 다이내믹까지 정확히 모델링 가능하대.\",\"body4\":\"컨트롤 능력도 대폭 향상! 복잡한 시네마틱 장면 지시도 잘 따르고, 사실적, 영화적, 애니메이션 스타일 등 원하는 스타일을 구현해준대.\",\"body5\":\"근데 더 대박은 이 기능이야. 'Cameos(카메오)' 기능! 내 모습을 짧게 녹화하면, Sora가 만든 영상 속에 내 외모와 목소리를 그대로 넣어주는 거야. 나를 원하는 어떤 환경에든 등장시킬 수 있어!\",\"body6\":\"OpenAI가 이 기능을 중심으로 새로운 소셜 앱 'Sora'를 출시했어. 앱에서 영상을 만들고, 서로의 결과물을 리믹스하며 소통하는, 새로운 개념의 공동 창작 플랫폼이래.\",\"body7\":\"Sora 2는 현재 미국과 캐나다에서 iOS 앱으로 출시됐고, 초기에 무료로 체험해 볼 수 있대. GPT-4o Pro 사용자는 더 고품질의 Pro 모델도 써볼 수 있다니, 당장 다운받아 보자!\",\"body8\":\"\"}",
+      "music_mood": "none",
+      "image_allocation_mode": "single_for_all",
+      "text_position": "bottom-edge",
+      "text_style": "white_background",
+      "title_area_mode": "remove",
+      "selected_bgm_path": "",
+      "use_test_files": false,
+      "uploaded_files": [
+        "1.mp4"
+      ],
+      "title_font": "BMYEONSUNG_otf.otf",
+      "body_font": "BMYEONSUNG_otf.otf",
+      "title_font_size": 42,
+      "body_font_size": 30,
+      "voice_narration": "disabled",
+      "cross_dissolve": "enabled",
+      "subtitle_duration": 5.0
+    },
+    "result": {
+      "video_path": "/zstus/backend/output_videos/202510/reels_d37ad1d9.mp4",
+      "duration": "약 10-30초",
+      "completed_at": "2025-10-01T22:39:27.205473"
+    },
+    "error_message": null,
+    "retry_count": 0,
+    "max_retries": 2
   }
 }

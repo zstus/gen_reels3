@@ -64,6 +64,8 @@ const MainApp: React.FC = () => {
     fontSettings: {
       titleFont: 'BMYEONSUNG_otf.otf',
       bodyFont: 'BMYEONSUNG_otf.otf',
+      titleFontSize: 42,
+      bodyFontSize: 36,
     },
     voiceNarration: 'enabled',
     crossDissolve: 'enabled',
@@ -102,6 +104,8 @@ const MainApp: React.FC = () => {
       fontSettings: {
         titleFont: 'BMYEONSUNG_otf.otf',
         bodyFont: 'BMYEONSUNG_otf.otf',
+        titleFontSize: 42,
+        bodyFontSize: 36,
       },
       voiceNarration: 'enabled',
       crossDissolve: 'enabled',

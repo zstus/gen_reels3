@@ -138,6 +138,12 @@ export const apiService = {
     if (data.bodyFont) {
       formData.append('body_font', data.bodyFont);
     }
+    if (data.titleFontSize) {
+      formData.append('title_font_size', String(data.titleFontSize));
+    }
+    if (data.bodyFontSize) {
+      formData.append('body_font_size', String(data.bodyFontSize));
+    }
 
     // 선택된 음악 파일 경로 추가
     if (data.musicFile) {
@@ -198,6 +204,8 @@ export const apiService = {
     useTestFiles?: boolean;
     titleFont?: string;
     bodyFont?: string;
+    titleFontSize?: number;
+    bodyFontSize?: number;
     voiceNarration: VoiceNarration;
     crossDissolve: CrossDissolve;
     subtitleDuration?: number;
@@ -243,6 +251,12 @@ export const apiService = {
     }
     if (data.bodyFont) {
       formData.append('body_font', data.bodyFont);
+    }
+    if (data.titleFontSize) {
+      formData.append('title_font_size', String(data.titleFontSize));
+    }
+    if (data.bodyFontSize) {
+      formData.append('body_font_size', String(data.bodyFontSize));
     }
 
     // 선택된 음악 파일 경로 추가
@@ -312,6 +326,8 @@ export const apiService = {
     titleAreaMode: TitleAreaMode;
     titleFont: string;
     bodyFont: string;
+    titleFontSize?: number;
+    bodyFontSize?: number;
     image?: File;
     jobId?: string;  // Job ID 추가
   }): Promise<{ status: string; preview_url: string; message: string }> {
@@ -324,6 +340,13 @@ export const apiService = {
     formData.append('title_area_mode', data.titleAreaMode);
     formData.append('title_font', data.titleFont);
     formData.append('body_font', data.bodyFont);
+
+    if (data.titleFontSize) {
+      formData.append('title_font_size', String(data.titleFontSize));
+    }
+    if (data.bodyFontSize) {
+      formData.append('body_font_size', String(data.bodyFontSize));
+    }
 
     if (data.jobId) {
       formData.append('job_id', data.jobId);  // Job ID 추가
