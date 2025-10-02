@@ -130,6 +130,7 @@ const VideoBookmarkModal: React.FC<VideoBookmarkModalProps> = ({
               component="img"
               image={video.thumbnail_url!}
               alt={video.display_name}
+              loading="lazy"
               sx={{
                 position: 'absolute',
                 top: 0,
@@ -200,13 +201,21 @@ const VideoBookmarkModal: React.FC<VideoBookmarkModalProps> = ({
           >
             {video.display_name}
           </Typography>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <Chip
-              label={`${video.size_mb} MB`}
-              size="small"
-              sx={{ fontSize: '0.7rem', height: 20 }}
-            />
-            <Typography variant="caption" color="text.secondary">
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <Chip
+                label={`${video.size_mb} MB`}
+                size="small"
+                sx={{ fontSize: '0.7rem', height: 20 }}
+              />
+              <Chip
+                label={`${video.duration}초`}
+                size="small"
+                color="primary"
+                sx={{ fontSize: '0.7rem', height: 20 }}
+              />
+            </Box>
+            <Typography variant="caption" color="text.secondary" sx={{ textAlign: 'center' }}>
               {new Date(video.modified_time * 1000).toLocaleDateString('ko-KR', {
                 month: 'short',
                 day: 'numeric',

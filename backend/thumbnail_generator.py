@@ -26,12 +26,14 @@ logger = get_logger('thumbnail_generator')
 class ThumbnailGenerator:
     """비디오 썸네일 생성기"""
 
-    def __init__(self, thumbnail_size: Tuple[int, int] = (480, 480)):
+    def __init__(self, thumbnail_size: Tuple[int, int] = (200, 200), use_webp: bool = True):
         """
         Args:
-            thumbnail_size: 썸네일 크기 (width, height)
+            thumbnail_size: 썸네일 크기 (width, height) - 기본값 200x200으로 최적화
+            use_webp: WebP 포맷 사용 여부 (기본값 True)
         """
         self.thumbnail_size = thumbnail_size
+        self.use_webp = use_webp
         self.generated_count = 0
         self.skipped_count = 0
         self.error_count = 0
@@ -79,13 +81,19 @@ class ThumbnailGenerator:
             # 리사이즈
             img = img.resize(self.thumbnail_size, Image.Resampling.LANCZOS)
 
-            # 저장
-            img.save(output_path, 'JPEG', quality=85, optimize=True)
+            # 포맷별 저장 (WebP 우선)
+            if self.use_webp:
+                # WebP 포맷: 50-70% 용량 감소, 고품질 유지
+                img.save(output_path, 'WEBP', quality=80, method=4, optimize=True)
+                logger.info(f"✅ WebP 썸네일 생성 성공: {os.path.basename(output_path)} (200x200)")
+            else:
+                # JPEG 포맷 (하위 호환)
+                img.save(output_path, 'JPEG', quality=85, optimize=True)
+                logger.info(f"✅ JPEG 썸네일 생성 성공: {os.path.basename(output_path)}")
 
             # 리소스 정리
             video.close()
 
-            logger.info(f"✅ 썸네일 생성 성공: {os.path.basename(output_path)}")
             return True
 
         except Exception as e:
@@ -124,11 +132,17 @@ class ThumbnailGenerator:
 
         for video_path in video_files:
             filename = os.path.basename(video_path)
-            thumbnail_name = filename.replace('.mp4', '.jpg')
+
+            # WebP 또는 JPEG 썸네일 확장자 결정
+            thumbnail_ext = '.webp' if self.use_webp else '.jpg'
+            thumbnail_name = filename.replace('.mp4', thumbnail_ext)
             thumbnail_path = os.path.join(bookmark_folder, thumbnail_name)
 
-            # 이미 썸네일이 존재하는지 확인
-            if os.path.exists(thumbnail_path):
+            # 이미 썸네일이 존재하는지 확인 (WebP 및 JPEG 모두 체크)
+            webp_path = os.path.join(bookmark_folder, filename.replace('.mp4', '.webp'))
+            jpg_path = os.path.join(bookmark_folder, filename.replace('.mp4', '.jpg'))
+
+            if os.path.exists(webp_path) or os.path.exists(jpg_path):
                 logger.debug(f"⏭️ 썸네일 이미 존재: {thumbnail_name}")
                 self.skipped_count += 1
                 continue
@@ -170,11 +184,15 @@ class ThumbnailGenerator:
             logger.error(f"❌ 비디오 파일을 찾을 수 없습니다: {video_path}")
             return False
 
-        # 썸네일 경로 생성
-        thumbnail_path = video_path.replace('.mp4', '.jpg')
+        # WebP 또는 JPEG 썸네일 경로 생성
+        thumbnail_ext = '.webp' if self.use_webp else '.jpg'
+        thumbnail_path = video_path.replace('.mp4', thumbnail_ext)
 
-        # 이미 존재하면 스킵
-        if os.path.exists(thumbnail_path):
+        # 이미 존재하면 스킵 (WebP 및 JPEG 모두 체크)
+        webp_path = video_path.replace('.mp4', '.webp')
+        jpg_path = video_path.replace('.mp4', '.jpg')
+
+        if os.path.exists(webp_path) or os.path.exists(jpg_path):
             logger.info(f"⏭️ 썸네일 이미 존재: {os.path.basename(thumbnail_path)}")
             return True
 

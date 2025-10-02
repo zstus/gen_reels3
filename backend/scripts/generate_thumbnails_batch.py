@@ -35,13 +35,13 @@ class ThumbnailBatchGenerator:
             raise FileNotFoundError(f"Videos 디렉토리가 존재하지 않습니다: {videos_dir}")
 
     def generate_video_thumbnail(self, video_path: str, thumbnail_path: str) -> bool:
-        """비디오 파일에서 썸네일 이미지 생성"""
+        """비디오 파일에서 썸네일 이미지 생성 (WebP 200x200)"""
         try:
             logger.info(f"🎬 썸네일 생성 시작: {os.path.basename(video_path)}")
 
             with VideoFileClip(video_path) as clip:
-                # 동영상 길이의 10% 지점에서 썸네일 추출 (최소 1초, 최대 clip.duration-0.1)
-                thumbnail_time = min(max(1.0, clip.duration * 0.1), clip.duration - 0.1)
+                # 동영상 0.5초 지점에서 썸네일 추출
+                thumbnail_time = min(0.5, clip.duration - 0.1)
 
                 # 프레임 추출
                 frame = clip.get_frame(thumbnail_time)
@@ -49,13 +49,22 @@ class ThumbnailBatchGenerator:
                 # PIL Image로 변환
                 image = Image.fromarray(frame)
 
-                # 썸네일 크기로 리사이즈 (가로 240px, 세로 비례 조정)
-                image.thumbnail((240, 240), Image.Resampling.LANCZOS)
+                # 정사각형으로 크롭 (중앙 기준)
+                width, height = image.size
+                if width > height:
+                    left = (width - height) // 2
+                    image = image.crop((left, 0, left + height, height))
+                else:
+                    top = (height - width) // 2
+                    image = image.crop((0, top, width, top + width))
 
-                # JPG로 저장
-                image.save(thumbnail_path, 'JPEG', quality=85)
+                # 200x200으로 리사이즈 (LANCZOS 고품질)
+                image = image.resize((200, 200), Image.Resampling.LANCZOS)
 
-                logger.info(f"✅ 썸네일 생성 완료: {os.path.basename(thumbnail_path)}")
+                # WebP 포맷으로 저장 (80% 품질, method=4 최적화)
+                image.save(thumbnail_path, 'WEBP', quality=80, method=4, optimize=True)
+
+                logger.info(f"✅ WebP 썸네일 생성 완료: {os.path.basename(thumbnail_path)} (200x200)")
                 return True
 
         except Exception as e:
@@ -80,20 +89,26 @@ class ThumbnailBatchGenerator:
         return video_files
 
     def check_existing_thumbnails(self, video_files):
-        """기존 썸네일이 있는지 확인"""
+        """기존 썸네일이 있는지 확인 (WebP 우선, JPG 폴백)"""
         need_thumbnail = []
         already_exists = []
 
         for filename, file_path in video_files:
             # 썸네일 파일명 생성
             filename_without_ext = os.path.splitext(filename)[0]
-            thumbnail_filename = f"{filename_without_ext}.jpg"
-            thumbnail_path = os.path.join(self.videos_dir, thumbnail_filename)
+            thumbnail_filename_webp = f"{filename_without_ext}_thumb.webp"
+            thumbnail_filename_jpg = f"{filename_without_ext}_thumb.jpg"
+            thumbnail_path_webp = os.path.join(self.videos_dir, thumbnail_filename_webp)
+            thumbnail_path_jpg = os.path.join(self.videos_dir, thumbnail_filename_jpg)
 
-            if os.path.exists(thumbnail_path):
-                already_exists.append((filename, thumbnail_path))
+            # WebP 우선, 없으면 JPG 확인
+            if os.path.exists(thumbnail_path_webp):
+                already_exists.append((filename, thumbnail_path_webp))
+            elif os.path.exists(thumbnail_path_jpg):
+                already_exists.append((filename, thumbnail_path_jpg))
             else:
-                need_thumbnail.append((filename, file_path, thumbnail_path))
+                # 새로운 WebP 썸네일 경로
+                need_thumbnail.append((filename, file_path, thumbnail_path_webp))
 
         logger.info(f"📋 썸네일 현황:")
         logger.info(f"  ✅ 이미 존재: {len(already_exists)}개")
@@ -114,8 +129,8 @@ class ThumbnailBatchGenerator:
 
         # 기존 썸네일 확인
         if force_regenerate:
-            logger.info("🔄 강제 재생성 모드: 모든 썸네일을 다시 생성합니다")
-            to_process = [(filename, file_path, os.path.join(self.videos_dir, f"{os.path.splitext(filename)[0]}.jpg"))
+            logger.info("🔄 강제 재생성 모드: 모든 썸네일을 WebP로 다시 생성합니다")
+            to_process = [(filename, file_path, os.path.join(self.videos_dir, f"{os.path.splitext(filename)[0]}_thumb.webp"))
                          for filename, file_path in video_files]
         else:
             to_process, already_exists = self.check_existing_thumbnails(video_files)

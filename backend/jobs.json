@@ -1,72 +1,4 @@
 {
-  "4dab3ff4-c524-4435-a98d-082e6ac8f3c6": {
-    "job_id": "4dab3ff4-c524-4435-a98d-082e6ac8f3c6",
-    "user_email": "xystus@gmail.com",
-    "status": "completed",
-    "created_at": "2025-09-24T11:36:10.720533",
-    "updated_at": "2025-09-24T11:37:41.459963",
-    "video_params": {
-      "content_data": "{\"title\":\"선배의 자랑, 나만 불편해?\",\"body1\":\"선배는 분당 수내동의 큰평수 집에 살아, 대출도 없대.\",\"body2\":\"부동산 빼고 현금성 자산이 50억 정도 된다고 하더라.\",\"body3\":\"직접 증권사 앱 켜서 본인 자산을 보여주더라고.\",\"body4\":\"상속 아니고 선배가 직접 모은 돈이라는데, 좀 씁쓸했어.\",\"body5\":\"선배 자랑질 쿨하게 넘기려 해도 쉽지 않더라.\",\"body6\":\"민생지원금 못 받는다고 푸념할 땐 짜증나서, 일정 핑계로 자리를 피했지.\",\"body7\":\"재산 많아지면 세상 보는 뷰가 달라질까? 내가 쪼잔한건가?\",\"body8\":\"\"}",
-      "music_mood": "suspense",
-      "image_allocation_mode": "2_per_image",
-      "text_position": "bottom",
-      "text_style": "background",
-      "title_area_mode": "keep",
-      "selected_bgm_path": "Duty Calls - Rod Kim.mp3",
-      "use_test_files": false,
-      "uploaded_files": [
-        "1.png",
-        "2.mp4",
-        "3.mp4",
-        "4.mp4"
-      ],
-      "title_font": "IBMPlexSansKR-Bold.ttf",
-      "body_font": "BMYEONSUNG_otf.otf",
-      "voice_narration": "enabled"
-    },
-    "result": {
-      "video_path": "/zstus/backend/output_videos/reels_fb793466.mp4",
-      "duration": "약 10-30초",
-      "completed_at": "2025-09-24T11:37:41.458313"
-    },
-    "error_message": null,
-    "retry_count": 0,
-    "max_retries": 2
-  },
-  "117da431-2903-46c0-935f-1a98d81061e4": {
-    "job_id": "117da431-2903-46c0-935f-1a98d81061e4",
-    "user_email": "xystus@gmail.com",
-    "status": "completed",
-    "created_at": "2025-09-24T12:00:39.314057",
-    "updated_at": "2025-09-24T12:03:28.160549",
-    "video_params": {
-      "content_data": "{\"title\":\"가을을 타게되는 과학적 이유 알아?\",\"body1\":\"'가을 탄다'라는 말, 그냥 하는 말일까? 과학적 근거가 있을까?\",\"body2\":\"빨리 알려줄께. 세로토닌은 기분이 좋아지게 하는 호르몬인데, 햇빛을 받았을 때 분비가 왕성해져.\",\"body3\":\"가을이 되면 일조량이 줄잖아. 그래서 세로토닌도 줄어 우울해지는거야. 하나 더.\",\"body4\":\"사람의 몸은 기온이 올라갈 때 자극을 받아. 그래서 마음이 들뜨고 활기차져\",\"body5\":\"가을에 느끼는 무기력함, 온도가 낮기 때문이기도 한 거야.\",\"body6\":\"이런 상태를 환절기 우울증이라고 해. 직장인 82%가 이것을 경험한다?\",\"body7\":\"그러니 우울해도 너무 걱정말고, 넌 정상이니 가을 감성을 만끽해보는 건 어때?\",\"body8\":\"\"}",
-      "music_mood": "bright",
-      "image_allocation_mode": "2_per_image",
-      "text_position": "bottom",
-      "text_style": "background",
-      "title_area_mode": "keep",
-      "selected_bgm_path": "Fun Vibe - Dyalla.mp3",
-      "use_test_files": false,
-      "uploaded_files": [
-        "1.mp4",
-        "2.mp4",
-        "3.mp4",
-        "4.mp4"
-      ],
-      "title_font": "IBMPlexSansKR-Bold.ttf",
-      "body_font": "BMYEONSUNG_otf.otf",
-      "voice_narration": "enabled"
-    },
-    "result": {
-      "video_path": "/zstus/backend/output_videos/reels_d11ac68f.mp4",
-      "duration": "약 10-30초",
-      "completed_at": "2025-09-24T12:03:28.158829"
-    },
-    "error_message": null,
-    "retry_count": 0,
-    "max_retries": 2
-  },
   "7830daa0-4dd2-442d-ad74-34c679f902cb": {
     "job_id": "7830daa0-4dd2-442d-ad74-34c679f902cb",
     "user_email": "xystus@gmail.com",
@@ -1922,6 +1854,240 @@
       "video_path": "/zstus/backend/output_videos/202510/reels_29812185.mp4",
       "duration": "약 10-30초",
       "completed_at": "2025-10-02T06:02:03.224958"
+    },
+    "error_message": null,
+    "retry_count": 0,
+    "max_retries": 2
+  },
+  "job_7zenabghh_mg911pjj": {
+    "job_id": "job_7zenabghh_mg911pjj",
+    "user_email": "xystus@gmail.com",
+    "status": "completed",
+    "created_at": "2025-10-02T06:28:22.066462",
+    "updated_at": "2025-10-02T06:30:53.377845",
+    "video_params": {
+      "content_data": "{\"title\":\"명절에 시댁에 안 가는데, 처가는 왜..\",\"body1\":\"명절에 시댁 안 가면 당연히 여기도 안 가야 하는거 아냐? 참고로 나는 남편이야. \",\"body2\":\"우리 부모님이 자기들끼리 놀거라고 오지 말라 하셨거든. 그래서 명절에 대부분 본가에는 안 가. \",\"body3\":\"그래서 명절에 우리도 놀러가자고 했더니 아내는 처가엔 꼭 가야겠다는 거야. 꿀단지도 없으면서...\",\"body4\":\"본가는 안 가는데 처가는 매번 2박 3일씩 가는 건 당연하게 생각한다니까? \",\"body5\":\"이번 명절도 일요일부터 처가 가자고 하는데, 내가 혼자 애들 데리고 놀러가겠다고 하니까 안 된대.\",\"body6\":\"이런 건 공평해야 하는 거 아냐? 왜 나만 처가에 가야되는 건데?\",\"body7\":\"처가에 가야 돼? 아니면 놀러가자고 강력히 우길까? 너라면 어떻게 할래?\",\"body8\":\"\"}",
+      "music_mood": "bright",
+      "image_allocation_mode": "1_per_image",
+      "text_position": "bottom",
+      "text_style": "background",
+      "title_area_mode": "keep",
+      "selected_bgm_path": "For Granted - Dyalla.mp3",
+      "use_test_files": false,
+      "uploaded_files": [
+        "1.mp4",
+        "2.mp4",
+        "3.mp4",
+        "4.mp4",
+        "5.mp4",
+        "6.jpg",
+        "7.mp4"
+      ],
+      "title_font": "BMHANNAPro.ttf",
+      "body_font": "BMYEONSUNG_otf.otf",
+      "title_font_size": 42,
+      "body_font_size": 36,
+      "voice_narration": "enabled",
+      "cross_dissolve": "enabled",
+      "subtitle_duration": 0.0
+    },
+    "result": {
+      "video_path": "/zstus/backend/output_videos/202510/reels_e09773d1.mp4",
+      "duration": "약 10-30초",
+      "completed_at": "2025-10-02T06:30:53.375494"
+    },
+    "error_message": null,
+    "retry_count": 0,
+    "max_retries": 2
+  },
+  "job_dxqvy8rob_mg96st3b": {
+    "job_id": "job_dxqvy8rob_mg96st3b",
+    "user_email": "xystus@gmail.com",
+    "status": "completed",
+    "created_at": "2025-10-02T09:05:36.624674",
+    "updated_at": "2025-10-02T09:06:28.759562",
+    "video_params": {
+      "content_data": "{\"title\":\"띵동! 삼전 9만원 돌파!📈\",\"body1\":\"코스피 역대 최고치 돌파!💥\",\"body2\":\"SK하이닉스, 폭등 중!🚀\",\"body3\":\"삼전 '9만전자' 탄력!🔥\",\"body4\":\"연내 4000가? 가능성은?🌟\",\"body5\":\"90층 구조대에 왔어요!🏗️\",\"body6\":\"4년 9개월만에 돌파!💪\",\"body7\":\"증시 파장 속, 어디로?🌪️\",\"body8\":\"\"}",
+      "music_mood": "bright",
+      "image_allocation_mode": "1_per_image",
+      "text_position": "bottom-edge",
+      "text_style": "white_background",
+      "title_area_mode": "remove",
+      "selected_bgm_path": "Soaring - The Grey Room _ Golden Palms.mp3",
+      "use_test_files": false,
+      "uploaded_files": [
+        "1.png",
+        "2.png",
+        "3.png",
+        "4.png",
+        "5.png",
+        "6.png",
+        "7.png"
+      ],
+      "title_font": "BMYEONSUNG_otf.otf",
+      "body_font": "BMYEONSUNG_otf.otf",
+      "title_font_size": 42,
+      "body_font_size": 36,
+      "voice_narration": "enabled",
+      "cross_dissolve": "enabled",
+      "subtitle_duration": 0.0
+    },
+    "result": {
+      "video_path": "/zstus/backend/output_videos/202510/reels_94b19aa0.mp4",
+      "duration": "약 10-30초",
+      "completed_at": "2025-10-02T09:06:28.757361"
+    },
+    "error_message": null,
+    "retry_count": 0,
+    "max_retries": 2
+  },
+  "job_frc6icb0k_mg972rua": {
+    "job_id": "job_frc6icb0k_mg972rua",
+    "user_email": "xystus@gmail.com",
+    "status": "completed",
+    "created_at": "2025-10-02T09:13:18.672517",
+    "updated_at": "2025-10-02T09:18:21.970883",
+    "video_params": {
+      "content_data": "{\"title\":\"결혼 5개월 전\",\"body1\":\"펜션에서 컵라면 먹으려다, 커피포트 물이 튀어 발등 화상!\",\"body2\":\"너무 아파서 주저앉았는데… 예비신랑? 그냥 '헐' 한마디 하고 소파 가서 유튜브\",\"body3\":\"심지어 '괜찮아?' 이 한마디도 없음. 동태눈으로 빤히 쳐다본 게 다임\",\"body4\":\"이전에도 공감 제로, 내 얘기하면 무반응, 웃겨도 정색… 이번엔 진짜 터짐.\",\"body5\":\"따지니까 '내가 괜찮냐고 물으면 낫냐? 여자들은 너무 기대가 크다' 이딴 소리\",\"body6\":\"결혼 약속하니까 이제 보인다. 이기적이고 공감 없는 남자라는 거.\",\"body7\":\"백년해로? 아니, 예식장 취소부터 검색 중ㅋㅋ 내가 너무한 걸까?\",\"body8\":\"\"}",
+      "music_mood": "bright",
+      "image_allocation_mode": "2_per_image",
+      "text_position": "bottom-edge",
+      "text_style": "white_background",
+      "title_area_mode": "keep",
+      "selected_bgm_path": "Lace Tablecloths - The Mini Vandals.mp3",
+      "use_test_files": false,
+      "uploaded_files": [
+        "1.webp",
+        "2.mp4",
+        "3.mp4",
+        "4.jpg"
+      ],
+      "title_font": "BMHANNAPro.ttf",
+      "body_font": "BMYEONSUNG_otf.otf",
+      "title_font_size": 42,
+      "body_font_size": 36,
+      "voice_narration": "disabled",
+      "cross_dissolve": "enabled",
+      "subtitle_duration": 8.0
+    },
+    "result": {
+      "video_path": "/zstus/backend/output_videos/202510/reels_efc23ea8.mp4",
+      "duration": "약 10-30초",
+      "completed_at": "2025-10-02T09:18:21.964222"
+    },
+    "error_message": null,
+    "retry_count": 0,
+    "max_retries": 2
+  },
+  "job_xqgio87zf_mg97a9fr": {
+    "job_id": "job_xqgio87zf_mg97a9fr",
+    "user_email": "xystus@gmail.com",
+    "status": "completed",
+    "created_at": "2025-10-02T09:17:15.163757",
+    "updated_at": "2025-10-02T09:18:52.370994",
+    "video_params": {
+      "content_data": "{\"title\":\"결혼 5개월 전\",\"body1\":\"펜션에서 컵라면 먹으려다, 커피포트 물이 튀어 발등 화상!\",\"body2\":\"너무 아파서 주저앉았는데… 예비신랑? 그냥 '헐' 한마디 하고 소파 가서 유튜브\",\"body3\":\"심지어 '괜찮아?' 이 한마디도 없음. 동태눈으로 빤히 쳐다본 게 다임\",\"body4\":\"이전에도 공감 제로, 내 얘기하면 무반응, 웃겨도 정색… 이번엔 진짜 터짐.\",\"body5\":\"따지니까 '내가 괜찮냐고 물으면 낫냐? 여자들은 너무 기대가 크다' 이딴 소리\",\"body6\":\"결혼 약속하니까 이제 보인다. 이기적이고 공감 없는 남자라는 거.\",\"body7\":\"백년해로? 아니, 예식장 취소부터 검색 중ㅋㅋ 내가 너무한 걸까?\",\"body8\":\"\"}",
+      "music_mood": "bright",
+      "image_allocation_mode": "2_per_image",
+      "text_position": "bottom-edge",
+      "text_style": "white_background",
+      "title_area_mode": "keep",
+      "selected_bgm_path": "Soaring - The Grey Room _ Golden Palms.mp3",
+      "use_test_files": false,
+      "uploaded_files": [
+        "1.mp4",
+        "2.webp",
+        "3.mp4",
+        "4.mp4"
+      ],
+      "title_font": "BMHANNAPro.ttf",
+      "body_font": "PretendardVariable.ttf",
+      "title_font_size": 42,
+      "body_font_size": 36,
+      "voice_narration": "disabled",
+      "cross_dissolve": "enabled",
+      "subtitle_duration": 2.0
+    },
+    "result": {
+      "video_path": "/zstus/backend/output_videos/202510/reels_e2002415.mp4",
+      "duration": "약 10-30초",
+      "completed_at": "2025-10-02T09:18:52.362764"
+    },
+    "error_message": null,
+    "retry_count": 0,
+    "max_retries": 2
+  },
+  "job_y9d3gbo9q_mg9bvcb0": {
+    "job_id": "job_y9d3gbo9q_mg9bvcb0",
+    "user_email": "xystus@gmail.com",
+    "status": "completed",
+    "created_at": "2025-10-02T11:26:14.989819",
+    "updated_at": "2025-10-02T11:30:05.107116",
+    "video_params": {
+      "content_data": "{\"title\":\"이기적인 친정 엄마 VS 여행가기\",\"body1\":\"엄마, 제가 여행을 간다고요? 서운하다고요?\",\"body2\":\"자식 더 키워봤다고? 그럼 여행 더 많이 다녀올게요!\",\"body3\":\"명절이라고 해서 모든 걸 포기할 순 없잖아요.\",\"body4\":\"이번엔 제가 제 마음껏 쉬러 간다고요.\",\"body5\":\"늘 받기만 하는 게 아니라 주기도 중요한데.\",\"body6\":\"이런 일이 바로 소소한 행복일텐데요!\",\"body7\":\"엄마, 제가 행복해지고 올게요. 기다려주세요.\",\"body8\":\"\"}",
+      "music_mood": "none",
+      "image_allocation_mode": "single_for_all",
+      "text_position": "bottom-edge",
+      "text_style": "background",
+      "title_area_mode": "remove",
+      "selected_bgm_path": "",
+      "use_test_files": false,
+      "uploaded_files": [
+        "1.mp4"
+      ],
+      "title_font": "BMYEONSUNG_otf.otf",
+      "body_font": "BMYEONSUNG_otf.otf",
+      "title_font_size": 42,
+      "body_font_size": 36,
+      "voice_narration": "disabled",
+      "cross_dissolve": "enabled",
+      "subtitle_duration": 5.0
+    },
+    "result": {
+      "video_path": "/zstus/backend/output_videos/202510/reels_33ab69ed.mp4",
+      "duration": "약 10-30초",
+      "completed_at": "2025-10-02T11:30:05.104807"
+    },
+    "error_message": null,
+    "retry_count": 0,
+    "max_retries": 2
+  },
+  "job_a2kk8ds7o_mg9cu5or": {
+    "job_id": "job_a2kk8ds7o_mg9cu5or",
+    "user_email": "xystus@gmail.com",
+    "status": "completed",
+    "created_at": "2025-10-02T12:00:48.604523",
+    "updated_at": "2025-10-02T12:03:55.550518",
+    "video_params": {
+      "content_data": "{\"title\":\"명절에 집에 안 오는 딸\",\"body1\":\"명절에 집에 안 오는 자식이 그렇게 잘못된 거냐?\",\"body2\":\"시어머니 위암 말기라 가족끼리 여행 가기로 했다고 미리 말했는데, 엄마가 '명절에 집에 안 오는 자식이 어딨냐'고 하더라.\",\"body3\":\"아버지가 시어머니 옷 사라고 봉투 줬는데, 엄마가 '명절에 안 온다는데 뭐가 이쁘다고 주냐'며 빼앗아갔어.\",\"body4\":\"아버지는 화내고, 남동생도 '누나 없으면 명절 아니냐'며 봉투 다시 내 손에 쥐여줬지.\",\"body5\":\"동생이 운동화도 사왔는데, 엄마는 그것도 마음에 안 든다며 방에 들어가버렸어. 결국 밥도 못 먹고 그냥 왔어.\",\"body6\":\"밤에 엄마한테 울면서 전화 왔어. '서운하다, 나도 같이 여행 가고 싶다'고. 짜증나.\",\"body7\":\"25살에 혼자된 사람 모시고 여행 한 번 가는 게 그렇게 배 아픈 일인가? 내가한 건가, 엄마가한 건가? 너라면 어때?\",\"body8\":\"\"}",
+      "music_mood": "sad",
+      "image_allocation_mode": "1_per_image",
+      "text_position": "bottom-edge",
+      "text_style": "background",
+      "title_area_mode": "keep",
+      "selected_bgm_path": "Land of a Loss - Dan _Lebo_ Lebowitz, Tone Seeker.mp3",
+      "use_test_files": false,
+      "uploaded_files": [
+        "1.mp4",
+        "2.png",
+        "3.mp4",
+        "4.mp4",
+        "5.mp4",
+        "6.png",
+        "7.mp4"
+      ],
+      "title_font": "BMHANNAPro.ttf",
+      "body_font": "BMYEONSUNG_otf.otf",
+      "title_font_size": 50,
+      "body_font_size": 36,
+      "voice_narration": "enabled",
+      "cross_dissolve": "enabled",
+      "subtitle_duration": 0.0
+    },
+    "result": {
+      "video_path": "/zstus/backend/output_videos/202510/reels_075096f7.mp4",
+      "duration": "약 10-30초",
+      "completed_at": "2025-10-02T12:03:55.548231"
     },
     "error_message": null,
     "retry_count": 0,

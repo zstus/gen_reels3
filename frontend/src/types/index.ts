@@ -252,4 +252,6 @@ export interface BookmarkVideo {
   video_url: string;
   thumbnail_url: string | null;
   has_thumbnail: boolean;
+  duration: number;
+  extension: string;
 }

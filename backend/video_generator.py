@@ -1559,7 +1559,8 @@ class VideoGenerator:
                     content['title'],
                     self.video_width,
                     220,
-                    title_font
+                    title_font,
+                    title_font_size
                 )
                 print("✅ 타이틀 영역 확보: 220px 타이틀 + 670px 미디어")
             else:
