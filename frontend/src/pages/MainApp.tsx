@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   Box,
   Container,
@@ -17,7 +17,7 @@ import {
 import { AccountCircle, ExitToApp } from '@mui/icons-material';
 import { useAuth } from '../contexts/AuthContext';
 import ContentStep from '../components/ContentStep';
-import ImageStep from '../components/ImageStep';
+import ImageStep, { ImageStepRef } from '../components/ImageStep';
 import MusicStep from '../components/MusicStep';
 import GenerateStep from '../components/GenerateStep';
 import { ProjectData, ReelsContent, MusicMood, ImageUploadMode, MusicFile, TextPosition, TextStyle, TitleAreaMode, CrossDissolve } from '../types';
@@ -39,6 +39,9 @@ const MainApp: React.FC = () => {
   const { user, logout } = useAuth();
   const [activeStep, setActiveStep] = useState(0);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+
+  // ✅ ImageStep의 ref 생성 (영상 생성 시 데이터 수집용)
+  const imageStepRef = useRef<ImageStepRef>(null);
   
   // 프로젝트 데이터 상태
   const [projectData, setProjectData] = useState<ProjectData>({
@@ -124,6 +127,8 @@ const MainApp: React.FC = () => {
     }));
   };
 
+  // ✅ editedTexts는 ImageStep의 ref를 통해 가져오므로 불필요
+
   const handleMusicChange = (selectedMusic: MusicFile | null, musicMood: MusicMood) => {
     setProjectData(prev => ({
       ...prev,
@@ -150,6 +155,48 @@ const MainApp: React.FC = () => {
       // Job ID를 새로 생성하고 재시도 또는 사용자에게 알림
       alert('작업 폴더 생성에 실패했습니다. 다시 시도해주세요.');
     }
+  };
+
+  // ImageStep에서 "다음" 버튼을 누를 때 수정된 텍스트를 projectData에 반영
+  const handleImageStepNext = () => {
+    // ImageStep ref에서 수정된 텍스트 수집
+    const { editedTexts } = imageStepRef.current?.getEditedData() || { editedTexts: {} };
+
+    // 원본 content 복사
+    const updatedContent = { ...projectData.content };
+
+    // editedTexts를 content에 병합
+    Object.keys(editedTexts).forEach(imageIndexStr => {
+      const imageIndex = parseInt(imageIndexStr);
+      const texts = editedTexts[imageIndex];
+
+      if (texts && texts.length > 0) {
+        if (projectData.imageUploadMode === 'per-two-scripts') {
+          // per-two-scripts: imageIndex 0 → body1, body2
+          const startIdx = imageIndex * 2 + 1;
+          texts.forEach((text, idx) => {
+            const bodyKey = `body${startIdx + idx}` as keyof ReelsContent;
+            if (text && bodyKey in updatedContent) {
+              updatedContent[bodyKey] = text;
+            }
+          });
+        } else if (projectData.imageUploadMode === 'per-script') {
+          // per-script: imageIndex 0 → body1
+          const bodyKey = `body${imageIndex + 1}` as keyof ReelsContent;
+          if (texts[0] && bodyKey in updatedContent) {
+            updatedContent[bodyKey] = texts[0];
+          }
+        }
+      }
+    });
+
+    console.log('✅ 수정된 텍스트 세션에 반영:', updatedContent);
+
+    // projectData 업데이트
+    setProjectData(prev => ({ ...prev, content: updatedContent }));
+
+    // 다음 단계로 이동
+    handleNext();
   };
 
 
@@ -179,12 +226,13 @@ const MainApp: React.FC = () => {
       case 1:
         return (
           <ImageStep
+            ref={imageStepRef}
             images={projectData.images}
             imageUploadMode={projectData.imageUploadMode}
             content={projectData.content}
-            jobId={projectData.jobId} // Job ID 전달
+            jobId={projectData.jobId}
             onChange={handleImagesChange}
-            onNext={handleNext}
+            onNext={handleImageStepNext}
             onBack={handleBack}
           />
         );
@@ -202,6 +250,7 @@ const MainApp: React.FC = () => {
         return (
           <GenerateStep
             projectData={projectData}
+            imageStepRef={imageStepRef}
             onBack={handleBack}
             onReset={handleReset}
           />

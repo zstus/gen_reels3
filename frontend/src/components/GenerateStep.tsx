@@ -31,6 +31,7 @@ import {
   AccordionDetails,
   Skeleton,
 } from '@mui/material';
+import { ImageStepRef } from './ImageStep';
 import {
   PlayArrow,
   Download,
@@ -55,12 +56,14 @@ import apiService from '../services/api';
 
 interface GenerateStepProps {
   projectData: ProjectData;
+  imageStepRef: React.RefObject<ImageStepRef>;
   onBack: () => void;
   onReset: () => void;
 }
 
 const GenerateStep: React.FC<GenerateStepProps> = ({
   projectData,
+  imageStepRef,
   onBack,
   onReset,
 }) => {
@@ -109,7 +112,7 @@ const GenerateStep: React.FC<GenerateStepProps> = ({
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [loadingPreview, setLoadingPreview] = useState(false);
 
-  // projectData 값으로 초기화
+  // projectData 값으로 초기화 (수정된 텍스트는 이미 projectData.content에 반영됨)
   useEffect(() => {
     setTitleFont(projectData.fontSettings.titleFont);
     setBodyFont(projectData.fontSettings.bodyFont);
@@ -260,8 +263,12 @@ const GenerateStep: React.FC<GenerateStepProps> = ({
     try {
       setStatusMessage('배치 작업 요청 중...');
 
+      // ✅ ImageStep에서 수정된 데이터 수집
+      const { editedTexts } = imageStepRef.current?.getEditedData() || { editedTexts: {} };
+
       // 배치 작업 API 호출
       const contentData = JSON.stringify(projectData.content);
+      const editedTextsData = JSON.stringify(editedTexts);
       const response = await apiService.generateVideoAsync({
         userEmail: userEmail,
         content: contentData,
@@ -280,6 +287,7 @@ const GenerateStep: React.FC<GenerateStepProps> = ({
         crossDissolve: crossDissolve,
         subtitleDuration: subtitleDuration,
         jobId: projectData.jobId,  // Job ID 추가
+        editedTexts: editedTextsData, // 수정된 텍스트 전달
       });
 
       if (response.status === 'success') {
@@ -398,7 +406,7 @@ const GenerateStep: React.FC<GenerateStepProps> = ({
     const scriptCount = Object.values(projectData.content)
       .slice(1)
       .filter(script => script?.trim()).length;
-    
+
     let totalChars = 0;
     Object.values(projectData.content).slice(1).forEach(script => {
       if (script?.trim()) {

@@ -1,6 +1,6 @@
 import os
 import requests
-from PIL import Image, ImageDraw, ImageFont
+from PIL import Image, ImageDraw, ImageFont, ImageOps
 from moviepy.editor import *
 import numpy as np
 import uuid
@@ -17,6 +17,14 @@ from datetime import datetime
 # 통합 로깅 시스템 import
 from utils.logger_config import get_logger
 logger = get_logger('video_generator')
+
+# HEIC 파일 지원을 위한 pillow-heif
+try:
+    from pillow_heif import register_heif_opener
+    register_heif_opener()
+    logger.info("✅ HEIC 파일 지원 활성화")
+except ImportError:
+    logger.warning("⚠️ pillow-heif 미설치 - HEIC 파일 지원 불가")
 
 class VideoGenerator:
     def __init__(self):
@@ -415,12 +423,13 @@ class VideoGenerator:
         font_path = os.path.join(os.path.dirname(__file__), "font", selected_font)
 
         # 폰트 크기 설정 (사용자 지정 크기 우선, white_background는 2pt 작게)
+        # 최소 12pt 보장하여 PIL "font size must be greater than 0" 에러 방지
         if text_style == "white_background":
-            # white_background 스타일은 2포인트 작게
-            font_size = (title_font_size - 2) if is_title else (body_font_size - 2)
+            # white_background 스타일은 2포인트 작게 (최소 12pt 보장)
+            font_size = max(12, (title_font_size - 2)) if is_title else max(12, (body_font_size - 2))
         else:
-            # 일반 스타일은 사용자 지정 크기 사용
-            font_size = title_font_size if is_title else body_font_size
+            # 일반 스타일은 사용자 지정 크기 사용 (최소 12pt 보장)
+            font_size = max(12, title_font_size) if is_title else max(12, body_font_size)
 
         # 한글 폰트 설정
         try:
@@ -468,8 +477,9 @@ class VideoGenerator:
         if current_line:
             lines.append(current_line)
         
-        # 전체 텍스트 박스 크기 계산 (폰트 크기에 맞춘 줄간격)
-        line_height = 40  # 36pt 폰트에 맞춘 적정 줄간격
+        # 전체 텍스트 박스 크기 계산 (폰트 크기에 비례하는 줄간격)
+        # 폰트 크기 * 1.11 = 36pt → 40px, 26pt → 29px
+        line_height = max(font_size + 4, int(font_size * 1.11))
         total_height = len(lines) * line_height
         padding = 20  # 패딩 조정
         
@@ -507,19 +517,19 @@ class VideoGenerator:
             except:
                 emoji_font = None
         
-        # text_style에 따른 텍스트 렌더링
+        # text_style에 따른 텍스트 렌더링 (font_size 파라미터 전달)
         if text_style == "background":
-            # 반투명 배경 스타일 (기존)
-            self._render_text_with_background(draw, lines, font, emoji_font, width, start_y, line_height)
+            # 반투명 배경 스타일 (폰트 크기 비례 패딩)
+            self._render_text_with_background(draw, lines, font, emoji_font, width, start_y, line_height, font_size)
         elif text_style == "white_background":
-            # 흰색 반투명 배경 + 검은색 글자 + 둥근 모서리 (신규)
-            self._render_text_with_white_background(draw, lines, font, emoji_font, width, start_y, line_height)
+            # 흰색 반투명 배경 + 검은색 글자 + 둥근 모서리 (폰트 크기 비례)
+            self._render_text_with_white_background(draw, lines, font, emoji_font, width, start_y, line_height, font_size)
         elif text_style == "black_text_white_outline":
-            # 검은색 글씨 + 흰색 외곽선 (신규)
-            self._render_text_with_black_text_white_outline(draw, lines, font, emoji_font, width, start_y, line_height)
+            # 검은색 글씨 + 흰색 외곽선
+            self._render_text_with_black_text_white_outline(draw, lines, font, emoji_font, width, start_y, line_height, font_size)
         else:
             # 외곽선 스타일 (기본값)
-            self._render_text_with_outline(draw, lines, font, emoji_font, width, start_y, line_height)
+            self._render_text_with_outline(draw, lines, font, emoji_font, width, start_y, line_height, font_size)
         
         # 임시 파일로 저장
         temp_file = tempfile.NamedTemporaryFile(delete=False, suffix='.png')
@@ -528,7 +538,7 @@ class VideoGenerator:
         
         return temp_file.name
     
-    def _render_text_with_outline(self, draw, lines, font, emoji_font, width, start_y, line_height):
+    def _render_text_with_outline(self, draw, lines, font, emoji_font, width, start_y, line_height, font_size):
         """외곽선 스타일로 텍스트 렌더링 (기존 방식)"""
         for i, line in enumerate(lines):
             bbox = draw.textbbox((0, 0), line, font=font)
@@ -565,8 +575,8 @@ class VideoGenerator:
                             draw.text((x + dx, y + dy), line, font=font, fill='black')
                 draw.text((x, y), line, font=font, fill='white')
     
-    def _render_text_with_background(self, draw, lines, font, emoji_font, width, start_y, line_height):
-        """반투명 배경 스타일로 텍스트 렌더링"""
+    def _render_text_with_background(self, draw, lines, font, emoji_font, width, start_y, line_height, font_size):
+        """반투명 배경 스타일로 텍스트 렌더링 (폰트 크기 비례 패딩)"""
         # 전체 텍스트 영역 크기 계산
         max_text_width = 0
         for line in lines:
@@ -574,10 +584,11 @@ class VideoGenerator:
             text_width = bbox[2] - bbox[0]
             if text_width > max_text_width:
                 max_text_width = text_width
-        
-        # 배경 박스 크기와 위치 계산
-        padding_x = 20  # 좌우 패딩
-        padding_y = 10  # 상하 패딩
+
+        # 배경 박스 크기와 위치 계산 (폰트 크기에 비례)
+        # 36pt 기준: padding_x=15px (36*0.42=15.12), padding_y=8px (36*0.22=7.92)
+        padding_x = max(10, int(font_size * 0.42))  # 최소 10px
+        padding_y = max(6, int(font_size * 0.22))   # 최소 6px
         background_width = max_text_width + padding_x * 2
         background_height = len(lines) * line_height + padding_y * 2
         
@@ -601,8 +612,8 @@ class VideoGenerator:
             # 흰색 텍스트 (배경이 있으므로 외곽선 불필요)
             draw.text((x, y), line, font=font, fill='white')
 
-    def _render_text_with_white_background(self, draw, lines, font, emoji_font, width, start_y, line_height):
-        """흰색 반투명 배경 + 검은색 글자 + 둥근 모서리 스타일로 텍스트 렌더링"""
+    def _render_text_with_white_background(self, draw, lines, font, emoji_font, width, start_y, line_height, font_size):
+        """흰색 반투명 배경 + 검은색 글자 + 둥근 모서리 스타일로 텍스트 렌더링 (폰트 크기 비례)"""
         # 전체 텍스트 영역 크기 계산
         max_text_width = 0
         for line in lines:
@@ -611,9 +622,10 @@ class VideoGenerator:
             if text_width > max_text_width:
                 max_text_width = text_width
 
-        # 배경 박스 크기와 위치 계산
-        padding_x = 20  # 좌우 패딩
-        padding_y = 10  # 상하 패딩
+        # 배경 박스 크기와 위치 계산 (폰트 크기에 비례)
+        # 36pt 기준: padding_x=15px, padding_y=8px
+        padding_x = max(10, int(font_size * 0.42))  # 최소 10px
+        padding_y = max(6, int(font_size * 0.22))   # 최소 6px
         background_width = max_text_width + padding_x * 2
         background_height = len(lines) * line_height + padding_y * 2
 
@@ -623,8 +635,8 @@ class VideoGenerator:
         # 둥근 모서리 흰색 반투명 배경 그리기
         from PIL import ImageDraw
 
-        # 둥근 모서리 반지름
-        corner_radius = 12
+        # 둥근 모서리 반지름 (폰트 크기에 비례: 36pt → 12px)
+        corner_radius = max(8, int(font_size * 0.33))
 
         # 반투명 흰색 배경 (투명도 80%)
         # PIL에서 둥근 사각형을 그리는 함수
@@ -659,7 +671,7 @@ class VideoGenerator:
             # 검은색 텍스트 (배경이 있으므로 외곽선 불필요)
             draw.text((x, y), line, font=font, fill='black')
 
-    def _render_text_with_black_text_white_outline(self, draw, lines, font, emoji_font, width, start_y, line_height):
+    def _render_text_with_black_text_white_outline(self, draw, lines, font, emoji_font, width, start_y, line_height, font_size):
         """검은색 글씨 + 흰색 외곽선 스타일로 텍스트 렌더링"""
         # 각 줄별로 텍스트 렌더링
         for i, line in enumerate(lines):
@@ -700,6 +712,8 @@ class VideoGenerator:
         """이미지를 중앙 기준 정사각형으로 크롭하여 716x716으로 리사이즈"""
         try:
             with Image.open(image_path) as img:
+                # ✅ EXIF orientation 적용 (아이폰 사진 회전 문제 해결)
+                img = ImageOps.exif_transpose(img) or img
                 width, height = img.size
                 print(f"🔳 이미지 로드: {image_path} ({width}x{height})")
                 
@@ -770,93 +784,119 @@ class VideoGenerator:
         return p
 
     def create_background_clip(self, image_path, duration):
-        """새로운 영상/이미지 배치 및 패닝 규칙 적용"""
+        """새로운 영상/이미지 배치 및 패닝 규칙 적용 (EXIF + 고품질 리사이즈)"""
         print(f"🎬 배경 클립 생성 시작: {image_path} (duration: {duration:.1f}s)")
-        
+
         try:
-            # 이미지 정보 로드
+            # 이미지 로드 + EXIF 적용 + 고품질 리사이즈
             with Image.open(image_path) as img:
+                # ✅ EXIF orientation 적용 (아이폰/HEIC 사진 회전 문제 해결)
+                img = ImageOps.exif_transpose(img) or img
                 orig_width, orig_height = img.size
                 print(f"📐 이미지 원본: {orig_width}x{orig_height}")
-            
-            # 작업 영역 정의: (0, 220) ~ (504, 890)
-            work_width = 504
-            work_height = 670  # 890 - 220
-            work_aspect_ratio = work_width / work_height  # 252:335 = 0.751
+
+                # 작업 영역 정의: (0, 220) ~ (504, 890)
+                work_width = 504
+                work_height = 670  # 890 - 220
+                work_aspect_ratio = work_width / work_height  # 252:335 = 0.751
+                image_aspect_ratio = orig_width / orig_height
+
+                print(f"📊 종횡비 비교: 이미지 {image_aspect_ratio:.3f} vs 작업영역 {work_aspect_ratio:.3f}")
+
+                # 고품질 리사이즈 수행
+                if image_aspect_ratio > work_aspect_ratio:
+                    # 가로형: 세로를 work_height에 맞춤
+                    new_height = work_height
+                    new_width = int(orig_width * work_height / orig_height)
+                    print(f"🔄 가로형 이미지: 리사이즈 {new_width}x{new_height}")
+                else:
+                    # 세로형: 가로를 work_width에 맞춤
+                    new_width = work_width
+                    new_height = int(orig_height * work_width / orig_width)
+                    print(f"🔄 세로형 이미지: 리사이즈 {new_width}x{new_height}")
+
+                # PIL 고품질 리사이즈 (LANCZOS)
+                try:
+                    resized_img = img.resize((new_width, new_height), Image.Resampling.LANCZOS)
+                except AttributeError:
+                    resized_img = img.resize((new_width, new_height), Image.LANCZOS)
+
+                print(f"✨ 고품질 리사이즈 완료: LANCZOS 알고리즘 사용")
+
+                # RGBA → RGB 변환
+                if resized_img.mode in ('RGBA', 'LA', 'P'):
+                    background = Image.new('RGB', resized_img.size, (0, 0, 0))
+                    if resized_img.mode == 'P':
+                        resized_img = resized_img.convert('RGBA')
+                    background.paste(resized_img, mask=resized_img.split()[-1] if resized_img.mode in ('RGBA', 'LA') else None)
+                    resized_img = background
+                    print(f"🔳 RGBA → RGB 변환 완료")
+
+                # 임시 파일로 저장 (고품질)
+                temp_file = tempfile.NamedTemporaryFile(delete=False, suffix='.jpg')
+                resized_img.save(temp_file.name, 'JPEG', quality=95)
+                processed_image_path = temp_file.name
+                print(f"💾 고품질 임시 파일 생성: {processed_image_path}")
+
+            # MoviePy로 처리된 이미지 로드
+            bg_clip = ImageClip(processed_image_path).set_duration(duration)
+            resized_width = new_width
+            resized_height = new_height
             image_aspect_ratio = orig_width / orig_height
             
-            print(f"📊 종횡비 비교: 이미지 {image_aspect_ratio:.3f} vs 작업영역 {work_aspect_ratio:.3f}")
-            
-            # 배경 클립 생성
-            bg_clip = ImageClip(image_path).set_duration(duration)
-            
             if image_aspect_ratio > work_aspect_ratio:
-                # 가로형 이미지: 세로 높이를 작업 영역에 맞춰 배치하고 좌우 패닝
-                print(f"🔄 가로형 이미지 처리: 세로 높이를 {work_height}에 맞춤")
-                
-                # 세로를 작업 영역에 맞춰 리사이즈
-                bg_clip = bg_clip.resize(height=work_height)
-                resized_width = int(orig_width * work_height / orig_height)
-                print(f"🔧 리사이즈 완료: {resized_width}x{work_height}")
-                
+                # 가로형 이미지: 좌우 패닝
                 # 좌우 패닝 범위 계산
                 pan_range = min(60, (resized_width - work_width) // 2)  # 최대 60px 또는 여유 공간의 절반
-                
+
                 # 2가지 좌우 패닝 패턴 중 랜덤 선택
                 pattern = random.randint(1, 2)
-                
+
                 if pattern == 1:
                     # 패턴 1: 좌 → 우 패닝
                     def left_to_right(t):
                         progress = self.linear_easing_function(t / duration)
                         x_offset = -((resized_width - work_width) // 2 - pan_range * progress)
                         return (x_offset, 220)  # Y는 타이틀 바로 아래
-                    
+
                     bg_clip = bg_clip.set_position(left_to_right)
                     print(f"🎬 패턴 1: 좌 → 우 패닝 ({pan_range}px 이동)")
-                    
+
                 else:
                     # 패턴 2: 우 → 좌 패닝
                     def right_to_left(t):
                         progress = self.linear_easing_function(t / duration)
                         x_offset = -((resized_width - work_width) // 2 - pan_range * (1 - progress))
                         return (x_offset, 220)  # Y는 타이틀 바로 아래
-                    
+
                     bg_clip = bg_clip.set_position(right_to_left)
                     print(f"🎬 패턴 2: 우 → 좌 패닝 ({pan_range}px 이동)")
-                    
+
             else:
-                # 세로형 이미지: 가로 폭을 작업 영역에 맞춰 배치하고 상하 패닝
-                print(f"🔄 세로형 이미지 처리: 가로 폭을 {work_width}에 맞춤")
-                
-                # 가로를 작업 영역에 맞춰 리사이즈
-                bg_clip = bg_clip.resize(width=work_width)
-                resized_height = int(orig_height * work_width / orig_width)
-                print(f"🔧 리사이즈 완료: {work_width}x{resized_height}")
-                
+                # 세로형 이미지: 상하 패닝
                 # 상하 패닝 범위 계산
                 pan_range = min(60, (resized_height - work_height) // 2)  # 최대 60px 또는 여유 공간의 절반
-                
+
                 # 2가지 상하 패닝 패턴 중 랜덤 선택
                 pattern = random.randint(3, 4)  # 패턴 3, 4로 구분
-                
+
                 if pattern == 3:
                     # 패턴 3: 위 → 아래 패닝
                     def top_to_bottom(t):
                         progress = self.linear_easing_function(t / duration)
                         y_offset = 220 - ((resized_height - work_height) // 2 - pan_range * progress)
                         return (0, y_offset)  # X는 중앙
-                    
+
                     bg_clip = bg_clip.set_position(top_to_bottom)
                     print(f"🎬 패턴 3: 위 → 아래 패닝 ({pan_range}px 이동)")
-                    
+
                 else:
                     # 패턴 4: 아래 → 위 패닝
                     def bottom_to_top(t):
                         progress = self.linear_easing_function(t / duration)
                         y_offset = 220 - ((resized_height - work_height) // 2 - pan_range * (1 - progress))
                         return (0, y_offset)  # X는 중앙
-                    
+
                     bg_clip = bg_clip.set_position(bottom_to_top)
                     print(f"🎬 패턴 4: 아래 → 위 패닝 ({pan_range}px 이동)")
             
@@ -866,16 +906,21 @@ class VideoGenerator:
             print(f"❌ 배경 클립 생성 에러: {str(e)}")
             # 에러 발생시 기본 클립 반환
             fallback_clip = ImageClip(image_path).set_duration(duration)
-            fallback_clip = fallback_clip.resize(height=670).set_position((0, 220))
+            try:
+                from moviepy.video.fx.all import resize as fx_resize
+                fallback_clip = fallback_clip.fx(fx_resize, height=670).set_position((0, 220))
+            except:
+                fallback_clip = fallback_clip.resize(height=670).set_position((0, 220))
             return fallback_clip
 
 
     
     def create_continuous_background_clip(self, image_path, total_duration, start_offset=0.0):
-        """2개 body 동안 연속적으로 움직이는 배경 클립 생성 - 3가지 패턴 중 랜덤 선택"""
+        """2개 body 동안 연속적으로 움직이는 배경 클립 생성 (EXIF + 고품질 적용)"""
         print(f"🎬 연속 배경 클립 생성: {image_path} (duration: {total_duration:.1f}s, offset: {start_offset:.1f}s)")
-        
+
         # 이미지를 정사각형으로 크롭 후 716x716으로 리사이즈
+        # ✅ crop_to_square()에서 EXIF orientation + LANCZOS 리사이즈 적용됨
         square_image_path = self.crop_to_square(image_path)
         
         try:
@@ -919,7 +964,11 @@ class VideoGenerator:
             print(f"❌ 연속 배경 클립 에러: {str(e)}")
             # 에러 발생시 기본 클립 반환
             fallback_clip = ImageClip(image_path).set_duration(total_duration)
-            fallback_clip = fallback_clip.resize(height=670).set_position((0, 0))
+            try:
+                from moviepy.video.fx.all import resize as fx_resize
+                fallback_clip = fallback_clip.fx(fx_resize, height=670).set_position((0, 0))
+            except:
+                fallback_clip = fallback_clip.resize(height=670).set_position((0, 0))
             return fallback_clip
             
         finally:
@@ -1023,10 +1072,42 @@ class VideoGenerator:
             if video_aspect_ratio > work_aspect_ratio:
                 # 가로형 비디오: 세로 높이를 작업 영역에 맞춰 배치하고 좌우 패닝
                 print(f"🔄 가로형 비디오 처리: 세로 높이를 {work_height}에 맞춤")
-                
+
                 # 세로를 작업 영역에 맞춰 리사이즈
-                video_clip = video_clip.resize(height=work_height)
                 resized_width = int(orig_width * work_height / orig_height)
+
+                try:
+                    # MoviePy resize with newer API
+                    from moviepy.video.fx.all import resize as fx_resize
+                    video_clip = video_clip.fx(fx_resize, height=work_height)
+                except:
+                    # Fallback to direct resize
+                    try:
+                        video_clip = video_clip.resize(height=work_height)
+                    except AttributeError as e:
+                        # PIL ANTIALIAS 이슈 - 프레임 추출 후 수동 리사이즈
+                        print(f"⚠️ MoviePy resize 실패 (PIL 호환성): {e}")
+                        print(f"🔄 프레임 추출 방식으로 전환")
+
+                        fps = 30
+                        duration_temp = video_clip.duration
+                        frames = []
+
+                        for t in [i/fps for i in range(int(duration_temp * fps))]:
+                            if t <= duration_temp:
+                                frame = video_clip.get_frame(t)
+                                pil_frame = Image.fromarray(frame)
+
+                                try:
+                                    resized_frame = pil_frame.resize((resized_width, work_height), Image.Resampling.LANCZOS)
+                                except AttributeError:
+                                    resized_frame = pil_frame.resize((resized_width, work_height), Image.LANCZOS)
+
+                                frames.append(np.array(resized_frame))
+
+                        from moviepy.editor import ImageSequenceClip
+                        video_clip = ImageSequenceClip(frames, fps=fps)
+
                 print(f"🔧 리사이즈 완료: {resized_width}x{work_height}")
                 
                 # 좌우 패닝 범위 계산
@@ -1058,10 +1139,42 @@ class VideoGenerator:
             else:
                 # 세로형 비디오: 가로 폭을 작업 영역에 맞춰 배치하고 상하 패닝
                 print(f"🔄 세로형 비디오 처리: 가로 폭을 {work_width}에 맞춤")
-                
+
                 # 가로를 작업 영역에 맞춰 리사이즈
-                video_clip = video_clip.resize(width=work_width)
                 resized_height = int(orig_height * work_width / orig_width)
+
+                try:
+                    # MoviePy resize with newer API
+                    from moviepy.video.fx.all import resize as fx_resize
+                    video_clip = video_clip.fx(fx_resize, width=work_width)
+                except:
+                    # Fallback to direct resize
+                    try:
+                        video_clip = video_clip.resize(width=work_width)
+                    except AttributeError as e:
+                        # PIL ANTIALIAS 이슈 - 프레임 추출 후 수동 리사이즈
+                        print(f"⚠️ MoviePy resize 실패 (PIL 호환성): {e}")
+                        print(f"🔄 프레임 추출 방식으로 전환")
+
+                        fps = 30
+                        duration_temp = video_clip.duration
+                        frames = []
+
+                        for t in [i/fps for i in range(int(duration_temp * fps))]:
+                            if t <= duration_temp:
+                                frame = video_clip.get_frame(t)
+                                pil_frame = Image.fromarray(frame)
+
+                                try:
+                                    resized_frame = pil_frame.resize((work_width, resized_height), Image.Resampling.LANCZOS)
+                                except AttributeError:
+                                    resized_frame = pil_frame.resize((work_width, resized_height), Image.LANCZOS)
+
+                                frames.append(np.array(resized_frame))
+
+                        from moviepy.editor import ImageSequenceClip
+                        video_clip = ImageSequenceClip(frames, fps=fps)
+
                 print(f"🔧 리사이즈 완료: {work_width}x{resized_height}")
                 
                 # 상하 패닝 범위 계산
@@ -2305,7 +2418,7 @@ class VideoGenerator:
         # 음악 파일은 더 이상 uploads에서 찾지 않음 (bgm 폴더 직접 사용)
         
         # 미디어 파일들 찾기 (이미지 + 비디오)
-        image_extensions = ['.png', '.jpg', '.jpeg', '.gif', '.webp', '.bmp']
+        image_extensions = ['.png', '.jpg', '.jpeg', '.gif', '.webp', '.bmp', '.heic', '.heif']
         video_extensions = ['.mp4', '.mov', '.avi', '.webm', '.mkv']
         all_extensions = image_extensions + video_extensions
         
@@ -2429,74 +2542,128 @@ class VideoGenerator:
         
         return image_files
     def create_fullscreen_background_clip(self, image_path, duration):
-        """전체 화면(504x890)용 이미지 배경 클립 생성"""
+        """전체 화면(504x890)용 이미지 배경 클립 생성 (EXIF + 고품질)"""
         print(f"🖼️ 전체 화면 이미지 클립 생성: {os.path.basename(image_path)}")
 
         try:
-            # 이미지 로드 및 크기 확인
-            img = Image.open(image_path)
-            orig_width, orig_height = img.size
-            print(f"📐 원본 이미지: {orig_width}x{orig_height}")
+            # 이미지 로드 + EXIF 적용 + 고품질 리사이즈
+            with Image.open(image_path) as img:
+                # ✅ EXIF orientation 적용 (아이폰/HEIC 사진 회전 문제 해결)
+                img = ImageOps.exif_transpose(img) or img
+                orig_width, orig_height = img.size
+                print(f"📐 원본 이미지: {orig_width}x{orig_height}")
 
-            # 작업 영역: 전체 화면 504x890
-            work_width = self.video_width
-            work_height = self.video_height
-            work_aspect_ratio = work_width / work_height
-            image_aspect_ratio = orig_width / orig_height
+                # 작업 영역: 전체 화면 504x890
+                work_width = self.video_width
+                work_height = self.video_height
+                work_aspect_ratio = work_width / work_height
+                image_aspect_ratio = orig_width / orig_height
 
-            print(f"🎯 목표: 전체 화면 {work_width}x{work_height}")
+                print(f"🎯 목표: 전체 화면 {work_width}x{work_height}")
+                print(f"📊 이미지 종횡비: {image_aspect_ratio:.3f}")
 
-            # 종횡비 기반 지능형 배치
-            if image_aspect_ratio > work_aspect_ratio:
-                # 가로형: 높이 맞춤 후 좌우 패닝
-                resized_height = work_height
-                resized_width = int(orig_width * resized_height / orig_height)
-                print(f"🔳 가로형 이미지: 높이 기준 리사이즈 {resized_width}x{resized_height}")
+                # 종횡비 기반 3단계 지능형 배치
+                if image_aspect_ratio > 0.590:
+                    # 가로형: 높이 맞춤 후 좌우 패닝
+                    resized_height = work_height
+                    resized_width = int(orig_width * resized_height / orig_height)
+                    print(f"🔳 가로형 이미지 (aspect > 0.590): 고품질 리사이즈 {resized_width}x{resized_height}")
 
-                # 좌우 패닝 범위
-                pan_range = min(60, (resized_width - work_width) // 2)
-            else:
-                # 세로형: 폭 맞춤 후 상하 패닝
-                resized_width = work_width
-                resized_height = int(orig_height * resized_width / orig_width)
-                print(f"🔳 세로형 이미지: 폭 기준 리사이즈 {resized_width}x{resized_height}")
+                    # 좌우 패닝 범위
+                    pan_range = min(60, (resized_width - work_width) // 2)
+                    image_type = "horizontal"
+                elif image_aspect_ratio >= 0.540:
+                    # 특수비율: 높이 1300px 고정 후 좌우 패닝 + 상하 크롭
+                    resized_height = 1300
+                    resized_width = int(orig_width * resized_height / orig_height)
+                    print(f"⭐ 특수비율 이미지 (0.540 ≤ aspect ≤ 0.590): 고품질 리사이즈 {resized_width}x{resized_height}")
+                    print(f"📐 상하 크롭: {1300 - work_height}px (상하 각 {(1300 - work_height) // 2}px)")
 
-                # 상하 패닝 범위
-                pan_range = min(60, (resized_height - work_height) // 2)
+                    # 좌우 패닝 범위
+                    pan_range = min(60, (resized_width - work_width) // 2)
+                    image_type = "special"
+                else:
+                    # 세로형: 폭 맞춤 후 상하 패닝
+                    resized_width = work_width
+                    resized_height = int(orig_height * resized_width / orig_width)
+                    print(f"🔳 세로형 이미지 (aspect < 0.540): 고품질 리사이즈 {resized_width}x{resized_height}")
+
+                    # 상하 패닝 범위
+                    pan_range = min(60, (resized_height - work_height) // 2)
+                    image_type = "vertical"
+
+                # PIL 고품질 리사이즈 (LANCZOS)
+                try:
+                    resized_img = img.resize((resized_width, resized_height), Image.Resampling.LANCZOS)
+                except AttributeError:
+                    resized_img = img.resize((resized_width, resized_height), Image.LANCZOS)
+
+                print(f"✨ 고품질 리사이즈 완료: LANCZOS 알고리즘 사용")
+
+                # RGBA → RGB 변환
+                if resized_img.mode in ('RGBA', 'LA', 'P'):
+                    background = Image.new('RGB', resized_img.size, (0, 0, 0))
+                    if resized_img.mode == 'P':
+                        resized_img = resized_img.convert('RGBA')
+                    background.paste(resized_img, mask=resized_img.split()[-1] if resized_img.mode in ('RGBA', 'LA') else None)
+                    resized_img = background
+                    print(f"🔳 RGBA → RGB 변환 완료")
+
+                # 임시 파일로 저장 (고품질)
+                temp_file = tempfile.NamedTemporaryFile(delete=False, suffix='.jpg')
+                resized_img.save(temp_file.name, 'JPEG', quality=95)
+                processed_image_path = temp_file.name
+                print(f"💾 고품질 임시 파일 생성: {processed_image_path}")
 
             # MoviePy 이미지 클립 생성
-            clip = ImageClip(image_path).set_duration(duration)
-            clip = clip.resize((resized_width, resized_height))
+            clip = ImageClip(processed_image_path).set_duration(duration)
 
             # 패닝 애니메이션 (4패턴 랜덤)
             patterns = [1, 2, 3, 4]
             pattern = random.choice(patterns)
 
-            if image_aspect_ratio > work_aspect_ratio:
+            if image_type == "horizontal":
                 # 가로형 패닝 (좌우)
                 if pattern in [1, 3]:
                     # 좌 → 우
-                    print(f"🎬 패턴 {pattern}: 좌 → 우 패닝 (duration: {duration:.1f}s)")
+                    print(f"🎬 가로형 패턴 {pattern}: 좌 → 우 패닝 (duration: {duration:.1f}s)")
                     start_x = -pan_range
                     end_x = pan_range
                 else:
                     # 우 → 좌
-                    print(f"🎬 패턴 {pattern}: 우 → 좌 패닝 (duration: {duration:.1f}s)")
+                    print(f"🎬 가로형 패턴 {pattern}: 우 → 좌 패닝 (duration: {duration:.1f}s)")
                     start_x = pan_range
                     end_x = -pan_range
 
                 start_y = (work_height - resized_height) // 2
                 end_y = start_y
-            else:
+            elif image_type == "special":
+                # 특수비율 패닝 (좌우 패닝 + Y축 중앙 고정)
+                if pattern in [1, 3]:
+                    # 좌 → 우
+                    print(f"🎬 특수비율 패턴 {pattern}: 좌 → 우 패닝 (duration: {duration:.1f}s)")
+                    start_x = -pan_range
+                    end_x = pan_range
+                else:
+                    # 우 → 좌
+                    print(f"🎬 특수비율 패턴 {pattern}: 우 → 좌 패닝 (duration: {duration:.1f}s)")
+                    start_x = pan_range
+                    end_x = -pan_range
+
+                # Y축: 이미지 중간 = 캔버스 중간 (상하 크롭)
+                start_y = (work_height - resized_height) // 2
+                end_y = start_y
+                print(f"📍 Y축 고정 위치: {start_y}px (이미지 중간 = 캔버스 중간)")
+            else:  # vertical
                 # 세로형 패닝 (상하)
                 if pattern in [1, 3]:
                     # 상 → 하
-                    print(f"🎬 패턴 {pattern}: 상 → 하 패닝 (duration: {duration:.1f}s)")
+                    print(f"🎬 세로형 패턴 {pattern}: 상 → 하 패닝 (duration: {duration:.1f}s)")
                     start_y = -pan_range
                     end_y = pan_range
                 else:
                     # 하 → 상
-                    print(f"🎬 패턴 {pattern}: 하 → 상 패닝 (duration: {duration:.1f}s)")
+                    print(f"🎬 세로형 패턴 {pattern}: 하 → 상 패닝 (duration: {duration:.1f}s)")
                     start_y = pan_range
                     end_y = -pan_range
 
@@ -2548,7 +2715,41 @@ class VideoGenerator:
                 new_height = work_height
                 new_width = int(orig_width * new_height / orig_height)
                 print(f"📐 가로형 비디오: 높이 기준 리사이즈 {new_width}x{new_height}")
-                video_clip = video_clip.resize(height=new_height)
+
+                try:
+                    # MoviePy resize with newer API
+                    from moviepy.video.fx.all import resize as fx_resize
+                    video_clip = video_clip.fx(fx_resize, height=new_height)
+                except:
+                    # Fallback to direct resize
+                    try:
+                        video_clip = video_clip.resize(height=new_height)
+                    except AttributeError as e:
+                        # PIL ANTIALIAS 이슈 - 프레임 추출 후 수동 리사이즈
+                        print(f"⚠️ MoviePy resize 실패 (PIL 호환성): {e}")
+                        print(f"🔄 프레임 추출 방식으로 전환")
+
+                        # 프레임 추출 (원본 비디오 길이 사용, 파라미터 duration 보존)
+                        fps = 30
+                        video_duration = video_clip.duration  # 지역 변수 사용
+                        frames = []
+
+                        for t in [i/fps for i in range(int(video_duration * fps))]:
+                            if t <= video_duration:
+                                frame = video_clip.get_frame(t)
+                                pil_frame = Image.fromarray(frame)
+
+                                # PIL로 리사이즈
+                                try:
+                                    resized_frame = pil_frame.resize((new_width, new_height), Image.Resampling.LANCZOS)
+                                except AttributeError:
+                                    resized_frame = pil_frame.resize((new_width, new_height), Image.LANCZOS)
+
+                                frames.append(np.array(resized_frame))
+
+                        # 새 비디오 클립 생성
+                        from moviepy.editor import ImageSequenceClip
+                        video_clip = ImageSequenceClip(frames, fps=fps)
 
                 # 중앙 크롭
                 crop_x = (new_width - work_width) // 2
@@ -2558,7 +2759,41 @@ class VideoGenerator:
                 new_width = work_width
                 new_height = int(orig_height * new_width / orig_width)
                 print(f"📐 세로형 비디오: 폭 기준 리사이즈 {new_width}x{new_height}")
-                video_clip = video_clip.resize(width=new_width)
+
+                try:
+                    # MoviePy resize with newer API
+                    from moviepy.video.fx.all import resize as fx_resize
+                    video_clip = video_clip.fx(fx_resize, width=new_width)
+                except:
+                    # Fallback to direct resize
+                    try:
+                        video_clip = video_clip.resize(width=new_width)
+                    except AttributeError as e:
+                        # PIL ANTIALIAS 이슈 - 프레임 추출 후 수동 리사이즈
+                        print(f"⚠️ MoviePy resize 실패 (PIL 호환성): {e}")
+                        print(f"🔄 프레임 추출 방식으로 전환")
+
+                        # 프레임 추출 (원본 비디오 길이 사용, 파라미터 duration 보존)
+                        fps = 30
+                        video_duration = video_clip.duration  # 지역 변수 사용
+                        frames = []
+
+                        for t in [i/fps for i in range(int(video_duration * fps))]:
+                            if t <= video_duration:
+                                frame = video_clip.get_frame(t)
+                                pil_frame = Image.fromarray(frame)
+
+                                # PIL로 리사이즈
+                                try:
+                                    resized_frame = pil_frame.resize((new_width, new_height), Image.Resampling.LANCZOS)
+                                except AttributeError:
+                                    resized_frame = pil_frame.resize((new_width, new_height), Image.LANCZOS)
+
+                                frames.append(np.array(resized_frame))
+
+                        # 새 비디오 클립 생성
+                        from moviepy.editor import ImageSequenceClip
+                        video_clip = ImageSequenceClip(frames, fps=fps)
 
                 # 중앙 크롭
                 crop_y = (new_height - work_height) // 2

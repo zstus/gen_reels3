@@ -210,6 +210,7 @@ export const apiService = {
     crossDissolve: CrossDissolve;
     subtitleDuration?: number;
     jobId?: string;  // Job ID 추가
+    editedTexts?: string; // 수정된 텍스트 (JSON 문자열)
   }): Promise<AsyncVideoResponse> {
     const formData = new FormData();
 
@@ -218,6 +219,11 @@ export const apiService = {
     formData.append('content_data', data.content);
     formData.append('music_mood', data.musicMood);
     formData.append('use_test_files', String(data.useTestFiles || false));
+
+    // 수정된 텍스트 추가
+    if (data.editedTexts) {
+      formData.append('edited_texts', data.editedTexts);
+    }
 
     // 이미지 할당 모드 추가 (백엔드 형식에 맞게 변환)
     const backendImageMode = data.imageUploadMode === 'per-script'

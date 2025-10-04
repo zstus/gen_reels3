@@ -213,6 +213,9 @@ export interface TextImagePair {
   isGenerating: boolean;
   customPrompt?: string;
   useCustomPrompt?: boolean;
+  // 수정된 텍스트 관리 (per-two-scripts 모드용)
+  editedTexts?: string[];  // 수정된 개별 텍스트 배열
+  originalTexts?: string[]; // 원본 개별 텍스트 배열 (비교용)
 }
 
 // Job 폴더 생성 요청 타입

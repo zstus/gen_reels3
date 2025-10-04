@@ -281,7 +281,7 @@ def copy_test_images():
     """test 폴더에서 uploads 폴더로 이미지 및 비디오 파일들 복사"""
     try:
         test_folder = "./test"
-        media_extensions = ["jpg", "jpeg", "png", "bmp", "gif", "webp", "mp4", "mov", "avi", "webm", "mkv"]
+        media_extensions = ["jpg", "jpeg", "png", "bmp", "gif", "webp", "heic", "heif", "mp4", "mov", "avi", "webm", "mkv"]
 
         # 1, 2, 3, 4 순서로 미디어 파일 찾기
         copied_count = 0
@@ -315,7 +315,8 @@ def copy_test_images():
 
 async def prepare_files(json_url: str, music_mood: str, image_urls: str,
                        content_data: str, background_music, use_test_files: bool,
-                       selected_bgm_path: str = "", uploaded_images: List = []):
+                       selected_bgm_path: str = "", uploaded_images: List = [],
+                       edited_texts: str = "{}"):
     """모든 파일을 uploads 폴더에 준비"""
 
     # 1. JSON 파일 처리
@@ -335,6 +336,27 @@ async def prepare_files(json_url: str, music_mood: str, image_urls: str,
         elif content_data:
             json_path = os.path.join(UPLOAD_FOLDER, "text.json")
             content = json.loads(content_data)  # 검증
+
+            # 🎯 수정된 텍스트 적용 (per-two-scripts 모드)
+            try:
+                edited_texts_dict = json.loads(edited_texts) if isinstance(edited_texts, str) else edited_texts
+                if edited_texts_dict:
+                    print(f"📝 수정된 텍스트 적용: {len(edited_texts_dict)}개 이미지 인덱스")
+                    for image_idx_str, texts in edited_texts_dict.items():
+                        image_idx = int(image_idx_str)
+                        # per-two-scripts: imageIndex * 2로 body 인덱스 계산
+                        text_idx = image_idx * 2
+                        if texts and len(texts) > 0 and texts[0]:
+                            body_key = f'body{text_idx + 1}'
+                            content[body_key] = texts[0]
+                            print(f"✏️ {body_key} 수정: {texts[0][:30]}...")
+                        if texts and len(texts) > 1 and texts[1]:
+                            body_key = f'body{text_idx + 2}'
+                            content[body_key] = texts[1]
+                            print(f"✏️ {body_key} 수정: {texts[1][:30]}...")
+            except (json.JSONDecodeError, ValueError, KeyError) as e:
+                print(f"⚠️ 수정된 텍스트 파싱 실패, 원본 사용: {e}")
+
             with open(json_path, 'w', encoding='utf-8') as f:
                 json.dump(content, f, ensure_ascii=False, indent=2)
             print("✅ 직접 JSON 데이터 저장: text.json")

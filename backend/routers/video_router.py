@@ -82,6 +82,9 @@ async def generate_video(
     # 자막 지속 시간 설정
     subtitle_duration: float = Form(default=0.0),
 
+    # 수정된 텍스트 (JSON 문자열)
+    edited_texts: str = Form(default="{}"),
+
     # 이미지 파일 업로드 (최대 8개)
     image_1: Optional[UploadFile] = File(None),
     image_2: Optional[UploadFile] = File(None),
@@ -136,7 +139,7 @@ async def generate_video(
         await prepare_files_func(
             json_url, music_mood, image_urls,
             content_data, background_music, use_test_files,
-            selected_bgm_path, uploaded_images
+            selected_bgm_path, uploaded_images, edited_texts
         )
 
         # 영상 생성
@@ -287,6 +290,9 @@ async def generate_video_async(
     # Job ID
     job_id: Optional[str] = Form(None),
 
+    # 수정된 텍스트 (JSON 문자열)
+    edited_texts: str = Form(default="{}"),
+
     # 이미지 파일 업로드
     image_1: Optional[UploadFile] = File(None),
     image_2: Optional[UploadFile] = File(None),
@@ -380,7 +386,8 @@ async def generate_video_async(
             'body_font_size': body_font_size,
             'voice_narration': voice_narration,
             'cross_dissolve': cross_dissolve,
-            'subtitle_duration': subtitle_duration
+            'subtitle_duration': subtitle_duration,
+            'edited_texts': edited_texts  # 수정된 텍스트 추가
         }
 
         # 작업을 큐에 추가

@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, useRef, useImperativeHandle, forwardRef } from 'react';
 import {
   Box,
   Paper,
@@ -22,31 +22,51 @@ import {
 import { CloudUpload, Delete, Image as ImageIcon, AutoFixHigh } from '@mui/icons-material';
 import { useDropzone } from 'react-dropzone';
 import { ReelsContent, ImageUploadMode } from '../types';
-import TextImagePairManager from './TextImagePairManager';
+import TextImagePairManager, { TextImagePairManagerRef } from './TextImagePairManager';
 
 interface ImageStepProps {
   images: File[];
   imageUploadMode: ImageUploadMode;
   content: ReelsContent;
-  jobId: string; // Job ID 추가
+  jobId: string;
   onChange: (images: File[], mode: ImageUploadMode) => void;
   onNext: () => void;
   onBack: () => void;
 }
 
-const ImageStep: React.FC<ImageStepProps> = ({
+// ✅ ImageStep ref 타입 정의
+export interface ImageStepRef {
+  getEditedData: () => {
+    editedTexts: { [key: number]: string[] };
+    customPrompts: { [key: number]: any };
+  };
+}
+
+const ImageStep = forwardRef<ImageStepRef, ImageStepProps>(({
   images,
   imageUploadMode,
   content,
-  jobId, // Job ID 추가
+  jobId,
   onChange,
   onNext,
   onBack,
-}) => {
+}, ref) => {
+  // ✅ TextImagePairManager의 ref 생성
+  const textImagePairManagerRef = useRef<TextImagePairManagerRef>(null);
   const [uploadProgress, setUploadProgress] = useState<{ [key: string]: number }>({});
   const [errors, setErrors] = useState<string[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
   const [generationProgress, setGenerationProgress] = useState('');
+
+  // ✅ 외부에서 데이터를 가져갈 수 있도록 메서드 제공
+  useImperativeHandle(ref, () => ({
+    getEditedData: () => {
+      return textImagePairManagerRef.current?.getEditedData() || {
+        editedTexts: {},
+        customPrompts: {}
+      };
+    }
+  }), []);
 
   // 필요한 이미지 개수 계산
   const getRequiredImageCount = () => {
@@ -79,10 +99,21 @@ const ImageStep: React.FC<ImageStepProps> = ({
         return;
       }
 
-      // 파일 형식 검증 (이미지 + 비디오)
-      const isImage = file.type.startsWith('image/');
-      const isVideo = file.type.startsWith('video/');
-      
+      // 파일 형식 검증 (이미지 + 비디오 + 확장자 기반)
+      const fileName = file.name.toLowerCase();
+      const isImageByType = file.type.startsWith('image/');
+      const isVideoByType = file.type.startsWith('video/');
+
+      // HEIC/HEIF는 브라우저에서 MIME 타입이 없을 수 있으므로 확장자로 검증
+      const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.bmp', '.heic', '.heif'];
+      const videoExtensions = ['.mp4', '.mov', '.avi', '.webm', '.mkv'];
+
+      const isImageByExt = imageExtensions.some(ext => fileName.endsWith(ext));
+      const isVideoByExt = videoExtensions.some(ext => fileName.endsWith(ext));
+
+      const isImage = isImageByType || isImageByExt;
+      const isVideo = isVideoByType || isVideoByExt;
+
       if (!isImage && !isVideo) {
         newErrors.push(`${file.name}: 이미지 또는 비디오 파일만 업로드 가능합니다`);
         return;
@@ -145,7 +176,7 @@ const ImageStep: React.FC<ImageStepProps> = ({
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
     accept: {
-      'image/*': ['.jpeg', '.jpg', '.png', '.gif', '.webp', '.bmp'],
+      'image/*': ['.jpeg', '.jpg', '.png', '.gif', '.webp', '.bmp', '.heic', '.heif'],
       'video/*': ['.mp4', '.mov', '.avi', '.webm', '.mkv']
     },
     // 무제한 파일 업로드 허용 (빈 슬롯에 자동 할당)
@@ -190,7 +221,9 @@ const ImageStep: React.FC<ImageStepProps> = ({
   };
 
   const isVideoFile = (file: File) => {
-    return file.type.startsWith('video/');
+    const fileName = file.name.toLowerCase();
+    const videoExtensions = ['.mp4', '.mov', '.avi', '.webm', '.mkv'];
+    return file.type.startsWith('video/') || videoExtensions.some(ext => fileName.endsWith(ext));
   };
 
   // 위치 정보가 있는 실제 이미지 개수 계산
@@ -494,10 +527,11 @@ const ImageStep: React.FC<ImageStepProps> = ({
       <Box sx={{ mt: 4 }}>
         <Divider sx={{ mb: 3 }} />
         <TextImagePairManager
+          ref={textImagePairManagerRef}
           content={content}
           imageUploadMode={imageUploadMode}
           images={images}
-          jobId={jobId} // Job ID 전달
+          jobId={jobId}
           onChange={onChange}
         />
       </Box>
@@ -522,6 +556,9 @@ const ImageStep: React.FC<ImageStepProps> = ({
       </Box>
     </Box>
   );
-};
+});
+
+// Display name for debugging
+ImageStep.displayName = 'ImageStep';
 
 export default ImageStep;

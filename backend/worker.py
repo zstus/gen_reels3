@@ -123,6 +123,27 @@ class VideoWorker:
             try:
                 content = json.loads(content_data) if isinstance(content_data, str) else content_data
                 video_title = content.get('title', '릴스 영상')
+
+                # 🎯 수정된 텍스트 적용 (per-two-scripts 모드)
+                edited_texts_str = video_params.get('edited_texts', '{}')
+                try:
+                    edited_texts_dict = json.loads(edited_texts_str) if isinstance(edited_texts_str, str) else edited_texts_str
+                    if edited_texts_dict:
+                        logger.info(f"📝 수정된 텍스트 적용: {len(edited_texts_dict)}개 이미지 인덱스")
+                        for image_idx_str, texts in edited_texts_dict.items():
+                            image_idx = int(image_idx_str)
+                            # per-two-scripts: imageIndex * 2로 body 인덱스 계산
+                            text_idx = image_idx * 2
+                            if texts and len(texts) > 0 and texts[0]:
+                                body_key = f'body{text_idx + 1}'
+                                content[body_key] = texts[0]
+                                logger.info(f"✏️ {body_key} 수정: {texts[0][:30]}...")
+                            if texts and len(texts) > 1 and texts[1]:
+                                body_key = f'body{text_idx + 2}'
+                                content[body_key] = texts[1]
+                                logger.info(f"✏️ {body_key} 수정: {texts[1][:30]}...")
+                except (json.JSONDecodeError, ValueError, KeyError) as e:
+                    logger.warning(f"⚠️ 수정된 텍스트 파싱 실패, 원본 사용: {e}")
             except (json.JSONDecodeError, AttributeError):
                 video_title = '릴스 영상'
 
