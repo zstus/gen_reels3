@@ -1,479 +1,4 @@
 {
-  "7830daa0-4dd2-442d-ad74-34c679f902cb": {
-    "job_id": "7830daa0-4dd2-442d-ad74-34c679f902cb",
-    "user_email": "xystus@gmail.com",
-    "status": "completed",
-    "created_at": "2025-09-25T04:26:53.779587",
-    "updated_at": "2025-09-25T04:28:27.683995",
-    "video_params": {
-      "content_data": "{\"title\":\"금융당국 개편, 진짜 멈췄나\",\"body1\":\"금융당국 개편, 여기서 진짜 멈춘 걸까? 뭔가 더 있는 거 아냐?\",\"body2\":\"25일 당정대가 금융당국 개편을 원점에서 검토하기로 했대.\",\"body3\":\"금융정책·감독 기능이 4개 기관으로 분산되면 효율성 떨어진다는 지적 계속됐지.\",\"body4\":\"실무자들 반발도 거셌고, 공공기관 지정은 그대로 추진한대.\",\"body5\":\"정부조직법 개정안 강행 얘기까지 나오면서 논란이 더 커지고 있어.\",\"body6\":\"이렇게 결정해도 괜찮은 걸까? 뭔가 남은 게 있는 건 아닐까?\",\"body7\":\"금융위-금감원 체제 유지, 너는 어떻게 생각해?\",\"body8\":\"\"}",
-      "music_mood": "bright",
-      "image_allocation_mode": "2_per_image",
-      "text_position": "bottom",
-      "text_style": "background",
-      "title_area_mode": "keep",
-      "selected_bgm_path": "Fun Vibe - Dyalla.mp3",
-      "use_test_files": false,
-      "uploaded_files": [
-        "1.png",
-        "2.png",
-        "3.png",
-        "4.mp4"
-      ],
-      "title_font": "IBMPlexSansKR-Bold.ttf",
-      "body_font": "BMYEONSUNG_otf.otf",
-      "voice_narration": "enabled"
-    },
-    "result": {
-      "video_path": "/zstus/backend/output_videos/reels_ef8791db.mp4",
-      "duration": "약 10-30초",
-      "completed_at": "2025-09-25T04:28:27.682189"
-    },
-    "error_message": null,
-    "retry_count": 0,
-    "max_retries": 2
-  },
-  "6dd8f8c1-e8e1-4f6b-b0cd-6fde7c7be3e1": {
-    "job_id": "6dd8f8c1-e8e1-4f6b-b0cd-6fde7c7be3e1",
-    "user_email": "xystus@gmail.com",
-    "status": "completed",
-    "created_at": "2025-09-25T11:51:15.030439",
-    "updated_at": "2025-09-25T11:54:04.845015",
-    "video_params": {
-      "content_data": "{\"title\":\"노안은 언제까지 서러워야 해?\",\"body1\":\"나는 여자인데 노안이라는 이야기를 자주 들어. 들을 때마다 웃어보이지만 진짜 등에서는 눔물이 막 남.\",\"body2\":\"열여덟살 때 청소년 카드로 지하철 타는데 역무원한데 맨날 왜 청소년카드 쓰냐며 잡힘. 어제도 잡더니 새 대가리인지..\",\"body3\":\"스무살 방학 때 호프집 알바를 하고 알바끼리 첫 회식을 했는데 온지 일주일 된 동갑여자애가 자기 술 잘마신다고 떠드는거야\",\"body4\":\"그러더니 그대로 꽐라가 돼버려서 회식 중간에 일부러 그 애 챙겨서 집에 데려다 줬거든.\",\"body5\":\"근데 그 애 부모들이 한참 언니가 되어선 어린애를 이렇게까지 술쳐맥이냐며 진짜 나한테 ㅈㄹㅈㄹ 난리를 치는거야. 너무 억울해서...\",\"body6\":\"짜증나서 저 애랑 동갑이고, 지가 술게임 하자고 해서 우리 하기 싫은거 했는데 저렇게 된거라고 했더니, \\\"진짜 동갑이니?\\\" 하는거야. \",\"body7\":\"그게 중요한거니? 지금 얼굴 나이가 되어야 벗어날 수 있다는 말이 진짜니? 인생이 오지게 힘들어...\",\"body8\":\"\"}",
-      "music_mood": "bright",
-      "image_allocation_mode": "2_per_image",
-      "text_position": "bottom",
-      "text_style": "outline",
-      "title_area_mode": "keep",
-      "selected_bgm_path": "Excess - Freedom Trail Studio.mp3",
-      "use_test_files": false,
-      "uploaded_files": [
-        "1.mp4",
-        "2.png",
-        "3.mp4",
-        "4.mp4"
-      ],
-      "title_font": "SeoulAlrim-ExtraBold.otf",
-      "body_font": "BMYEONSUNG_otf.otf",
-      "voice_narration": "enabled"
-    },
-    "result": {
-      "video_path": "/zstus/backend/output_videos/reels_82722d64.mp4",
-      "duration": "약 10-30초",
-      "completed_at": "2025-09-25T11:54:04.843196"
-    },
-    "error_message": null,
-    "retry_count": 0,
-    "max_retries": 2
-  },
-  "771a7414-6dda-4410-b706-3f5d680e841b": {
-    "job_id": "771a7414-6dda-4410-b706-3f5d680e841b",
-    "user_email": "xystus@gmail.com",
-    "status": "completed",
-    "created_at": "2025-09-25T13:35:49.042981",
-    "updated_at": "2025-09-25T13:38:08.119897",
-    "video_params": {
-      "content_data": "{\"title\":\"결혼 5개월 전, 이걸 봐버렸다…\",\"body1\":\"펜션에서 컵라면 먹으려다, 커피포트 물이 튀어 발등 화상! \",\"body2\":\"너무 아파서 주저앉았는데… 예비신랑? 그냥 '헐' 한마디 하고 소파 가서 유튜브 틀음…\",\"body3\":\"심지어 '괜찮아?' 이 한마디도 없음. 동태눈으로 빤히 쳐다본 게 다임\",\"body4\":\"이전에도 공감 제로, 내 얘기하면 무반응, 웃겨도 정색… 이번엔 진짜 터짐.\",\"body5\":\"따지니까 '내가 괜찮냐고 물으면 낫냐? 여자들은 너무 기대가 크다' 이딴 소리\",\"body6\":\"결혼 약속하니까 이제 보인다. 이기적이고 공감 없는 남자라는 거.\",\"body7\":\"백년해로? 아니, 예식장 취소부터 검색 중ㅋㅋ 내가 너무한 걸까? \",\"body8\":\"\"}",
-      "music_mood": "bright",
-      "image_allocation_mode": "2_per_image",
-      "text_position": "bottom",
-      "text_style": "background",
-      "title_area_mode": "keep",
-      "selected_bgm_path": "Lace Tablecloths - The Mini Vandals.mp3",
-      "use_test_files": false,
-      "uploaded_files": [
-        "1.mp4",
-        "2.mp4",
-        "3.mp4",
-        "4.png"
-      ],
-      "title_font": "SeoulNamsanEB.ttf",
-      "body_font": "SeoulHangangEB.ttf",
-      "voice_narration": "enabled"
-    },
-    "result": {
-      "video_path": "/zstus/backend/output_videos/reels_e6f776c5.mp4",
-      "duration": "약 10-30초",
-      "completed_at": "2025-09-25T13:38:08.118074"
-    },
-    "error_message": null,
-    "retry_count": 0,
-    "max_retries": 2
-  },
-  "a47280ab-ce82-48f2-a7a6-fa633d01f246": {
-    "job_id": "a47280ab-ce82-48f2-a7a6-fa633d01f246",
-    "user_email": "xystus@gmail.com",
-    "status": "completed",
-    "created_at": "2025-09-25T14:56:37.050818",
-    "updated_at": "2025-09-25T15:00:56.093688",
-    "video_params": {
-      "content_data": "{\"title\":\"비 올 때 뛰는 게 나아?\",\"body1\":\"비 오는 날 우산 안 챙겼을 때, 걷는 게 나을까 뛰는 게 나을까 고민해봤어?\",\"body2\":\"이걸 과학적으로 연구한 학자가 있다고 하더라.\",\"body3\":\"영국 연구팀은 빗속에서 머리랑 몸이 얼마나 젖는지 계산해서 발표했대.\",\"body4\":\"움직이는 초속 3m 이상이면 걷든 뛰든 거의 차이 없다는 거야.\",\"body5\":\"근데 미국 기상학자 피터슨은 이 결과에 이의를 제기했어. \",\"body6\":\"피터슨은 100m를 걸으면 뛸 때보다 16% 더 젖는다고 계산해낸 거야. 만약 소나기라면 차이는 23%까지 올라간대.\",\"body7\":\"결국 걷는 게 나을까, 뛰는 게 나을까? 너라면 어떻게 할래?\",\"body8\":\"\"}",
-      "music_mood": "suspense",
-      "image_allocation_mode": "2_per_image",
-      "text_position": "bottom",
-      "text_style": "outline",
-      "title_area_mode": "keep",
-      "selected_bgm_path": "Duty Calls - Rod Kim.mp3",
-      "use_test_files": false,
-      "uploaded_files": [
-        "1.mp4",
-        "2.png",
-        "3.png",
-        "4.png"
-      ],
-      "title_font": "IBMPlexSansKR-Bold.ttf",
-      "body_font": "SeoulHangangEB.ttf",
-      "voice_narration": "enabled"
-    },
-    "result": {
-      "video_path": "/zstus/backend/output_videos/reels_810592ce.mp4",
-      "duration": "약 10-30초",
-      "completed_at": "2025-09-25T15:00:56.092009"
-    },
-    "error_message": null,
-    "retry_count": 0,
-    "max_retries": 2
-  },
-  "f85b7d9c-5b00-4543-9152-5ece4d2b8ccd": {
-    "job_id": "f85b7d9c-5b00-4543-9152-5ece4d2b8ccd",
-    "user_email": "xystus@gmail.com",
-    "status": "completed",
-    "created_at": "2025-09-25T15:14:20.984637",
-    "updated_at": "2025-09-25T15:16:29.532138",
-    "video_params": {
-      "content_data": "{\"title\":\"비 맞기 싫으면?\",\"body1\":\"비 오는 날 우산을 안 가져왔어. 걷는 게 나을까, 뛰는 게 나을까?\",\"body2\":\"영국에 이걸 과학적으로 연구한 학자가 있대.\",\"body3\":\"속도가 초속 3m 이상이면 걷든 뛰든 거의 차이 없다고 하더라고..\",\"body4\":\"근데 미국 기상학자 토머스 피터슨이 이 결과에 이의를 제기했대.\",\"body5\":\"피터슨은 보통걸음 초속 1.5m, 뛰기는 4m로 계산해서 실험해봤어.\",\"body6\":\"그랬더니 100m를 걸으면 뛸 때보다 16% 더 젖고, 소나기 땐 23%까지 더 젖는다는 거야.\",\"body7\":\"그른데 뛰면 피곤하긴 하잖어. 게다가 초속 3미터 이상으로? 너라면 어쩔래?\",\"body8\":\"\"}",
-      "music_mood": "bright",
-      "image_allocation_mode": "2_per_image",
-      "text_position": "bottom",
-      "text_style": "outline",
-      "title_area_mode": "keep",
-      "selected_bgm_path": "For Granted - Dyalla.mp3",
-      "use_test_files": false,
-      "uploaded_files": [
-        "1.png",
-        "2.png",
-        "3.png",
-        "4.png"
-      ],
-      "title_font": "IBMPlexSansKR-Bold.ttf",
-      "body_font": "SeoulNamsanEB.ttf",
-      "voice_narration": "enabled"
-    },
-    "result": {
-      "video_path": "/zstus/backend/output_videos/reels_a04d0c6f.mp4",
-      "duration": "약 10-30초",
-      "completed_at": "2025-09-25T15:16:29.530378"
-    },
-    "error_message": null,
-    "retry_count": 0,
-    "max_retries": 2
-  },
-  "5edcd98e-9a2d-4f5d-b53d-a086dcd35a1e": {
-    "job_id": "5edcd98e-9a2d-4f5d-b53d-a086dcd35a1e",
-    "user_email": "xystus@gmail.com",
-    "status": "completed",
-    "created_at": "2025-09-25T15:33:10.517057",
-    "updated_at": "2025-09-25T15:34:53.668921",
-    "video_params": {
-      "content_data": "{\"title\":\"비 맞을 때 뛰어야 할까?\",\"body1\":\"비 오는 날, 우산 없이 걷는 게 나을까 뛰는 게 나을까?\",\"body2\":\"영국 연구팀이 빗속에서 머리랑 몸이 얼마나 젖는지 계산까지 했대.\",\"body3\":\"움직이는 속도가 초속 3미터 이상이면 걷든 뛰든 거의 차이 없다는 거야.\",\"body4\":\"근데 미국 기상학자 피터슨은 이 결과에 이의를 제기했어.\",\"body5\":\"보슬비 속 100미터를 걸으면 뛰는 것보다 16% 더 젖는대. 소나기면 23% 더 젖고 말야.\",\"body6\":\"그런데 뛰면 힘들잖아. 게다가 초속 3미터 이상의 속도로.. 나는 비를 그냥 조금 더 맞고 싶은데 너는 어때?\",\"body7\":\"\",\"body8\":\"\"}",
-      "music_mood": "bright",
-      "image_allocation_mode": "2_per_image",
-      "text_position": "bottom",
-      "text_style": "background",
-      "title_area_mode": "keep",
-      "selected_bgm_path": "Spatial Entaglement - The Grey Room _ Density & Time.mp3",
-      "use_test_files": false,
-      "uploaded_files": [
-        "1.png",
-        "2.png",
-        "3.png"
-      ],
-      "title_font": "IBMPlexSansKR-Bold.ttf",
-      "body_font": "SeoulAlrim-ExtraBold.otf",
-      "voice_narration": "enabled"
-    },
-    "result": {
-      "video_path": "/zstus/backend/output_videos/reels_506681d0.mp4",
-      "duration": "약 10-30초",
-      "completed_at": "2025-09-25T15:34:53.667168"
-    },
-    "error_message": null,
-    "retry_count": 0,
-    "max_retries": 2
-  },
-  "7666a3cf-711f-4236-88a2-947a47f1962f": {
-    "job_id": "7666a3cf-711f-4236-88a2-947a47f1962f",
-    "user_email": "xystus@gmail.com",
-    "status": "completed",
-    "created_at": "2025-09-25T17:43:19.560035",
-    "updated_at": "2025-09-25T17:44:13.017684",
-    "video_params": {
-      "content_data": "{\"title\":\"동생이랑 못살겠다\",\"body1\":\"아 ㅅㅂ 동생년이랑 도저히 같이 못살겠다.\",\"body2\":\"마트에서 광어초밥 특가할인 받아온 걸 차갑다고 전자렌지에 돌려버림.\",\"body3\":\"븅딱이랑 더 이상 같은 지붕 아래 살아갈 자신이 없다.\",\"body4\":\"내년엔 반드시 독립한다. 너라면 어떻게 할래?\",\"body5\":\"\",\"body6\":\"\",\"body7\":\"\",\"body8\":\"\"}",
-      "music_mood": "bright",
-      "image_allocation_mode": "1_per_image",
-      "text_position": "bottom",
-      "text_style": "white_background",
-      "title_area_mode": "keep",
-      "selected_bgm_path": "Excess - Freedom Trail Studio.mp3",
-      "use_test_files": false,
-      "uploaded_files": [
-        "1.png",
-        "2.png",
-        "3.mp4",
-        "4.png"
-      ],
-      "title_font": "BMHANNAPro.ttf",
-      "body_font": "BMYEONSUNG_otf.otf",
-      "voice_narration": "enabled"
-    },
-    "result": {
-      "video_path": "/zstus/backend/output_videos/reels_e9e259c1.mp4",
-      "duration": "약 10-30초",
-      "completed_at": "2025-09-25T17:44:13.015888"
-    },
-    "error_message": null,
-    "retry_count": 0,
-    "max_retries": 2
-  },
-  "8071daf0-c689-4325-87a8-1f201c219026": {
-    "job_id": "8071daf0-c689-4325-87a8-1f201c219026",
-    "user_email": "xystus@gmail.com",
-    "status": "completed",
-    "created_at": "2025-09-25T17:57:32.583109",
-    "updated_at": "2025-09-25T17:58:21.062730",
-    "video_params": {
-      "content_data": "{\"title\":\"광어초밥 전자렌지 사건\",\"body1\":\"아 ㅅㅂ 동생년이랑 도저히 같이 못살겠다.\",\"body2\":\"마트에서 광어초밥 특가로 사왔는데 차갑다고 전자렌지에 돌려버림.\",\"body3\":\"진짜 제삼자면 ㅈㄴ 웃긴데, 내가 당하니까 어이없고 화난다.\",\"body4\":\"내년엔 반드시 독립한다. 너라면 어떻게 하겠냐?\",\"body5\":\"\",\"body6\":\"\",\"body7\":\"\",\"body8\":\"\"}",
-      "music_mood": "bright",
-      "image_allocation_mode": "1_per_image",
-      "text_position": "bottom",
-      "text_style": "white_background",
-      "title_area_mode": "keep",
-      "selected_bgm_path": "It's Definitely It - Freedom Trail Studio.mp3",
-      "use_test_files": false,
-      "uploaded_files": [
-        "1.png",
-        "2.png",
-        "3.png",
-        "4.png"
-      ],
-      "title_font": "BMHANNAPro.ttf",
-      "body_font": "BMYEONSUNG_otf.otf",
-      "voice_narration": "enabled"
-    },
-    "result": {
-      "video_path": "/zstus/backend/output_videos/reels_fe37ee6d.mp4",
-      "duration": "약 10-30초",
-      "completed_at": "2025-09-25T17:58:21.060944"
-    },
-    "error_message": null,
-    "retry_count": 0,
-    "max_retries": 2
-  },
-  "e2e1edc8-a125-435b-86fd-ea2ce41b3003": {
-    "job_id": "e2e1edc8-a125-435b-86fd-ea2ce41b3003",
-    "user_email": "xystus@gmail.com",
-    "status": "completed",
-    "created_at": "2025-09-25T18:10:38.490205",
-    "updated_at": "2025-09-25T18:11:29.703371",
-    "video_params": {
-      "content_data": "{\"title\":\"광어초밥 전자렌지 사건\",\"body1\":\"아 ㅅㅂ 동생년이랑 도저히 같이 못살겠다.\",\"body2\":\"마트에서 광어초밥 특가로 사왔는데 차갑다고 전자렌지에 돌려버림.\",\"body3\":\"진짜 제삼자면 ㅈㄴ 웃긴데, 내가 당하니까 어이없고 화난다.\",\"body4\":\"내년엔 반드시 독립한다. 너라면 어떻게 하겠냐?\",\"body5\":\"\",\"body6\":\"\",\"body7\":\"\",\"body8\":\"\"}",
-      "music_mood": "bright",
-      "image_allocation_mode": "1_per_image",
-      "text_position": "bottom",
-      "text_style": "background",
-      "title_area_mode": "keep",
-      "selected_bgm_path": "It's Definitely It - Freedom Trail Studio.mp3",
-      "use_test_files": false,
-      "uploaded_files": [
-        "1.webp",
-        "2.png",
-        "3.png",
-        "4.mp4"
-      ],
-      "title_font": "BMHANNAPro.ttf",
-      "body_font": "BMYEONSUNG_otf.otf",
-      "voice_narration": "enabled"
-    },
-    "result": {
-      "video_path": "/zstus/backend/output_videos/reels_f1cee085.mp4",
-      "duration": "약 10-30초",
-      "completed_at": "2025-09-25T18:11:29.701527"
-    },
-    "error_message": null,
-    "retry_count": 0,
-    "max_retries": 2
-  },
-  "ea2d94a6-24b4-48d4-a8f6-01788d889ceb": {
-    "job_id": "ea2d94a6-24b4-48d4-a8f6-01788d889ceb",
-    "user_email": "xystus@gmail.com",
-    "status": "completed",
-    "created_at": "2025-09-25T18:22:27.081896",
-    "updated_at": "2025-09-25T18:23:21.280128",
-    "video_params": {
-      "content_data": "{\"title\":\"광어초밥 전자렌지 사건\",\"body1\":\"아 ㅅㅂ 동생년이랑 도저히 같이 못살겠다.\",\"body2\":\"마트에서 광어초밥 특가로 사왔는데 차갑다고 전자렌지에 돌려버림.\",\"body3\":\"진짜 제삼자면 ㅈㄴ 웃긴데, 내가 당하니까 어이없고 화난다.\",\"body4\":\"내년엔 반드시 독립한다. 너라면 어떻게 하겠냐?\",\"body5\":\"\",\"body6\":\"\",\"body7\":\"\",\"body8\":\"\"}",
-      "music_mood": "bright",
-      "image_allocation_mode": "1_per_image",
-      "text_position": "bottom",
-      "text_style": "white_background",
-      "title_area_mode": "keep",
-      "selected_bgm_path": "It's Definitely It - Freedom Trail Studio.mp3",
-      "use_test_files": false,
-      "uploaded_files": [
-        "1.mp4",
-        "2.png",
-        "3.png",
-        "4.png"
-      ],
-      "title_font": "BMHANNAPro.ttf",
-      "body_font": "BMYEONSUNG_otf.otf",
-      "voice_narration": "enabled"
-    },
-    "result": {
-      "video_path": "/zstus/backend/output_videos/reels_1cd72688.mp4",
-      "duration": "약 10-30초",
-      "completed_at": "2025-09-25T18:23:21.278340"
-    },
-    "error_message": null,
-    "retry_count": 0,
-    "max_retries": 2
-  },
-  "35bfb893-4ede-45dc-9b67-6f2ca0ec44cf": {
-    "job_id": "35bfb893-4ede-45dc-9b67-6f2ca0ec44cf",
-    "user_email": "xystus@gmail.com",
-    "status": "completed",
-    "created_at": "2025-09-25T18:30:09.366046",
-    "updated_at": "2025-09-25T18:31:06.205288",
-    "video_params": {
-      "content_data": "{\"title\":\"광어초밥 전자렌지 사건\",\"body1\":\"아 ㅅㅂ 동생년이랑 도저히 같이 못살겠다.\",\"body2\":\"마트에서 광어초밥 특가로 사왔는데 차갑다고 전자렌지에 돌려버림.\",\"body3\":\"진짜 제삼자면 ㅈㄴ 웃긴데, 내가 당하니까 어이없고 화난다.\",\"body4\":\"내년엔 반드시 독립한다. 너라면 어떻게 하겠냐?\",\"body5\":\"\",\"body6\":\"\",\"body7\":\"\",\"body8\":\"\"}",
-      "music_mood": "bright",
-      "image_allocation_mode": "1_per_image",
-      "text_position": "bottom",
-      "text_style": "white_background",
-      "title_area_mode": "keep",
-      "selected_bgm_path": "Excess - Freedom Trail Studio.mp3",
-      "use_test_files": false,
-      "uploaded_files": [
-        "1.webp",
-        "2.webp",
-        "3.jpg",
-        "4.png"
-      ],
-      "title_font": "BMHANNAPro.ttf",
-      "body_font": "BMYEONSUNG_otf.otf",
-      "voice_narration": "enabled"
-    },
-    "result": {
-      "video_path": "/zstus/backend/output_videos/reels_1a4233fc.mp4",
-      "duration": "약 10-30초",
-      "completed_at": "2025-09-25T18:31:06.203213"
-    },
-    "error_message": null,
-    "retry_count": 0,
-    "max_retries": 2
-  },
-  "e72f67b1-dca6-4db3-b641-3ff7cffced21": {
-    "job_id": "e72f67b1-dca6-4db3-b641-3ff7cffced21",
-    "user_email": "xystus@gmail.com",
-    "status": "completed",
-    "created_at": "2025-09-25T18:35:12.747376",
-    "updated_at": "2025-09-25T18:36:06.068981",
-    "video_params": {
-      "content_data": "{\"title\":\"광어초밥 전자렌지 사건\",\"body1\":\"아 ㅅㅂ 동생년이랑 도저히 같이 못살겠다.\",\"body2\":\"마트에서 광어초밥 특가로 사왔는데 차갑다고 전자렌지에 돌려버림.\",\"body3\":\"진짜 제삼자면 ㅈㄴ 웃긴데, 내가 당하니까 어이없고 화난다.\",\"body4\":\"내년엔 반드시 독립한다. 너라면 어떻게 하겠냐?\",\"body5\":\"\",\"body6\":\"\",\"body7\":\"\",\"body8\":\"\"}",
-      "music_mood": "bright",
-      "image_allocation_mode": "1_per_image",
-      "text_position": "bottom",
-      "text_style": "white_background",
-      "title_area_mode": "keep",
-      "selected_bgm_path": "It's Definitely It - Freedom Trail Studio.mp3",
-      "use_test_files": false,
-      "uploaded_files": [
-        "1.webp",
-        "2.png",
-        "3.jpg",
-        "4.mp4"
-      ],
-      "title_font": "BMHANNAPro.ttf",
-      "body_font": "BMYEONSUNG_otf.otf",
-      "voice_narration": "enabled"
-    },
-    "result": {
-      "video_path": "/zstus/backend/output_videos/reels_6008e237.mp4",
-      "duration": "약 10-30초",
-      "completed_at": "2025-09-25T18:36:06.066981"
-    },
-    "error_message": null,
-    "retry_count": 0,
-    "max_retries": 2
-  },
-  "44169c67-65cf-4cc3-b29f-4da775e619c4": {
-    "job_id": "44169c67-65cf-4cc3-b29f-4da775e619c4",
-    "user_email": "xystus@gmail.com",
-    "status": "completed",
-    "created_at": "2025-09-25T18:48:04.854300",
-    "updated_at": "2025-09-25T18:49:04.677717",
-    "video_params": {
-      "content_data": "{\"title\":\"광어초밥 전자렌지 사건\",\"body1\":\"아 ㅅㅂ 동생년이랑 도저히 같이 못살겠다.\",\"body2\":\"마트에서 광어초밥 특가로 사왔는데 차갑다고 전자렌지에 돌려버림.\",\"body3\":\"진짜 제삼자면 ㅈㄴ 웃긴데, 내가 당하니까 어이없고 화난다.\",\"body4\":\"내년엔 반드시 독립한다. 너라면 어떻게 하겠냐?\",\"body5\":\"\",\"body6\":\"\",\"body7\":\"\",\"body8\":\"\"}",
-      "music_mood": "bright",
-      "image_allocation_mode": "1_per_image",
-      "text_position": "bottom",
-      "text_style": "black_text_white_outline",
-      "title_area_mode": "keep",
-      "selected_bgm_path": "It's Definitely It - Freedom Trail Studio.mp3",
-      "use_test_files": false,
-      "uploaded_files": [
-        "1.webp",
-        "2.png",
-        "3.mp4",
-        "4.mp4"
-      ],
-      "title_font": "BMHANNAPro.ttf",
-      "body_font": "BMYEONSUNG_otf.otf",
-      "voice_narration": "enabled"
-    },
-    "result": {
-      "video_path": "/zstus/backend/output_videos/reels_9b8a5d7a.mp4",
-      "duration": "약 10-30초",
-      "completed_at": "2025-09-25T18:49:04.675712"
-    },
-    "error_message": null,
-    "retry_count": 0,
-    "max_retries": 2
-  },
-  "540ad45d-59d0-47ba-bf57-40515e19215b": {
-    "job_id": "540ad45d-59d0-47ba-bf57-40515e19215b",
-    "user_email": "xystus@gmail.com",
-    "status": "completed",
-    "created_at": "2025-09-25T23:38:17.292731",
-    "updated_at": "2025-09-25T23:39:05.702277",
-    "video_params": {
-      "content_data": "{\"title\":\"인생이 40대부터 실전인 이유\",\"body1\":\"회사에 다닐 수 있는 기간이 얼마 안 남음\",\"body2\":\"이직이 어려워짐\",\"body3\":\"부모님 편찮으시기 시작함\",\"body4\":\"자녀 교육비 최고조\",\"body5\":\"아파트 대충금 여전히 많음\",\"body6\":\"체력은 갈수록 딸림\",\"body7\":\"노후를 준비할 돈이 없는데, 세월은 빨리 감\",\"body8\":\"\"}",
-      "music_mood": "suspense",
-      "image_allocation_mode": "2_per_image",
-      "text_position": "bottom",
-      "text_style": "white_background",
-      "title_area_mode": "keep",
-      "selected_bgm_path": "Yacoby - Schwartzy.mp3",
-      "use_test_files": false,
-      "uploaded_files": [
-        "1.png",
-        "2.png",
-        "3.png",
-        "4.png"
-      ],
-      "title_font": "IBMPlexSansKR-Bold.ttf",
-      "body_font": "BMHANNAPro.ttf",
-      "voice_narration": "enabled"
-    },
-    "result": {
-      "video_path": "/zstus/backend/output_videos/reels_7d9c04d4.mp4",
-      "duration": "약 10-30초",
-      "completed_at": "2025-09-25T23:39:05.700275"
-    },
-    "error_message": null,
-    "retry_count": 0,
-    "max_retries": 2
-  },
   "1037649f-85ad-4207-8db5-5c56401137e2": {
     "job_id": "1037649f-85ad-4207-8db5-5c56401137e2",
     "user_email": "xystus@gmail.com",
@@ -2088,6 +1613,128 @@
       "video_path": "/zstus/backend/output_videos/202510/reels_075096f7.mp4",
       "duration": "약 10-30초",
       "completed_at": "2025-10-02T12:03:55.548231"
+    },
+    "error_message": null,
+    "retry_count": 0,
+    "max_retries": 2
+  },
+  "job_99jyo4lg3_mgac1fx9": {
+    "job_id": "job_99jyo4lg3_mgac1fx9",
+    "user_email": "xystus@gmail.com",
+    "status": "completed",
+    "created_at": "2025-10-03T04:24:26.550223",
+    "updated_at": "2025-10-03T04:26:41.637928",
+    "video_params": {
+      "content_data": "{\"title\":\"아빠와 내 전남친\",\"body1\":\"아빠가 2년 전에 헤어진 남자랑 아주 친하게 지내. 뭐랄까, 아들처럼 생각하신다니까.\",\"body2\":\"그 남자가 세차에 환장하다 못해 미친 수준이였거든. 집에 데려왔을 때 아빠 차를 세차해준 적이 있어. \",\"body3\":\"아빠가 본넷에 비친 자기 모습에 빨려들어 가는 표정이 아직도 잊혀지지 않아.\",\"body4\":\"그 이후 그 남자와 헤어졌는데 아빠는 계속 그를 만나서 세차도 하고 밥도 먹고 술도 마시고 그래.\",\"body5\":\"엄마는 아빠가 저렇게 밝아지셨는데 속좁게 굴지 말라고, 티낼 생각도 하지 말라고 해.\",\"body6\":\"얼마 전엔 할아버지가 보내온 산삼 세뿌리를 엄마, 아빠, 그 남자 이렇게 먹음. ㅈㄹ\",\"body7\":\"그 남자한테 자제해달라고 부탁해볼까? 너라면 어쩔래?\",\"body8\":\"\"}",
+      "music_mood": "bright",
+      "image_allocation_mode": "1_per_image",
+      "text_position": "bottom",
+      "text_style": "outline",
+      "title_area_mode": "keep",
+      "selected_bgm_path": "Fun Vibe - Dyalla.mp3",
+      "use_test_files": false,
+      "uploaded_files": [
+        "1.png",
+        "2.png",
+        "3.png",
+        "4.png",
+        "5.mp4",
+        "6.png",
+        "7.mp4"
+      ],
+      "title_font": "BMHANNAPro.ttf",
+      "body_font": "BMYEONSUNG_otf.otf",
+      "title_font_size": 42,
+      "body_font_size": 36,
+      "voice_narration": "enabled",
+      "cross_dissolve": "enabled",
+      "subtitle_duration": 0.0
+    },
+    "result": {
+      "video_path": "/zstus/backend/output_videos/202510/reels_540924d3.mp4",
+      "duration": "약 10-30초",
+      "completed_at": "2025-10-03T04:26:41.635645"
+    },
+    "error_message": null,
+    "retry_count": 0,
+    "max_retries": 2
+  },
+  "job_nsl8r068a_mgak57j3": {
+    "job_id": "job_nsl8r068a_mgak57j3",
+    "user_email": "xystus@gmail.com",
+    "status": "completed",
+    "created_at": "2025-10-03T08:15:44.610916",
+    "updated_at": "2025-10-03T08:17:47.426394",
+    "video_params": {
+      "content_data": "{\"title\":\"제주도 여행 2025\",\"body1\":\"오랜만에 방문한 제주도. \",\"body2\":\"비가 엄청나게 왔던 도착하는 날\",\"body3\":\"펜션은 그래서 더 예쁘게 보였을지도 몰라\",\"body4\":\"통창 덕에 집 안에서도 온 몸으로 비를 맞는 느낌\",\"body5\":\"엘라 피츠제럴드의 재즈가 룸을 가득 채우고 있었지\",\"body6\":\"서울에서는 인사했지만 이곳에서는 아직 문턱에 앉아있는 여름\",\"body7\":\"마지막 여름, 마지막 더위… 좋은 기억을 남기길\",\"body8\":\"\"}",
+      "music_mood": "calm",
+      "image_allocation_mode": "1_per_image",
+      "text_position": "bottom-edge",
+      "text_style": "white_background",
+      "title_area_mode": "keep",
+      "selected_bgm_path": "Taking in The Changes - Everet Almond.mp3",
+      "use_test_files": false,
+      "uploaded_files": [
+        "1.jpeg",
+        "2.jpeg",
+        "3.jpeg",
+        "4.jpeg",
+        "5.jpeg",
+        "6.jpeg",
+        "7.jpeg"
+      ],
+      "title_font": "BMYEONSUNG_otf.otf",
+      "body_font": "BMYEONSUNG_otf.otf",
+      "title_font_size": 42,
+      "body_font_size": 36,
+      "voice_narration": "disabled",
+      "cross_dissolve": "enabled",
+      "subtitle_duration": 5.0
+    },
+    "result": {
+      "video_path": "/zstus/backend/output_videos/202510/reels_c1f8105a.mp4",
+      "duration": "약 10-30초",
+      "completed_at": "2025-10-03T08:17:47.419625"
+    },
+    "error_message": null,
+    "retry_count": 0,
+    "max_retries": 2
+  },
+  "job_q3hd9xvdn_mgbr9avz": {
+    "job_id": "job_q3hd9xvdn_mgbr9avz",
+    "user_email": "xystus@gmail.com",
+    "status": "completed",
+    "created_at": "2025-10-04T04:18:47.262525",
+    "updated_at": "2025-10-04T04:24:04.360238",
+    "video_params": {
+      "content_data": "{\"title\":\"안녕, 서울의 여름! ☔️ 제주 세화에서의 마지막 인사\",\"body1\":\"비가 추적추적 내리는 제주 세화의 예쁜 숙소\",\"body2\":\"통창으로 둘러싸여서 안에 있어도 온몸으로 비를 맞는 듯 했어.\",\"body3\":\"서울에서 이미 여름과 인사했지만, 제주는 아직 여름이 문턱에 앉아있네.\",\"body4\":\"그래서 여름에게 한번 더 작별 인사를 할 수 있을 것 같아\",\"body5\":\"마지막 날까지 편안하게 잘 있다 갈 수 있길.\",\"body6\":\"오늘 밤은 빗소리 들으면서 푹 쉬어볼까..\",\"body7\":\"\",\"body8\":\"\"}",
+      "music_mood": "calm",
+      "image_allocation_mode": "1_per_image",
+      "text_position": "bottom-edge",
+      "text_style": "white_background",
+      "title_area_mode": "remove",
+      "selected_bgm_path": "You and I - Telecasted.mp3",
+      "use_test_files": false,
+      "uploaded_files": [
+        "1.mov",
+        "2.mov",
+        "3.mov",
+        "4.mov",
+        "5.mov",
+        "6.mov"
+      ],
+      "title_font": "BMYEONSUNG_otf.otf",
+      "body_font": "BMYEONSUNG_otf.otf",
+      "title_font_size": 42,
+      "body_font_size": 36,
+      "voice_narration": "disabled",
+      "cross_dissolve": "enabled",
+      "subtitle_duration": 8.0
+    },
+    "result": {
+      "video_path": "/zstus/backend/output_videos/202510/reels_9644c3cf.mp4",
+      "duration": "약 10-30초",
+      "completed_at": "2025-10-04T04:24:04.358320"
     },
     "error_message": null,
     "retry_count": 0,

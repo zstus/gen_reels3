@@ -198,8 +198,8 @@ const TextImagePairManager: React.FC<TextImagePairManagerProps> = ({
     });
 
     // 파일 유효성 검증 (모드에 따라 다른 제한)
-    const maxSize = imageUploadMode === 'single-for-all' ? 40 * 1024 * 1024 : 10 * 1024 * 1024;
-    const maxSizeText = imageUploadMode === 'single-for-all' ? '40MB' : '10MB';
+    const maxSize = imageUploadMode === 'single-for-all' ? 80 * 1024 * 1024 : 40 * 1024 * 1024;
+    const maxSizeText = imageUploadMode === 'single-for-all' ? '80MB' : '40MB';
 
     if (file.size > maxSize) {
       setUploadErrors(prev => ({ ...prev, [imageIndex]: `파일 크기가 ${maxSizeText}를 초과합니다` }));

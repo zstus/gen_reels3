@@ -160,7 +160,7 @@ const GenerateStep: React.FC<GenerateStepProps> = ({
   }, []);
 
   // 미리보기 생성
-  const generatePreview = async () => {
+  const generatePreview = React.useCallback(async () => {
     if (!projectData.content.title || !projectData.content.body1) {
       alert('미리보기를 위해서는 제목과 첫 번째 대사가 필요합니다.');
       return;
@@ -196,7 +196,19 @@ const GenerateStep: React.FC<GenerateStepProps> = ({
     } finally {
       setLoadingPreview(false);
     }
-  };
+  }, [
+    projectData.content.title,
+    projectData.content.body1,
+    projectData.images,
+    projectData.jobId,
+    textPosition,
+    textStyle,
+    titleAreaMode,
+    titleFont,
+    bodyFont,
+    titleFontSize,
+    bodyFontSize
+  ]);
 
   // 자동 미리보기 생성
   useEffect(() => {
@@ -219,13 +231,9 @@ const GenerateStep: React.FC<GenerateStepProps> = ({
     projectData.content.title,
     projectData.content.body1,
     projectData.images,
-    textPosition,
-    textStyle,
-    titleAreaMode,
-    titleFont,
-    bodyFont,
     loadingFonts,
-    availableFonts
+    availableFonts,
+    generatePreview  // useCallback으로 메모이제이션된 함수 사용
   ]);
 
   // 배치 영상 생성 시작 (비동기)
