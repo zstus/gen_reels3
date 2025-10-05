@@ -29,8 +29,8 @@ echo "   FastAPI 서버 백그라운드에서 시작됨 (포트 8080)"
 echo "🤖 백그라운드 워커 재시작 중..."
 cd /zstus/backend
 source venv/bin/activate
-nohup python worker.py --poll-interval 5 > worker.log 2>&1 &
-echo "   백그라운드 워커 시작됨 (5초 폴링 간격)"
+nohup python worker.py --poll-interval 5 >> api.log 2>&1 &
+echo "   백그라운드 워커 시작됨 (5초 폴링 간격, api.log에 통합)"
 
 # 5. React 재시작
 echo "⚛️  React 개발 서버 재시작 중..."
@@ -73,7 +73,7 @@ if pgrep -f "python worker.py" > /dev/null; then
     WORKER_PID=$(pgrep -f "python worker.py")
     echo "   ✅ 워커 정상 실행 (PID: $WORKER_PID)"
 else
-    echo "   ❌ 워커 응답 없음 - worker.log 확인 필요"
+    echo "   ❌ 워커 응답 없음 - api.log 확인 필요"
 fi
 
 # 7. 실행 중인 프로세스 표시
@@ -91,8 +91,7 @@ echo "   - 웹 서비스: http://zstus.synology.me:8097/"
 echo "   - FastAPI 직접: http://localhost:8080"
 echo "   - React 직접: http://localhost:3000"
 echo "\n📄 로그 확인:"
-echo "   - FastAPI 로그: tail -f /zstus/backend/api.log"
-echo "   - 워커 로그: tail -f /zstus/backend/worker.log"
+echo "   - 통합 로그 (FastAPI + Worker): tail -f /zstus/backend/api.log"
 echo "   - React 로그: tail -f /zstus/frontend/react.log"
 echo "\n📧 이메일 서비스:"
 echo "   - Gmail SMTP: lazyflicker@gmail.com"

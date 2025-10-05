@@ -342,76 +342,6 @@ class VideoGenerator:
         
         return temp_file.name
     
-    def create_simple_group_clip(self, image_path, group_segments, total_duration, title_image_path=None, text_position="bottom", text_style="outline", title_font="BMYEONSUNG_otf.otf", body_font="BMYEONSUNG_otf.otf"):
-        """간단한 그룹 클립 생성 (uploads 폴더용)"""
-        print(f"    🔧 간단한 그룹 클립 생성: {total_duration:.1f}초")
-        
-        # 1. 연속 배경 이미지 (전체 그룹 시간동안)
-        bg_clip = self.create_continuous_background_clip(image_path, total_duration)
-        
-        # 2. 상단 검은 영역 (전체 시간)
-        black_top = ColorClip(size=(self.video_width, 220), color=(0,0,0))
-        black_top = black_top.set_duration(total_duration).set_position((0, 0))
-        
-        # 3. 제목 클립 설정
-        if title_image_path and os.path.exists(title_image_path):
-            title_clip = ImageClip(title_image_path).set_duration(total_duration).set_position((0, 0))
-        else:
-            title_clip = None
-        
-        # 4. 각 텍스트를 시간별로 배치
-        text_clips = []
-        current_time = 0.0
-
-        for body_key, body_text, tts_path, clip_duration in group_segments:
-            text_image_path = self.create_text_image(body_text, self.video_width, self.video_height, text_position, text_style, is_title=False, title_font=title_font, body_font=body_font, title_area_mode=title_area_mode, title_font_size=title_font_size, body_font_size=body_font_size)
-            text_clip = ImageClip(text_image_path).set_start(current_time).set_duration(clip_duration).set_position((0, 0))
-            text_clips.append(text_clip)
-            current_time += clip_duration
-        
-        # 5. 합성
-        composition_clips = [bg_clip, black_top]
-        if title_clip:
-            composition_clips.append(title_clip)
-        composition_clips.extend(text_clips)
-        
-        group_final = CompositeVideoClip(composition_clips, size=(self.video_width, self.video_height))
-        
-        return group_final
-
-    def create_truly_continuous_group_clip(self, image_path, group_segments, total_duration, title_image_path, text_position="bottom", text_style="outline", title_font="BMYEONSUNG_otf.otf", body_font="BMYEONSUNG_otf.otf"):
-        """그룹 내에서 정말 끊기지 않는 연속 클립 생성"""
-        print(f"    🔧 연속 그룹 클립 생성: {total_duration:.1f}초")
-        
-        # 1. 연속 배경 이미지 (전체 그룹 시간동안 - 끊기지 않음!)
-        bg_clip = self.create_continuous_background_clip(image_path, total_duration)
-        
-        # 2. 상단 검은 영역 (전체 시간)
-        black_top = ColorClip(size=(self.video_width, 220), color=(0,0,0))
-        black_top = black_top.set_duration(total_duration).set_position((0, 0))
-        
-        # 3. 제목 (전체 시간)
-        title_clip = ImageClip(title_image_path).set_duration(total_duration).set_position((0, 0))
-        
-        # 4. 간단한 방법: 각 텍스트를 시간별로 배치
-        text_clips = []
-        current_time = 0.0
-
-        for body_key, body_text, tts_path, clip_duration in group_segments:
-            text_image_path = self.create_text_image(body_text, self.video_width, self.video_height, text_position, text_style, is_title=False, title_font=title_font, body_font=body_font, title_area_mode=title_area_mode, title_font_size=title_font_size, body_font_size=body_font_size)
-            text_clip = ImageClip(text_image_path).set_start(current_time).set_duration(clip_duration).set_position((0, 0))
-            text_clips.append(text_clip)
-            current_time += clip_duration
-        
-        # 5. 합성 (배경은 연속, 텍스트만 시간별로)
-        group_final = CompositeVideoClip([
-            bg_clip,     # 연속 배경
-            black_top,   # 상단
-            title_clip,  # 제목
-        ] + text_clips, size=(self.video_width, self.video_height))
-        
-        return group_final
-    
     def create_text_image(self, text, width, height, text_position="bottom", text_style="outline", is_title=False, title_font="BMYEONSUNG_otf.otf", body_font="BMYEONSUNG_otf.otf", title_area_mode="keep", title_font_size=42, body_font_size=36):
         """텍스트 이미지 생성 (배경 박스 포함)"""
         # 투명 배경 이미지 생성
@@ -2543,7 +2473,7 @@ class VideoGenerator:
         return image_files
     def create_fullscreen_background_clip(self, image_path, duration):
         """전체 화면(504x890)용 이미지 배경 클립 생성 (EXIF + 고품질)"""
-        print(f"🖼️ 전체 화면 이미지 클립 생성: {os.path.basename(image_path)}")
+        logger.info(f"🖼️ 전체 화면 이미지 클립 생성: {os.path.basename(image_path)}")
 
         try:
             # 이미지 로드 + EXIF 적용 + 고품질 리사이즈
@@ -2551,7 +2481,7 @@ class VideoGenerator:
                 # ✅ EXIF orientation 적용 (아이폰/HEIC 사진 회전 문제 해결)
                 img = ImageOps.exif_transpose(img) or img
                 orig_width, orig_height = img.size
-                print(f"📐 원본 이미지: {orig_width}x{orig_height}")
+                logger.info(f"📐 원본 이미지: {orig_width}x{orig_height}")
 
                 # 작업 영역: 전체 화면 504x890
                 work_width = self.video_width
@@ -2559,46 +2489,71 @@ class VideoGenerator:
                 work_aspect_ratio = work_width / work_height
                 image_aspect_ratio = orig_width / orig_height
 
-                print(f"🎯 목표: 전체 화면 {work_width}x{work_height}")
-                print(f"📊 이미지 종횡비: {image_aspect_ratio:.3f}")
+                logger.info(f"🎯 목표: 전체 화면 {work_width}x{work_height}")
+                logger.info(f"📊 이미지 종횡비: {image_aspect_ratio:.3f}")
 
-                # 종횡비 기반 3단계 지능형 배치
+                # ============================================
+                # 1단계: 리사이징 (3가지 타입 분류)
+                # ============================================
+                logger.info(f"\n{'='*50}")
+                logger.info(f"📐 1단계: 리사이징 시작")
+                logger.info(f"{'='*50}")
+
                 if image_aspect_ratio > 0.590:
-                    # 가로형: 높이 맞춤 후 좌우 패닝
+                    # 가로형: 높이 890px 고정
                     resized_height = work_height
                     resized_width = int(orig_width * resized_height / orig_height)
-                    print(f"🔳 가로형 이미지 (aspect > 0.590): 고품질 리사이즈 {resized_width}x{resized_height}")
 
-                    # 좌우 패닝 범위
-                    pan_range = min(60, (resized_width - work_width) // 2)
-                    image_type = "horizontal"
+                    logger.info(f"🔳 가로형 이미지 (aspect > 0.590)")
+                    logger.info(f"   원본: {orig_width}x{orig_height} → resizedImage: {resized_width}x{resized_height}")
+
+                    # PIL 리사이즈
+                    try:
+                        resized_img = img.resize((resized_width, resized_height), Image.Resampling.LANCZOS)
+                    except AttributeError:
+                        resized_img = img.resize((resized_width, resized_height), Image.LANCZOS)
+
                 elif image_aspect_ratio >= 0.540:
-                    # 특수비율: 높이 1300px 고정 후 좌우 패닝 + 상하 크롭
-                    resized_height = 1300
-                    resized_width = int(orig_width * resized_height / orig_height)
-                    print(f"⭐ 특수비율 이미지 (0.540 ≤ aspect ≤ 0.590): 고품질 리사이즈 {resized_width}x{resized_height}")
-                    print(f"📐 상하 크롭: {1300 - work_height}px (상하 각 {(1300 - work_height) // 2}px)")
+                    # 특수비율: 2단계 리사이징 (1100px → 890px 크롭)
+                    logger.info(f"⭐ 특수비율 이미지 (0.540 ≤ aspect ≤ 0.590)")
 
-                    # 좌우 패닝 범위
-                    pan_range = min(60, (resized_width - work_width) // 2)
-                    image_type = "special"
+                    # Step A: 높이 1100px로 리사이즈
+                    temp_height = 1100
+                    temp_width = int(orig_width * temp_height / orig_height)
+
+                    logger.info(f"   Step A: 원본 {orig_width}x{orig_height} → 임시 {temp_width}x{temp_height}")
+
+                    try:
+                        temp_img = img.resize((temp_width, temp_height), Image.Resampling.LANCZOS)
+                    except AttributeError:
+                        temp_img = img.resize((temp_width, temp_height), Image.LANCZOS)
+
+                    # Step B: 상하 크롭하여 890px로 조정
+                    crop_top = (temp_height - work_height) // 2  # (1100-890)/2 = 105
+                    crop_bottom = crop_top + work_height         # 105 + 890 = 995
+
+                    logger.info(f"   Step B: 상하 크롭 {crop_top}px → resizedImage: {temp_width}x{work_height}")
+
+                    resized_img = temp_img.crop((0, crop_top, temp_width, crop_bottom))
+
+                    resized_width = temp_width
+                    resized_height = work_height
+
                 else:
-                    # 세로형: 폭 맞춤 후 상하 패닝
+                    # 세로형: 폭 504px 고정
                     resized_width = work_width
                     resized_height = int(orig_height * resized_width / orig_width)
-                    print(f"🔳 세로형 이미지 (aspect < 0.540): 고품질 리사이즈 {resized_width}x{resized_height}")
 
-                    # 상하 패닝 범위
-                    pan_range = min(60, (resized_height - work_height) // 2)
-                    image_type = "vertical"
+                    logger.info(f"🔳 세로형 이미지 (aspect < 0.540)")
+                    logger.info(f"   원본: {orig_width}x{orig_height} → resizedImage: {resized_width}x{resized_height}")
 
-                # PIL 고품질 리사이즈 (LANCZOS)
-                try:
-                    resized_img = img.resize((resized_width, resized_height), Image.Resampling.LANCZOS)
-                except AttributeError:
-                    resized_img = img.resize((resized_width, resized_height), Image.LANCZOS)
+                    # PIL 리사이즈
+                    try:
+                        resized_img = img.resize((resized_width, resized_height), Image.Resampling.LANCZOS)
+                    except AttributeError:
+                        resized_img = img.resize((resized_width, resized_height), Image.LANCZOS)
 
-                print(f"✨ 고품질 리사이즈 완료: LANCZOS 알고리즘 사용")
+                logger.info(f"✅ 1단계 리사이징 완료: LANCZOS 알고리즘 사용")
 
                 # RGBA → RGB 변환
                 if resized_img.mode in ('RGBA', 'LA', 'P'):
@@ -2607,68 +2562,78 @@ class VideoGenerator:
                         resized_img = resized_img.convert('RGBA')
                     background.paste(resized_img, mask=resized_img.split()[-1] if resized_img.mode in ('RGBA', 'LA') else None)
                     resized_img = background
-                    print(f"🔳 RGBA → RGB 변환 완료")
+                    logger.info(f"🔳 RGBA → RGB 변환 완료")
 
                 # 임시 파일로 저장 (고품질)
                 temp_file = tempfile.NamedTemporaryFile(delete=False, suffix='.jpg')
                 resized_img.save(temp_file.name, 'JPEG', quality=95)
                 processed_image_path = temp_file.name
-                print(f"💾 고품질 임시 파일 생성: {processed_image_path}")
+                logger.info(f"💾 resizedImage 저장 완료: {processed_image_path}")
 
             # MoviePy 이미지 클립 생성
             clip = ImageClip(processed_image_path).set_duration(duration)
 
-            # 패닝 애니메이션 (4패턴 랜덤)
-            patterns = [1, 2, 3, 4]
-            pattern = random.choice(patterns)
+            # ============================================
+            # 2단계: 패닝 (resizedImage 크기 기준)
+            # ============================================
+            print(f"\n{'='*50}")
+            logger.info(f"🎬 2단계: 패닝 시작")
+            logger.info(f"{'='*50}")
 
-            if image_type == "horizontal":
-                # 가로형 패닝 (좌우)
-                if pattern in [1, 3]:
-                    # 좌 → 우
-                    print(f"🎬 가로형 패턴 {pattern}: 좌 → 우 패닝 (duration: {duration:.1f}s)")
-                    start_x = -pan_range
-                    end_x = pan_range
-                else:
-                    # 우 → 좌
-                    print(f"🎬 가로형 패턴 {pattern}: 우 → 좌 패닝 (duration: {duration:.1f}s)")
-                    start_x = pan_range
-                    end_x = -pan_range
+            # resizedImage 크기 기준으로 패닝 타입 먼저 결정
+            if resized_width > work_width:
+                # 가로 패닝 확정
+                available_margin = (resized_width - work_width) // 2
+                safe_pan_range = min(60, available_margin)
+
+                # 가로 패닝 방향만 랜덤 선택
+                pattern = random.choice([1, 2])
+
+                if pattern == 1:
+                    # 좌→우 패닝: 이미지를 왼쪽으로 이동 (왼쪽 부분 → 오른쪽 부분 보여주기)
+                    start_x = 0
+                    end_x = -safe_pan_range
+                    logger.info(f"🎬 가로 패닝 - 패턴 {pattern}: 좌→우 ({start_x} → {end_x})")
+                else:  # pattern == 2
+                    # 우→좌 패닝: 이미지를 오른쪽으로 이동 (오른쪽 부분 → 왼쪽 부분 보여주기)
+                    start_x = -(resized_width - work_width)
+                    end_x = start_x + safe_pan_range
+                    logger.info(f"🎬 가로 패닝 - 패턴 {pattern}: 우→좌 ({start_x} → {end_x})")
 
                 start_y = (work_height - resized_height) // 2
                 end_y = start_y
-            elif image_type == "special":
-                # 특수비율 패닝 (좌우 패닝 + Y축 중앙 고정)
-                if pattern in [1, 3]:
-                    # 좌 → 우
-                    print(f"🎬 특수비율 패턴 {pattern}: 좌 → 우 패닝 (duration: {duration:.1f}s)")
-                    start_x = -pan_range
-                    end_x = pan_range
-                else:
-                    # 우 → 좌
-                    print(f"🎬 특수비율 패턴 {pattern}: 우 → 좌 패닝 (duration: {duration:.1f}s)")
-                    start_x = pan_range
-                    end_x = -pan_range
 
-                # Y축: 이미지 중간 = 캔버스 중간 (상하 크롭)
-                start_y = (work_height - resized_height) // 2
-                end_y = start_y
-                print(f"📍 Y축 고정 위치: {start_y}px (이미지 중간 = 캔버스 중간)")
-            else:  # vertical
-                # 세로형 패닝 (상하)
-                if pattern in [1, 3]:
-                    # 상 → 하
-                    print(f"🎬 세로형 패턴 {pattern}: 상 → 하 패닝 (duration: {duration:.1f}s)")
-                    start_y = -pan_range
-                    end_y = pan_range
-                else:
-                    # 하 → 상
-                    print(f"🎬 세로형 패턴 {pattern}: 하 → 상 패닝 (duration: {duration:.1f}s)")
-                    start_y = pan_range
-                    end_y = -pan_range
+            elif resized_height > work_height:
+                # 세로 패닝 확정
+                available_margin = (resized_height - work_height) // 2
+                safe_pan_range = min(60, available_margin)
+
+                # 세로 패닝 방향만 랜덤 선택
+                pattern = random.choice([1, 2])
+
+                if pattern == 1:
+                    # 상→하 패닝: 이미지를 위쪽으로 이동 (위쪽 부분 → 아래쪽 부분 보여주기)
+                    start_y = 0
+                    end_y = -safe_pan_range
+                    logger.info(f"🎬 세로 패닝 - 패턴 {pattern}: 상→하 ({start_y} → {end_y})")
+                else:  # pattern == 2
+                    # 하→상 패닝: 이미지를 아래쪽으로 이동 (아래쪽 부분 → 위쪽 부분 보여주기)
+                    start_y = -(resized_height - work_height)
+                    end_y = start_y + safe_pan_range
+                    logger.info(f"🎬 세로 패닝 - 패턴 {pattern}: 하→상 ({start_y} → {end_y})")
 
                 start_x = (work_width - resized_width) // 2
                 end_x = start_x
+
+            else:
+                # 고정: 중앙 배치 (정사각형 또는 캔버스와 동일)
+                start_x = (work_width - resized_width) // 2
+                start_y = (work_height - resized_height) // 2
+                end_x = start_x
+                end_y = start_y
+
+                logger.info(f"📐 고정 모드 (resizedImage와 캔버스 크기 동일)")
+                logger.info(f"   중앙 배치: ({start_x}, {start_y})")
 
             # Linear 이징으로 패닝 적용
             def pos_func(t):
@@ -2679,14 +2644,15 @@ class VideoGenerator:
 
             clip = clip.set_position(pos_func)
 
-            print(f"🎯 Linear 이징 적용: 일정한 속도로 명확한 움직임")
-            print(f"📏 패닝 범위: {pan_range}px 이동 (2배 확대)")
-            print(f"✅ 전체 화면 이미지 클립 생성 완료!")
+            logger.info(f"✅ 2단계 패닝 완료: Linear 이징 적용")
+            logger.info(f"   시작 좌표: ({start_x}, {start_y}) → 종료 좌표: ({end_x}, {end_y})")
+            logger.info(f"{'='*50}\n")
+            logger.info(f"✅ 전체 화면 이미지 클립 생성 완료!")
 
             return clip
 
         except Exception as e:
-            print(f"❌ 전체 화면 이미지 클립 생성 실패: {e}")
+            logger.error(f"❌ 전체 화면 이미지 클립 생성 실패: {e}")
             # 폴백: 검은 배경
             return ColorClip(size=(self.video_width, self.video_height),
                            color=(0,0,0), duration=duration)
