@@ -177,7 +177,7 @@ class JobLogger:
                         original_filename: str,
                         file_type: str,
                         sequence_number: int) -> str:
-        """미디어 파일을 assets 폴더에 저장"""
+        """미디어 파일을 assets 폴더에 년월 구조로 저장"""
         try:
             # 파일 확장자 추출
             file_ext = os.path.splitext(original_filename)[1].lower()
@@ -185,11 +185,19 @@ class JobLogger:
             # 고유한 파일명 생성 (job_id + sequence + 확장자)
             new_filename = f"{job_id}_{sequence_number:02d}{file_ext}"
 
-            # 저장 경로 결정 (이미지/비디오 구분)
+            # 년월 폴더 생성 (YYYYMM 형식)
+            year_month = datetime.now().strftime("%Y%m")
+
+            # 저장 경로 결정 (assets/images/202510 또는 assets/videos/202510)
             if file_type == "image":
-                asset_path = os.path.join(self.assets_dir, "images", new_filename)
+                asset_folder = os.path.join(self.assets_dir, "images", year_month)
             else:  # video
-                asset_path = os.path.join(self.assets_dir, "videos", new_filename)
+                asset_folder = os.path.join(self.assets_dir, "videos", year_month)
+
+            # 폴더가 없으면 생성
+            os.makedirs(asset_folder, exist_ok=True)
+
+            asset_path = os.path.join(asset_folder, new_filename)
 
             # 파일 복사
             shutil.copy2(original_file_path, asset_path)
@@ -218,7 +226,7 @@ class JobLogger:
 
                 conn.commit()
 
-            logger.info(f"미디어 파일 저장: {original_filename} -> {asset_path}")
+            logger.info(f"미디어 파일 저장: {original_filename} -> {asset_path} ({year_month})")
             return asset_path
 
         except Exception as e:

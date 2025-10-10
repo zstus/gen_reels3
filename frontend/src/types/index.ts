@@ -258,3 +258,20 @@ export interface BookmarkVideo {
   duration: number;
   extension: string;
 }
+
+// 북마크 이미지 타입
+export interface BookmarkImage {
+  filename: string;
+  display_name: string;
+  size_mb: number;
+  modified_time: number;
+  image_url: string;
+  thumbnail_url: string;
+  extension: string;
+}
+
+// 북마크 미디어 타입 (비디오와 이미지 통합)
+export type BookmarkMedia = BookmarkVideo | BookmarkImage;
+
+// 미디어 타입 구분
+export type MediaType = 'video' | 'image';

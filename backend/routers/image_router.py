@@ -233,7 +233,12 @@ async def generate_images_with_dalle(texts: List[str], job_id: Optional[str] = N
                                     with open(retry_file_path, "wb") as f:
                                         f.write(await retry_img_response.read())
 
-                                    retry_image_url_path = f"/get-image/{retry_filename}"
+                                    # Job ID에 따라 URL 경로 설정 (재시도도 동일하게)
+                                    if job_id and FOLDER_MANAGER_AVAILABLE:
+                                        retry_image_url_path = f"/job-uploads/{job_id}/{retry_filename}"
+                                    else:
+                                        retry_image_url_path = f"/get-image/{retry_filename}"
+
                                     logger.info(f"💾 이미지 {i+1} 재시도 저장 완료: {retry_filename}")
                                     return retry_image_url_path
                                 else:
@@ -356,7 +361,12 @@ async def generate_images_with_dalle_sequential(texts: List[str], job_id: Option
                         with open(retry_file_path, "wb") as f:
                             f.write(retry_img_response.content)
 
-                        retry_image_url_path = f"/get-image/{retry_filename}"
+                        # Job ID에 따라 URL 경로 설정 (재시도도 동일하게)
+                        if job_id and FOLDER_MANAGER_AVAILABLE:
+                            retry_image_url_path = f"/job-uploads/{job_id}/{retry_filename}"
+                        else:
+                            retry_image_url_path = f"/get-image/{retry_filename}"
+
                         logger.info(f"💾 이미지 {i+1} 재시도 저장 완료: {retry_filename}")
                         generated_image_paths.append(retry_image_url_path)
 

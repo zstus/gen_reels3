@@ -31,8 +31,8 @@ import {
   VideoLibrary
 } from '@mui/icons-material';
 import { useDropzone } from 'react-dropzone';
-import { ReelsContent, ImageUploadMode, TextImagePair, CustomPrompt, BookmarkVideo } from '../types';
-import VideoBookmarkModal from './VideoBookmarkModal';
+import { ReelsContent, ImageUploadMode, TextImagePair, CustomPrompt, BookmarkVideo, BookmarkImage } from '../types';
+import MediaBookmarkModal from './MediaBookmarkModal';
 import apiService from '../services/api';
 
 interface TextImagePairManagerProps {
@@ -59,6 +59,7 @@ const TextImagePairManager = forwardRef<TextImagePairManagerRef, TextImagePairMa
   onChange,
 }, ref) => {
   const [generationStatus, setGenerationStatus] = useState<{ [key: string]: string }>({});
+  const [generationType, setGenerationType] = useState<{ [key: number]: 'ai' | 'bookmark' }>({});
   const [uploadErrors, setUploadErrors] = useState<{ [key: number]: string }>({});
   const [customPrompts, setCustomPrompts] = useState<{ [key: number]: CustomPrompt }>({});
   const [promptsExpanded, setPromptsExpanded] = useState<{ [key: number]: boolean }>({});
@@ -327,6 +328,7 @@ const TextImagePairManager = forwardRef<TextImagePairManagerRef, TextImagePairMa
   const handleIndividualGenerate = async (imageIndex: number, pair: TextImagePair & { imageIndex: number }, customPrompt?: string, useCustomPrompt?: boolean) => {
     console.log('🤖 handleIndividualGenerate 시작 - imageIndex:', imageIndex, 'pair:', pair, 'customPrompt:', customPrompt, 'useCustomPrompt:', useCustomPrompt);
     setGenerationStatus(prev => ({ ...prev, [imageIndex]: 'generating' }));
+    setGenerationType(prev => ({ ...prev, [imageIndex]: 'ai' }));
 
     try {
       // 요청 바디 구성
@@ -495,38 +497,54 @@ const TextImagePairManager = forwardRef<TextImagePairManagerRef, TextImagePairMa
     setCurrentBookmarkIndex(null);
   };
 
-  // 북마크 비디오 선택 핸들러
-  const handleSelectBookmarkVideo = async (video: BookmarkVideo) => {
+  // 북마크 미디어(비디오/이미지) 선택 핸들러
+  const handleSelectBookmarkMedia = async (media: BookmarkVideo | BookmarkImage, mediaType: 'video' | 'image') => {
     if (currentBookmarkIndex === null) return;
 
-    console.log('✅ 북마크 비디오 선택:', video.filename, 'imageIndex:', currentBookmarkIndex);
+    console.log(`✅ 북마크 ${mediaType === 'video' ? '비디오' : '이미지'} 선택:`, media.filename, 'imageIndex:', currentBookmarkIndex);
 
     try {
       // 생성 상태 업데이트
       setGenerationStatus(prev => ({ ...prev, [currentBookmarkIndex]: 'generating' }));
+      setGenerationType(prev => ({ ...prev, [currentBookmarkIndex]: 'bookmark' }));
 
-      // 백엔드 API 호출: 북마크 비디오를 Job 폴더로 복사
-      const response = await apiService.copyBookmarkVideo(
-        jobId,
-        video.filename,
-        currentBookmarkIndex
-      );
+      // 백엔드 API 호출: 북마크 미디어를 Job 폴더로 복사
+      const response = mediaType === 'video'
+        ? await apiService.copyBookmarkVideo(jobId, media.filename, currentBookmarkIndex)
+        : await apiService.copyBookmarkImage(jobId, media.filename, currentBookmarkIndex);
 
       if (response.status === 'success') {
-        // 복사된 비디오 파일을 File 객체로 변환하여 이미지 배열에 추가
-        const videoUrl = response.data.file_url;
-        const videoFilename = response.data.filename;
+        // 복사된 파일을 File 객체로 변환하여 이미지 배열에 추가
+        const fileUrl = response.data.file_url;
+        const filename = response.data.filename;
 
-        // 비디오 파일을 Fetch로 가져와서 File 객체 생성
-        const videoResponse = await fetch(videoUrl);
-        if (!videoResponse.ok) {
-          throw new Error('비디오 파일 다운로드에 실패했습니다');
+        // 파일을 Fetch로 가져와서 File 객체 생성
+        const fileResponse = await fetch(fileUrl);
+        if (!fileResponse.ok) {
+          throw new Error(`${mediaType === 'video' ? '비디오' : '이미지'} 파일 다운로드에 실패했습니다`);
         }
 
-        const blob = await videoResponse.blob();
-        const file = new File([blob], videoFilename, { type: 'video/mp4' });
+        const blob = await fileResponse.blob();
 
-        console.log('📸 북마크 비디오 파일 생성 완료 - fileName:', videoFilename, 'imageIndex:', currentBookmarkIndex);
+        // 파일 타입 결정
+        const ext = filename.split('.').pop()?.toLowerCase();
+        let mimeType = 'application/octet-stream';
+
+        if (mediaType === 'video') {
+          if (ext === 'mp4') mimeType = 'video/mp4';
+          else if (ext === 'mov') mimeType = 'video/quicktime';
+          else if (ext === 'avi') mimeType = 'video/x-msvideo';
+          else if (ext === 'webm') mimeType = 'video/webm';
+        } else {
+          if (ext === 'jpg' || ext === 'jpeg') mimeType = 'image/jpeg';
+          else if (ext === 'png') mimeType = 'image/png';
+          else if (ext === 'webp') mimeType = 'image/webp';
+          else if (ext === 'gif') mimeType = 'image/gif';
+        }
+
+        const file = new File([blob], filename, { type: mimeType });
+
+        console.log(`📸 북마크 ${mediaType === 'video' ? '비디오' : '이미지'} 파일 생성 완료 - fileName:`, filename, 'imageIndex:', currentBookmarkIndex);
 
         // 이미지 배열 업데이트
         handleIndividualImageUpload(currentBookmarkIndex, [file]);
@@ -540,12 +558,12 @@ const TextImagePairManager = forwardRef<TextImagePairManagerRef, TextImagePairMa
           });
         }, 3000);
 
-        console.log('✅ 북마크 비디오 복사 및 업로드 완료');
+        console.log(`✅ 북마크 ${mediaType === 'video' ? '비디오' : '이미지'} 복사 및 업로드 완료`);
       }
     } catch (error: any) {
-      console.error('❌ 북마크 비디오 선택 오류:', error);
+      console.error(`❌ 북마크 ${mediaType === 'video' ? '비디오' : '이미지'} 선택 오류:`, error);
       setGenerationStatus(prev => ({ ...prev, [currentBookmarkIndex]: 'error' }));
-      setUploadErrors(prev => ({ ...prev, [currentBookmarkIndex]: error.message || '북마크 비디오 불러오기 실패' }));
+      setUploadErrors(prev => ({ ...prev, [currentBookmarkIndex]: error.message || `북마크 ${mediaType === 'video' ? '비디오' : '이미지'} 불러오기 실패` }));
 
       setTimeout(() => {
         setGenerationStatus(prev => {
@@ -639,6 +657,7 @@ const TextImagePairManager = forwardRef<TextImagePairManagerRef, TextImagePairMa
     const isGenerating = generationStatus[imageIndex] === 'generating';
     const generationError = generationStatus[imageIndex] === 'error';
     const generationSuccess = generationStatus[imageIndex] === 'success';
+    const currentGenerationType = generationType[imageIndex];
     const uploadError = uploadErrors[imageIndex];
     const isPromptExpanded = promptsExpanded[imageIndex] || false;
     const currentCustomPrompt = customPrompts[imageIndex];
@@ -958,20 +977,20 @@ const TextImagePairManager = forwardRef<TextImagePairManagerRef, TextImagePairMa
             <Alert severity="info" sx={{ mt: 1 }}>
               <Box sx={{ display: 'flex', alignItems: 'center' }}>
                 <CircularProgress size={16} sx={{ mr: 1 }} />
-                이미지 생성 중...
+                {currentGenerationType === 'bookmark' ? '미디어 불러오는 중...' : '이미지 생성 중...'}
               </Box>
             </Alert>
           )}
-          
+
           {generationSuccess && (
             <Alert severity="success" sx={{ mt: 1 }}>
-              이미지 생성 완료!
+              {currentGenerationType === 'bookmark' ? '미디어 불러오기 완료!' : '이미지 생성 완료!'}
             </Alert>
           )}
-          
+
           {generationError && (
             <Alert severity="error" sx={{ mt: 1 }}>
-              이미지 생성 실패. 다시 시도해주세요.
+              {currentGenerationType === 'bookmark' ? '미디어 불러오기 실패. 다시 시도해주세요.' : '이미지 생성 실패. 다시 시도해주세요.'}
             </Alert>
           )}
           
@@ -1034,7 +1053,7 @@ const TextImagePairManager = forwardRef<TextImagePairManagerRef, TextImagePairMa
               }
             }}
           >
-            동영상 불러오기
+            미디어 불러오기
           </Button>
         </Box>
       </Card>
@@ -1070,11 +1089,11 @@ const TextImagePairManager = forwardRef<TextImagePairManagerRef, TextImagePairMa
         </Alert>
       )}
 
-      {/* 북마크 비디오 선택 모달 */}
-      <VideoBookmarkModal
+      {/* 북마크 미디어 선택 모달 */}
+      <MediaBookmarkModal
         open={bookmarkModalOpen}
         onClose={handleCloseBookmarkModal}
-        onSelect={handleSelectBookmarkVideo}
+        onSelect={handleSelectBookmarkMedia}
       />
     </Box>
   );

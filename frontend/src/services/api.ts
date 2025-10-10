@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { ApiResponse, GenerateVideoRequest, MusicFolder, MusicFile, MusicMood, ImageUploadMode, TextPosition, TextStyle, AsyncVideoRequest, AsyncVideoResponse, JobInfo, VoiceNarration, TitleAreaMode, CrossDissolve, CreateJobFolderResponse, CleanupJobFolderResponse } from '../types';
+import { ApiResponse, GenerateVideoRequest, MusicFolder, MusicFile, MusicMood, ImageUploadMode, TextPosition, TextStyle, AsyncVideoRequest, AsyncVideoResponse, JobInfo, VoiceNarration, TitleAreaMode, CrossDissolve, CreateJobFolderResponse, CleanupJobFolderResponse, BookmarkVideo, BookmarkImage } from '../types';
 
 // API 베이스 URL 설정
 const API_BASE_URL = '/api';
@@ -440,6 +440,36 @@ export const apiService = {
       return response.data;
     } catch (error) {
       console.error('북마크 비디오 복사 실패:', error);
+      throw error;
+    }
+  },
+
+  // 북마크 이미지 목록 조회
+  async getBookmarkImages(): Promise<{ status: string; message: string; data: BookmarkImage[] }> {
+    try {
+      const response = await apiClient.get('/bookmark-images');
+      return response.data;
+    } catch (error) {
+      console.error('북마크 이미지 목록 조회 실패:', error);
+      throw error;
+    }
+  },
+
+  // 북마크 이미지를 Job 폴더로 복사
+  async copyBookmarkImage(jobId: string, imageFilename: string, imageIndex: number): Promise<{
+    status: string;
+    message: string;
+    data: { filename: string; file_url: string; image_index: number };
+  }> {
+    try {
+      const response = await apiClient.post('/copy-bookmark-image', {
+        job_id: jobId,
+        video_filename: imageFilename,  // backend에서 동일한 필드명 사용
+        image_index: imageIndex,
+      });
+      return response.data;
+    } catch (error) {
+      console.error('북마크 이미지 복사 실패:', error);
       throw error;
     }
   }
