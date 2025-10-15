@@ -23,7 +23,8 @@
       "Bash(npm install)",
       "Bash(source:*)",
       "Bash(cat:*)",
-      "Bash(awk:*)"
+      "Bash(awk:*)",
+      "Read(//SYNOLOGYNAS/DOCKER/ubt_genReels/frontend/src/components/**)"
     ],
     "deny": [],
     "ask": []

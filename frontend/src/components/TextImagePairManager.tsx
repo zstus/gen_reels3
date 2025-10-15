@@ -740,7 +740,8 @@ const TextImagePairManager = forwardRef<TextImagePairManagerRef, TextImagePairMa
                     key={stableKey}
                     fullWidth
                     multiline
-                    rows={2}
+                    minRows={2}
+                    maxRows={8}
                     defaultValue={initialValue}
                     inputRef={(el) => {
                       if (el) {
@@ -969,19 +970,6 @@ const TextImagePairManager = forwardRef<TextImagePairManagerRef, TextImagePairMa
                   )}
                 </IconButton>
               </Box>
-
-              <Typography variant="caption" sx={{
-                position: 'absolute',
-                bottom: 4,
-                left: 8,
-                bgcolor: 'rgba(0,0,0,0.7)',
-                color: 'white',
-                px: 1,
-                py: 0.5,
-                borderRadius: 1
-              }}>
-                {pair.image.name}
-              </Typography>
 
               {/* 🎨 패닝 옵션 섹션 (이미지가 있을 때만 표시, 비디오 제외) */}
               {!pair.image.type.startsWith('video/') && (
