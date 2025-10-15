@@ -86,6 +86,7 @@ export interface ProjectData {
   fontSettings: FontSettings;
   voiceNarration: VoiceNarration;
   crossDissolve: CrossDissolve;
+  imagePanningOptions?: { [key: number]: boolean }; // 이미지별 패닝 옵션 (선택적)
 }
 
 // API 응답 타입

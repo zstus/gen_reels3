@@ -40,7 +40,9 @@ interface TextImagePairManagerProps {
   imageUploadMode: ImageUploadMode;
   images: File[];
   jobId: string;
+  imagePanningOptions: { [key: number]: boolean }; // 🎨 패닝 옵션 props 추가
   onChange: (images: File[], mode: ImageUploadMode) => void;
+  onPanningOptionsChange: (options: { [key: number]: boolean }) => void; // 🎨 패닝 옵션 변경 핸들러
 }
 
 // ✅ ref를 통해 외부에서 접근 가능한 메서드 타입 정의
@@ -48,6 +50,7 @@ export interface TextImagePairManagerRef {
   getEditedData: () => {
     editedTexts: { [key: number]: string[] };
     customPrompts: { [key: number]: CustomPrompt };
+    imagePanningOptions: { [key: number]: boolean };
   };
 }
 
@@ -56,7 +59,9 @@ const TextImagePairManager = forwardRef<TextImagePairManagerRef, TextImagePairMa
   imageUploadMode,
   images,
   jobId,
+  imagePanningOptions, // 🎨 props에서 받기
   onChange,
+  onPanningOptionsChange, // 🎨 props에서 받기
 }, ref) => {
   const [generationStatus, setGenerationStatus] = useState<{ [key: string]: string }>({});
   const [generationType, setGenerationType] = useState<{ [key: number]: 'ai' | 'bookmark' }>({});
@@ -65,6 +70,31 @@ const TextImagePairManager = forwardRef<TextImagePairManagerRef, TextImagePairMa
   const [promptsExpanded, setPromptsExpanded] = useState<{ [key: number]: boolean }>({});
   const [bookmarkModalOpen, setBookmarkModalOpen] = useState<boolean>(false);
   const [currentBookmarkIndex, setCurrentBookmarkIndex] = useState<number | null>(null);
+
+  // 🎨 이미지 개수가 변경될 때마다 패닝 옵션 초기화 (기본값: true)
+  useEffect(() => {
+    const imageCount = images.length;
+    if (imageCount === 0) return; // 이미지가 없으면 초기화 안 함
+
+    const newOptions: { [key: number]: boolean } = {};
+    let hasChanges = false;
+
+    for (let i = 0; i < imageCount; i++) {
+      // 기존 값이 있으면 유지, 없으면 true로 초기화
+      if (imagePanningOptions[i] !== undefined) {
+        newOptions[i] = imagePanningOptions[i];
+      } else {
+        newOptions[i] = true; // 기본값: 패닝 활성화
+        hasChanges = true;
+      }
+    }
+
+    // 변경사항이 있을 때만 업데이트
+    if (hasChanges) {
+      console.log(`🎨 패닝 옵션 초기화: ${imageCount}개 이미지에 대해 기본값 설정`, newOptions);
+      onPanningOptionsChange(newOptions);
+    }
+  }, [images.length, images]);
 
   // ✅ Uncontrolled TextField를 위한 ref 저장소
   const textFieldRefs = useRef<{ [key: string]: HTMLInputElement }>({});
@@ -127,10 +157,11 @@ const TextImagePairManager = forwardRef<TextImagePairManagerRef, TextImagePairMa
 
       return {
         editedTexts,
-        customPrompts: customPromptsData
+        customPrompts: customPromptsData,
+        imagePanningOptions: imagePanningOptions
       };
     }
-  }), [customPrompts]); // customPrompts의 enabled 상태만 의존
+  }), [customPrompts, imagePanningOptions]); // customPrompts와 imagePanningOptions 의존
 
   // ✅ 커스텀 프롬프트 토글 (enabled 상태만 관리)
   const toggleCustomPrompt = (imageIndex: number, enabled: boolean) => {
@@ -149,6 +180,17 @@ const TextImagePairManager = forwardRef<TextImagePairManagerRef, TextImagePairMa
       ...prev,
       [imageIndex]: !prev[imageIndex]
     }));
+  };
+
+  // 🎨 패닝 옵션 토글 함수
+  const togglePanningOption = (imageIndex: number, enabled: boolean) => {
+    const newOptions = {
+      ...imagePanningOptions,
+      [imageIndex]: enabled
+    };
+    console.log(`🎨 패닝 옵션 변경 - imageIndex: ${imageIndex}, enabled: ${enabled}`);
+    console.log(`🎨 전체 패닝 옵션 상태:`, newOptions);
+    onPanningOptionsChange(newOptions); // 🎨 props 핸들러 호출
   };
 
   // 텍스트-이미지 쌍 데이터 생성 (useMemo로 최적화)
@@ -662,6 +704,11 @@ const TextImagePairManager = forwardRef<TextImagePairManagerRef, TextImagePairMa
     const isPromptExpanded = promptsExpanded[imageIndex] || false;
     const currentCustomPrompt = customPrompts[imageIndex];
 
+    // 🎨 패닝 옵션 상태 (기본값: true)
+    const currentPanningOption = imagePanningOptions[imageIndex] !== undefined
+      ? imagePanningOptions[imageIndex]
+      : true;
+
     // ✅ 심플한 커스텀 프롬프트 핸들러 (복잡한 로컬 상태/디바운스 제거)
 
     return (
@@ -923,7 +970,7 @@ const TextImagePairManager = forwardRef<TextImagePairManagerRef, TextImagePairMa
                 </IconButton>
               </Box>
 
-              <Typography variant="caption" sx={{ 
+              <Typography variant="caption" sx={{
                 position: 'absolute',
                 bottom: 4,
                 left: 8,
@@ -935,6 +982,41 @@ const TextImagePairManager = forwardRef<TextImagePairManagerRef, TextImagePairMa
               }}>
                 {pair.image.name}
               </Typography>
+
+              {/* 🎨 패닝 옵션 섹션 (이미지가 있을 때만 표시, 비디오 제외) */}
+              {!pair.image.type.startsWith('video/') && (
+                <Box sx={{
+                  mt: 2,
+                  p: 1.5,
+                  bgcolor: 'rgba(76, 175, 80, 0.04)',
+                  borderRadius: 1,
+                  border: '1px solid rgba(76, 175, 80, 0.2)'
+                }}>
+                  <FormControlLabel
+                    control={
+                      <Switch
+                        checked={currentPanningOption}
+                        onChange={(e) => togglePanningOption(imageIndex, e.target.checked)}
+                        size="small"
+                        color="success"
+                      />
+                    }
+                    label={
+                      <Box>
+                        <Typography variant="caption" sx={{ fontWeight: 600, display: 'block' }}>
+                          🎬 패닝 효과
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.7rem' }}>
+                          {currentPanningOption
+                            ? '이미지가 좌우/상하로 부드럽게 움직입니다'
+                            : '이미지가 고정되어 움직이지 않습니다'}
+                        </Typography>
+                      </Box>
+                    }
+                    sx={{ ml: 0, width: '100%' }}
+                  />
+                </Box>
+              )}
             </Box>
           ) : (
             <Box

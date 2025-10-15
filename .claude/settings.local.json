@@ -22,7 +22,8 @@
       "mcp__context7__get-library-docs",
       "Bash(npm install)",
       "Bash(source:*)",
-      "Bash(cat:*)"
+      "Bash(cat:*)",
+      "Bash(awk:*)"
     ],
     "deny": [],
     "ask": []

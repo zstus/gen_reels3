@@ -57,6 +57,7 @@ const MusicStep: React.FC<MusicStepProps> = ({
     romantic: [],
     sad: [],
     suspense: [],
+    none: [],
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -83,17 +84,20 @@ const MusicStep: React.FC<MusicStepProps> = ({
     
     try {
       const bgmList = await apiService.getBgmList();
-      const bgmData: { [key in Exclude<MusicMood, 'none'>]: MusicFile[] } = {
+      const bgmData: { [key in MusicMood]: MusicFile[] } = {
         bright: [],
         calm: [],
         romantic: [],
         sad: [],
         suspense: [],
+        none: [],
       };
 
       // BGM 목록을 성격별로 정리
       bgmList.forEach(folder => {
-        bgmData[folder.mood] = folder.files;
+        if (folder.mood !== 'none') {
+          bgmData[folder.mood] = folder.files;
+        }
       });
 
       setMusicFolders(bgmData);

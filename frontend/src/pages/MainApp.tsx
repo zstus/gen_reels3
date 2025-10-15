@@ -72,6 +72,7 @@ const MainApp: React.FC = () => {
     },
     voiceNarration: 'enabled',
     crossDissolve: 'enabled',
+    imagePanningOptions: {}, // 🎨 패닝 옵션 초기화
   });
 
   const handleNext = () => {
@@ -124,6 +125,14 @@ const MainApp: React.FC = () => {
       ...prev,
       images,
       imageUploadMode: mode
+    }));
+  };
+
+  // 🎨 패닝 옵션 변경 핸들러
+  const handlePanningOptionsChange = (options: { [key: number]: boolean }) => {
+    setProjectData(prev => ({
+      ...prev,
+      imagePanningOptions: options
     }));
   };
 
@@ -231,7 +240,9 @@ const MainApp: React.FC = () => {
             imageUploadMode={projectData.imageUploadMode}
             content={projectData.content}
             jobId={projectData.jobId}
+            imagePanningOptions={projectData.imagePanningOptions || {}}
             onChange={handleImagesChange}
+            onPanningOptionsChange={handlePanningOptionsChange}
             onNext={handleImageStepNext}
             onBack={handleBack}
           />

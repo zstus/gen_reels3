@@ -1,0 +1,1030 @@
+================================================================================
+                    릴스 영상 생성 프로세스 상세 분석
+================================================================================
+
+작성일: 2025-01-11
+파일: backend/video_generator.py
+클래스: VideoGenerator
+
+================================================================================
+                        전체 프로세스 플로우차트
+================================================================================
+
+                            [시작: 사용자 요청]
+                                    |
+                                    v
+                        ┌───────────────────────────┐
+                        │   입력 데이터 수집         │
+                        │  - 텍스트 (title+body)    │
+                        │  - 미디어 파일들          │
+                        │  - BGM 파일               │
+                        │  - 설정 옵션              │
+                        └───────────┬───────────────┘
+                                    |
+                                    v
+                        ┌───────────────────────────┐
+                        │ create_video_from_uploads()│
+                        └───────────┬───────────────┘
+                                    |
+                                    v
+                        ┌───────────────────────────┐
+                        │ scan_uploads_folder()     │
+                        │ - 미디어 파일 감지        │
+                        │ - 타입 분류 (이미지/비디오)│
+                        └───────────┬───────────────┘
+                                    |
+                                    v
+            ╔═══════════════════════════════════════════════════════╗
+            ║     create_video_with_local_images() [핵심 메인]      ║
+            ╚═══════════════╦═══════════════════════════════════════╝
+                            |
+            ┌───────────────┴───────────────┐
+            |                               |
+            v                               v
+    ┌──────────────────┐          ┌──────────────────┐
+    │  Phase 1: 준비    │          │  title_area_mode  │
+    │                  │          │  분기 준비         │
+    └────────┬─────────┘          └──────────────────┘
+             |
+             v
+    ┌──────────────────────────────────┐
+    │ 1. 타이틀 이미지 생성             │
+    │    create_title_image()          │
+    └────────┬─────────────────────────┘
+             |
+             v
+    ┌──────────────────────────────────┐
+    │ 2. voice_narration == "enabled"? │
+    └────────┬─────────────────────────┘
+             |
+         ┌───┴───┐
+         Yes     No
+          |       |
+          v       └────────────────┐
+    ┌──────────────────┐          |
+    │ TTS 음성 생성     │          |
+    │ - 전처리          │          |
+    │ - gTTS 생성       │          |
+    │ - 1.5배속 처리    │          |
+    └────────┬─────────┘          |
+             |                    |
+             └──────────┬─────────┘
+                        |
+                        v
+            ┌───────────────────────────┐
+            │  Phase 2: 시간 계산        │
+            │  - body별 읽기 시간        │
+            │  - 미디어 할당 계획        │
+            └───────────┬───────────────┘
+                        |
+                        v
+            ┌───────────────────────────┐
+            │ image_allocation_mode?    │
+            └───────────┬───────────────┘
+                        |
+        ┌───────────────┼───────────────┐
+        |               |               |
+        v               v               v
+    "1_per_image"   "2_per_image"    "single_image"
+        |               |               |
+        v               v               v
+    ┌────────┐      ┌────────┐      ┌────────┐
+    │body 1개│      │body 2개│      │전체 영상│
+    │당 미디어│      │당 미디어│      │ 1개로  │
+    │  1개   │      │  1개   │      │        │
+    └───┬────┘      └───┬────┘      └───┬────┘
+        |               |               |
+        └───────────────┼───────────────┘
+                        |
+                        v
+            ╔═══════════════════════════════╗
+            ║  Phase 3: 클립 생성 루프       ║
+            ╚═══════════════╦═══════════════╝
+                            |
+                ┌───────────┴───────────┐
+                |                       |
+                v                       v
+        ┌───────────────┐      ┌───────────────┐
+        │ title_area_mode│      │미디어 타입?   │
+        └───────┬───────┘      └───────┬───────┘
+                |                      |
+        ┌───────┴───────┐      ┌──────┴──────┐
+        |               |      |             |
+        v               v      v             v
+    "keep"          "remove"  이미지      비디오
+        |               |      |             |
+        v               v      v             v
+    ┌────────┐    ┌────────┐  |             |
+    │504x670 │    │504x890 │  |             |
+    │작업영역│    │전체화면│  |             |
+    └───┬────┘    └───┬────┘  |             |
+        |               |      |             |
+        └───────┬───────┘      |             |
+                |              |             |
+                v              v             v
+        ┌──────────────┐  ┌─────────┐  ┌─────────┐
+        │ 패닝 옵션?    │  │이미지클립│  │비디오클립│
+        └──────┬───────┘  │생성      │  │생성      │
+               |          └────┬────┘  └────┬────┘
+        ┌──────┴──────┐        |            |
+        |             |        v            v
+        v             v    ┌────────────────────┐
+    enabled      disabled  │ enable_panning?    │
+        |             |    └────────┬───────────┘
+        v             v             |
+    ┌────────┐    ┌────────┐   ┌───┴────┐
+    │패닝 적용│    │중앙 고정│   |        |
+    │ 60px   │    │위로붙임 │   Yes      No
+    │Linear  │    │아래검은 │   (이미지) (비디오)
+    └───┬────┘    └───┬────┘   |        |
+        |             |         v        v
+        └──────┬──────┘     ┌─────┐  ┌─────┐
+               |            │좌우패닝│  │중앙 │
+               v            │상하패닝│  │고정 │
+        ┌────────────┐     └──┬──┘  └──┬──┘
+        │종횡비 판단  │        |        |
+        │0.751 기준  │        └────┬───┘
+        └──────┬─────┘             |
+               |                   |
+        ┌──────┴──────┐            |
+        |             |            |
+        v             v            |
+    가로형        세로형           |
+    (좌우)        (상하)           |
+        |             |            |
+        └──────┬──────┘            |
+               |                   |
+               └─────────┬─────────┘
+                         |
+                         v
+            ┌────────────────────────┐
+            │ 텍스트 이미지 생성      │
+            │ create_text_image()    │
+            └────────────┬───────────┘
+                         |
+                         v
+            ┌────────────────────────┐
+            │ text_position?         │
+            └────────────┬───────────┘
+                         |
+                ┌────────┴────────┐
+                |                 |
+                v                 v
+              "top"            "bottom"
+            (340-520px)      (520-700px)
+            중앙 430px       중앙 610px
+                |                 |
+                └────────┬────────┘
+                         |
+                         v
+            ┌────────────────────────┐
+            │ text_style?            │
+            └────────────┬───────────┘
+                         |
+        ┌────────────────┼────────────────┐
+        |                |                |
+        v                v                v
+    "outline"       "background"    "white_bg"/"black_white"
+    2px 외곽선      반투명 박스      특수 스타일
+        |                |                |
+        └────────────────┼────────────────┘
+                         |
+                         v
+            ┌────────────────────────┐
+            │ 배경 + 타이틀 + 텍스트  │
+            │ CompositeVideoClip     │
+            └────────────┬───────────┘
+                         |
+                         v
+            ┌────────────────────────┐
+            │ 클립 리스트에 추가      │
+            └────────────┬───────────┘
+                         |
+                         v
+            ┌────────────────────────┐
+            │ 다음 body로 반복?       │
+            └────────────┬───────────┘
+                         |
+                  ┌──────┴──────┐
+                  Yes           No
+                   |             |
+                   └→(반복)      v
+                                 |
+                ╔════════════════════════════╗
+                ║  Phase 4: 트랜지션 적용     ║
+                ╚════════════╦═══════════════╝
+                             |
+                             v
+                ┌────────────────────────────┐
+                │ cross_dissolve == "enabled"?│
+                └────────────┬───────────────┘
+                             |
+                      ┌──────┴──────┐
+                      Yes           No
+                       |             |
+                       v             └────────┐
+            ┌──────────────────┐             |
+            │ 미디어 전환 감지  │             |
+            │ detect_image_    │             |
+            │ transitions()    │             |
+            └────────┬─────────┘             |
+                     |                       |
+                     v                       |
+            ┌──────────────────┐             |
+            │ 크로스페이드 적용 │             |
+            │ 0.4초 오버랩     │             |
+            └────────┬─────────┘             |
+                     |                       |
+                     └───────┬───────────────┘
+                             |
+                             v
+                ╔════════════════════════════╗
+                ║ Phase 5: 최종 렌더링        ║
+                ╚════════════╦═══════════════╝
+                             |
+                             v
+                ┌────────────────────────────┐
+                │ 클립 결합                  │
+                │ concatenate_videoclips()   │
+                └────────────┬───────────────┘
+                             |
+                             v
+                ┌────────────────────────────┐
+                │ voice_narration == "enabled"?│
+                └────────────┬───────────────┘
+                             |
+                      ┌──────┴──────┐
+                      Yes           No
+                       |             |
+                       v             v
+            ┌──────────────────┐  ┌────────┐
+            │ TTS + BGM 믹싱   │  │ BGM만  │
+            │ - TTS 원본       │  │ 사용   │
+            │ - BGM 25% 볼륨   │  │        │
+            │ - 오버레이       │  │        │
+            └────────┬─────────┘  └───┬────┘
+                     |                |
+                     └────────┬───────┘
+                              |
+                              v
+                ┌────────────────────────────┐
+                │ 최종 MP4 인코딩             │
+                │ - codec: libx264           │
+                │ - audio_codec: aac         │
+                │ - fps: 30                  │
+                │ - preset: medium           │
+                └────────────┬───────────────┘
+                             |
+                             v
+                ┌────────────────────────────┐
+                │ 임시 파일 정리              │
+                └────────────┬───────────────┘
+                             |
+                             v
+                ┌────────────────────────────┐
+                │ 완료: 504x890 릴스 영상     │
+                │       (MP4 파일)            │
+                └────────────────────────────┘
+                             |
+                             v
+                        [종료: 영상 반환]
+
+
+================================================================================
+                        I. 전체 프로세스 개요
+================================================================================
+
+[입력]
+1. 텍스트 데이터 (JSON): title + body1~body8
+2. 미디어 파일: 이미지(JPG, PNG, WebP, GIF, BMP) 또는 비디오(MP4, MOV, AVI, WebM)
+3. 배경음악 (BGM): MP3, WAV, M4A
+4. 설정 옵션:
+   - image_allocation_mode: "1_per_image" | "2_per_image"
+   - text_position: "top" | "bottom"
+   - text_style: "outline" | "background"
+   - title_area_mode: "keep" | "remove"
+   - image_panning_options: {0: True, 1: False, ...}
+
+[출력]
+- 504x890 해상도 릴스 영상 (MP4)
+
+================================================================================
+                    II. 메인 엔트리 포인트 (Entry Points)
+================================================================================
+
+1. create_video_from_uploads()
+   - 위치: Line 2572
+   - 역할: uploads 폴더의 파일들로 영상 생성
+   - 프로세스:
+     ① scan_uploads_folder()로 uploads 폴더 스캔
+     ② create_video_with_local_images() 호출
+
+2. create_video_with_local_images()
+   - 위치: Line 1704
+   - 역할: 로컬 미디어 파일들로 영상 생성 (핵심 메인 함수)
+   - 프로세스: 아래 섹션 III 참조
+
+3. create_video()
+   - 위치: Line 2173
+   - 역할: URL 이미지들로 영상 생성 (레거시)
+
+================================================================================
+          III. 핵심 영상 생성 프로세스 (create_video_with_local_images)
+================================================================================
+
+[Phase 1] 준비 단계 (Line 1711-1800)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+1. 미디어 파일 정보 수집
+   - media_files가 None이면 자동 감지
+   - 파일 확장자로 image/video 타입 판단
+   - 결과: [(path, "image"), (path, "video"), ...]
+
+2. 타이틀 이미지 생성
+   함수: create_title_image()
+   - 입력: title 텍스트, 폰트, 크기
+   - 출력: 504x220 타이틀 이미지 (임시 파일)
+   - 특징: 한글 폰트 + 이모지 지원
+
+3. TTS 음성 생성 (voice_narration="enabled"인 경우)
+   함수: create_tts_audio()
+   - 전처리: preprocess_korean_text() - 특수문자 제거
+   - 생성: Google TTS (gTTS)
+   - 후처리: speed_up_audio() - 1.5배속 (50% 빠르게)
+   - 4단계 fallback: FFmpeg → MoviePy → Pydub → NumPy 샘플링
+
+[Phase 2] 시간 계산 및 할당 (Line 1800-1820)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+1. 각 body 텍스트별 읽기 시간 계산
+   - 기준: 한글 분당 300자, 1.5배속 적용
+   - 최소 시간: 2초
+   - subtitle_duration 추가 가능
+
+2. 미디어 할당 결정
+   - image_allocation_mode = "1_per_image": body 1개당 미디어 1개
+   - image_allocation_mode = "2_per_image": body 2개당 미디어 1개
+
+[Phase 3] 클립 생성 (Line 1820-2050)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+3-1. 단일 Body 클립 생성 (1_per_image 모드)
+     위치: Line 1823-1870
+
+     [이미지인 경우]
+     ┌─────────────────────────────────────────────────┐
+     │ title_area_mode = "keep"                        │
+     │ ① create_background_clip() 호출                 │
+     │    - 이미지 크롭 & 리사이즈                     │
+     │    - 패닝 적용 (enable_panning 옵션에 따라)     │
+     │ ② 220px 검은 배경 생성                          │
+     │ ③ 타이틀 이미지 오버레이                        │
+     │ ④ 텍스트 이미지 생성 및 오버레이                │
+     │ ⑤ CompositeVideoClip으로 합성                   │
+     │                                                 │
+     │ title_area_mode = "remove"                      │
+     │ ① create_fullscreen_background_clip() 호출      │
+     │    - 전체 화면(504x890) 이미지 처리             │
+     │    - 패닝 적용                                  │
+     │ ② 텍스트 이미지 오버레이 (위치 동일)            │
+     │ ③ CompositeVideoClip으로 합성                   │
+     └─────────────────────────────────────────────────┘
+
+     [비디오인 경우]
+     ┌─────────────────────────────────────────────────┐
+     │ title_area_mode = "keep"                        │
+     │ ① create_video_background_clip() 호출           │
+     │    - enable_panning=False (항상 패닝 off)       │
+     │    - 비디오 길이 조정 (자르기/반복/연장)        │
+     │    - 중앙 고정 배치                             │
+     │ ② 220px 검은 배경 생성                          │
+     │ ③ 타이틀 이미지 오버레이                        │
+     │ ④ 텍스트 이미지 오버레이                        │
+     │ ⑤ CompositeVideoClip으로 합성                   │
+     │                                                 │
+     │ title_area_mode = "remove"                      │
+     │ ① create_fullscreen_video_clip() 호출           │
+     │    - enable_panning=False (항상 패닝 off)       │
+     │    - 전체 화면 비디오 처리                      │
+     │ ② 텍스트 이미지 오버레이                        │
+     │ ③ CompositeVideoClip으로 합성                   │
+     └─────────────────────────────────────────────────┘
+
+3-2. 2-Body 그룹 클립 생성 (2_per_image 모드)
+     위치: Line 1872-1960
+
+     [이미지인 경우]
+     ┌─────────────────────────────────────────────────┐
+     │ ① create_continuous_background_clip() 호출      │
+     │    - 연속 패닝: 2개 body 전체 시간 동안         │
+     │    - 패턴 1 (좌→우) 또는 패턴 2 (우→좌)         │
+     │ ② 타이틀 & 검은 배경 추가                      │
+     │ ③ 2개의 텍스트 클립 생성 (각각의 시간에)       │
+     │ ④ CompositeVideoClip으로 합성                   │
+     └─────────────────────────────────────────────────┘
+
+     [비디오인 경우]
+     ┌─────────────────────────────────────────────────┐
+     │ ① create_video_background_clip() 호출           │
+     │    - enable_panning=False (항상 패닝 off)       │
+     │    - 2개 body 전체 길이로 비디오 처리           │
+     │ ② 타이틀 & 검은 배경 추가                      │
+     │ ③ 2개의 텍스트 클립 생성                        │
+     │ ④ CompositeVideoClip으로 합성                   │
+     └─────────────────────────────────────────────────┘
+
+3-3. 단일 미디어로 전체 영상 생성
+     위치: Line 1962-2050
+     - 미디어 1개를 모든 body에 사용하는 경우
+     - 프로세스는 3-1, 3-2와 동일
+
+[Phase 4] 트랜지션 적용 (Line 2050-2100)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+cross_dissolve = "enabled"인 경우:
+
+1. 트랜지션 인덱스 감지
+   함수: detect_image_transitions()
+   - 미디어 파일이 바뀌는 지점 찾기
+   - 결과: [clip_index1, clip_index2, ...]
+
+2. 크로스페이드 적용
+   함수: apply_crossfade_to_clips()
+   - 0.4초 페이드 효과
+   - 앞 클립 마지막 + 뒤 클립 시작 오버랩
+
+[Phase 5] 오디오 & 최종 렌더링 (Line 2100-2170)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+1. 클립 결합
+   - concatenate_videoclips(clips)
+
+2. 오디오 믹싱
+   TTS 음성 있는 경우:
+   ① TTS 오디오 로드
+   ② BGM 볼륨 25%로 조정
+   ③ CompositeAudioClip([tts, bgm_adjusted])
+
+   TTS 없는 경우:
+   ① BGM만 사용
+
+3. 최종 렌더링
+   - codec: libx264
+   - audio_codec: aac
+   - fps: 30
+   - preset: medium
+   - 출력: MP4 파일
+
+================================================================================
+            IV. 이미지 처리 함수 상세 (Image Processing)
+================================================================================
+
+4-1. create_background_clip() - 기본 이미지 클립
+     위치: Line 714
+     작업 영역: 504x670 (타이틀 220px 아래)
+
+     [1단계] EXIF 처리 & 정사각형 크롭
+     ───────────────────────────────────────────
+     함수: crop_to_square()
+     - EXIF orientation 자동 수정
+     - 원본 이미지를 정사각형으로 크롭 (가운데 기준)
+     - 716x716으로 리사이즈 (LANCZOS)
+
+     [2단계] 리사이즈 전략 (패닝 옵션에 따라)
+     ───────────────────────────────────────────
+     enable_panning = True:
+       - 종횡비 비교: image_aspect vs work_aspect (0.751)
+
+       가로형 (aspect > 0.751):
+         new_height = 670
+         new_width = int(orig_width * 670 / orig_height)
+         → 세로를 670에 맞춤, 가로 여유 확보
+
+       세로형 (aspect ≤ 0.751):
+         new_width = 504
+         new_height = int(orig_height * 504 / orig_width)
+         → 가로를 504에 맞춤, 세로 여유 확보
+
+     enable_panning = False:
+       new_width = 504 (고정)
+       new_height = int(orig_height * 504 / orig_width)
+       → 항상 가로 504에 맞춤
+       → 위로 붙이고 아래 검은 패딩
+
+     [3단계] PIL 고품질 리사이즈
+     ───────────────────────────────────────────
+     - Image.Resampling.LANCZOS (고품질)
+     - RGBA → RGB 변환
+     - 임시 파일로 저장 (JPEG, quality=95)
+
+     [4단계] 패닝 애니메이션 적용
+     ───────────────────────────────────────────
+     enable_panning = True:
+
+       가로형 이미지:
+         - 좌우 패닝
+         - pan_range = min(60, (resized_width - 504) // 2)
+         - 패턴 1 (좌→우): x_offset = -(중앙 - range * progress)
+         - 패턴 2 (우→좌): x_offset = -(중앙 - range * (1-progress))
+         - Linear 이징
+
+       세로형 이미지:
+         - 상하 패닝
+         - pan_range = min(60, (resized_height - 670) // 2)
+         - 패턴 3 (위→아래): y_offset = 220 - (중앙 - range * progress)
+         - 패턴 4 (아래→위): y_offset = 220 - (중앙 - range * (1-progress))
+         - Linear 이징
+
+     enable_panning = False:
+       - x_pos = 0 (가로 꽉 채움)
+       - y_pos = y_offset (위로 붙임)
+       - 아래 검은 패딩 자동 표시
+
+     [5단계] 검은 배경 합성
+     ───────────────────────────────────────────
+     - ColorClip(504x670, black)
+     - CompositeVideoClip([black_bg, image_clip])
+
+4-2. create_continuous_background_clip() - 연속 이미지 클립
+     위치: Line 899
+     용도: 2_per_image 모드에서 2개 body 동안 연속 패닝
+
+     [처리 과정]
+     ① 정사각형 크롭: crop_to_square() → 716x716
+     ② 패닝 활성화 시:
+        - 패턴 1: 연속 좌→우 패닝 (60px 이동, Linear)
+        - 패턴 2: 연속 우→좌 패닝 (60px 이동, Linear)
+     ③ 패닝 비활성화 시:
+        - 가로 504로 리사이즈
+        - 위로 붙이기, 아래 검은 패딩
+     ④ 검은 배경 합성
+
+4-3. create_fullscreen_background_clip() - 전체화면 이미지
+     위치: Line 2660
+     작업 영역: 504x890 (전체 화면)
+     용도: title_area_mode="remove"일 때 사용
+
+     [1단계] EXIF 처리
+     ───────────────────────────────────────────
+     - ImageOps.exif_transpose() 사용
+
+     [2단계] 리사이즈 전략 (패닝 옵션에 따라)
+     ───────────────────────────────────────────
+     enable_panning = True:
+       3가지 종횡비 분류:
+
+       가로형 (aspect > 0.590):
+         resized_height = 890
+         resized_width = int(orig_width * 890 / orig_height)
+         → 높이 890에 맞춤
+
+       특수비율 (0.540 ≤ aspect ≤ 0.590):
+         Step A: 높이 1100으로 리사이즈
+         Step B: 상하 크롭하여 890으로 조정
+         → 2단계 리사이징
+
+       세로형 (aspect < 0.540):
+         resized_width = 504
+         resized_height = int(orig_height * 504 / orig_width)
+         → 폭 504에 맞춤
+
+     enable_panning = False:
+       resized_width = 504 (고정)
+       resized_height = int(orig_height * 504 / orig_width)
+       → 항상 가로 504에 맞춤
+
+     [3단계] 패닝 적용
+     ───────────────────────────────────────────
+     enable_panning = True:
+       - 2단계 패닝 시스템
+       - 시작 좌표 계산 (랜덤 또는 중앙)
+       - 종료 좌표 계산 (60px 이동)
+       - Linear 이징
+
+     enable_panning = False:
+       - x_pos = 0 (가로 꽉 채움)
+       - y_pos = 0 (위로 붙임)
+       - 아래 검은 패딩
+
+================================================================================
+            V. 비디오 처리 함수 상세 (Video Processing)
+================================================================================
+
+5-1. create_video_background_clip() - 기본 비디오 클립
+     위치: Line 1045
+     작업 영역: 504x670
+     **중요**: 모든 비디오는 enable_panning=False로 호출됨
+
+     [1단계] 비디오 로드 & 검증
+     ───────────────────────────────────────────
+     - VideoFileClip(video_path)
+     - 메타데이터 검증 (duration, width, height)
+
+     [2단계] 비디오 길이 조정
+     ───────────────────────────────────────────
+     original_duration > duration:
+       → subclip(0, duration) - 앞부분 자르기
+
+     original_duration < duration:
+       반복 재생 시도:
+         → concatenate_videoclips([clip, clip, ...])
+       실패 시 대안:
+         → 마지막 프레임 ImageClip으로 연장
+
+     [3단계] 리사이즈
+     ───────────────────────────────────────────
+     가로형 (aspect > 0.751):
+       resized_width = int(orig_width * 670 / orig_height)
+       video_clip.resize(height=670)
+       → 세로 670에 맞춤
+
+     세로형 (aspect ≤ 0.751):
+       resized_height = int(orig_height * 504 / orig_width)
+       video_clip.resize(width=504)
+       → 가로 504에 맞춤
+
+     [4단계] 배치 (항상 패닝 off)
+     ───────────────────────────────────────────
+     가로형:
+       x_offset = -((resized_width - 504) // 2)
+       position = (x_offset, 220)
+       → 중앙 고정
+
+     세로형:
+       y_offset = 220 - ((resized_height - 670) // 2)
+       position = (0, y_offset)
+       → 중앙 고정
+
+5-2. create_fullscreen_video_clip() - 전체화면 비디오
+     위치: Line 2883
+     작업 영역: 504x890
+     **중요**: 모든 비디오는 enable_panning=False로 호출됨
+
+     [처리 과정]
+     ① 비디오 로드 & 길이 조정 (5-1과 동일)
+     ② 리사이즈:
+        - 가로형: height=890
+        - 세로형: width=504
+     ③ 배치: 중앙 고정 (패닝 없음)
+
+================================================================================
+            VI. 텍스트 렌더링 상세 (Text Rendering)
+================================================================================
+
+6-1. create_text_image() - 텍스트 이미지 생성
+     위치: Line 345
+
+     [입력]
+     - text: 렌더링할 텍스트
+     - text_position: "top" | "bottom"
+     - text_style: "outline" | "background" | "white_bg" | "black_white"
+     - title_area_mode: "keep" | "remove"
+
+     [처리 과정]
+
+     1단계: 작업 영역 결정
+     ──────────────────────────────────────
+     title_area_mode = "keep":
+       work_height = 670
+
+       text_position = "top":
+         zone_center_y = 430  (상단 영역 340-520)
+
+       text_position = "bottom":
+         zone_center_y = 610  (하단 영역 520-700)
+
+     title_area_mode = "remove":
+       work_height = 890
+
+       text_position에 따라 Y 좌표 계산
+
+     2단계: 텍스트 분할 & 크기 계산
+     ──────────────────────────────────────
+     - 이모지 분리: split_text_and_emoji()
+     - 줄바꿈 처리
+     - 폰트 크기: body_font_size (기본 36pt)
+     - 총 높이 계산
+
+     3단계: 스타일별 렌더링
+     ──────────────────────────────────────
+     "outline":
+       → _render_text_with_outline()
+       - 검은색 외곽선 (2px, 25개 포지션)
+       - 흰색 텍스트
+       - 배경 투명
+
+     "background":
+       → _render_text_with_background()
+       - 반투명 검은 박스 배경
+       - 흰색 텍스트
+
+     "white_bg":
+       → _render_text_with_white_background()
+       - 흰색 박스 배경
+       - 검은색 텍스트
+
+     "black_white":
+       → _render_text_with_black_text_white_outline()
+       - 흰색 외곽선
+       - 검은색 텍스트
+
+     4단계: 이미지 저장
+     ──────────────────────────────────────
+     - RGBA PNG로 저장 (투명도 유지)
+     - 임시 파일 경로 반환
+
+6-2. 이모지 처리 시스템
+
+     has_emoji() - Line 61
+     ───────────────────────────────────────
+     - 유니코드 범위 체크
+     - 이모지 포함 여부 반환
+
+     split_text_and_emoji() - Line 75
+     ───────────────────────────────────────
+     - 텍스트와 이모지 분리
+     - 결과: [(text, is_emoji), ...]
+
+     draw_text_with_emoji() - Line 102
+     ───────────────────────────────────────
+     - 일반 텍스트: 한글 폰트
+     - 이모지: Noto Color Emoji 폰트
+     - 혼합 렌더링
+
+================================================================================
+            VII. 오디오 처리 상세 (Audio Processing)
+================================================================================
+
+7-1. TTS 생성
+     create_tts_audio() - Line 1382
+
+     [처리 과정]
+     ① 전처리: preprocess_korean_text()
+        - 특수문자 제거: ?, !, ~, 이모지 등
+        - 자연스러운 발음 유도
+
+     ② Google TTS 생성
+        - gTTS(text, lang='ko')
+        - 임시 MP3 파일 저장
+
+     ③ 1.5배속 처리
+        함수: speed_up_audio()
+        4단계 fallback:
+        1. FFmpeg atempo 필터
+        2. MoviePy speedx()
+        3. Pydub 샘플레이트 조정
+        4. NumPy 샘플 건너뛰기
+
+7-2. BGM 처리
+     - 볼륨 25%로 조정
+     - TTS와 오버레이
+     - 전체 영상 길이에 맞춤
+
+================================================================================
+            VIII. 트랜지션 시스템 (Transitions)
+================================================================================
+
+8-1. 트랜지션 감지
+     detect_image_transitions() - Line 3304
+
+     [로직]
+     - 미디어 파일이 바뀌는 클립 인덱스 찾기
+     - image_allocation_mode 고려
+     - 결과: [idx1, idx2, idx3, ...]
+
+8-2. 크로스페이드 적용
+     apply_crossfade_to_clips() - Line 3397
+
+     [처리]
+     ① 각 트랜지션 인덱스에서:
+        - 앞 클립 마지막 0.4초: fadeout
+        - 뒤 클립 시작 0.4초: fadein
+     ② 오버랩 영역 생성
+     ③ 클립 재배치
+
+================================================================================
+            IX. 데이터 흐름도 (Data Flow)
+================================================================================
+
+[입력] → [Phase 1] → [Phase 2] → [Phase 3] → [Phase 4] → [Phase 5] → [출력]
+
+입력:
+  - content (JSON)
+  - media_files (images/videos)
+  - bgm
+  - options
+
+Phase 1: 준비
+  ├─ 타이틀 이미지 생성
+  ├─ TTS 음성 생성 (선택)
+  └─ 미디어 파일 타입 분류
+
+Phase 2: 시간 계산
+  ├─ body별 읽기 시간
+  ├─ 미디어 할당 계획
+  └─ 총 영상 길이 산출
+
+Phase 3: 클립 생성
+  ├─ 1_per_image 모드
+  │   ├─ 이미지 → create_background_clip()
+  │   │            create_fullscreen_background_clip()
+  │   └─ 비디오 → create_video_background_clip()
+  │                create_fullscreen_video_clip()
+  │
+  └─ 2_per_image 모드
+      ├─ 이미지 → create_continuous_background_clip()
+      └─ 비디오 → create_video_background_clip()
+
+Phase 4: 트랜지션
+  ├─ 미디어 전환 지점 감지
+  └─ 크로스페이드 적용 (선택)
+
+Phase 5: 최종 렌더링
+  ├─ 클립 연결
+  ├─ 오디오 믹싱 (TTS + BGM)
+  └─ MP4 인코딩
+
+출력:
+  - 504x890 릴스 영상 (MP4)
+
+================================================================================
+            X. 주요 설정값 및 상수
+================================================================================
+
+해상도:
+  - video_width: 504
+  - video_height: 890
+  - title_height: 220
+  - work_height: 670 (keep 모드) | 890 (remove 모드)
+
+텍스트 위치 (keep 모드):
+  - top 영역: 340-520px (중앙 430px)
+  - bottom 영역: 520-700px (중앙 610px)
+  - 릴스 UI 회피: 700-890px 영역 비사용
+
+패닝:
+  - 이동 범위: 최대 60px
+  - 이징: Linear
+  - 이미지: 패닝 옵션에 따라 on/off
+  - 비디오: 항상 패닝 off (중앙 고정)
+
+폰트:
+  - 타이틀: 42pt (기본)
+  - Body: 36pt (기본)
+  - 외곽선: 2px
+
+오디오:
+  - TTS 속도: 1.5배속
+  - BGM 볼륨: 25%
+  - 읽기 속도: 분당 300자 (1.5배속 적용 후)
+
+트랜지션:
+  - 크로스페이드: 0.4초
+
+품질:
+  - 이미지 리샘플링: LANCZOS
+  - JPEG 품질: 95
+  - 비디오 코덱: libx264
+  - 오디오 코덱: aac
+  - FPS: 30
+
+================================================================================
+            XI. 함수 호출 관계도
+================================================================================
+
+create_video_from_uploads()
+  └─ scan_uploads_folder()
+  └─ create_video_with_local_images()
+      ├─ create_title_image()
+      ├─ create_tts_audio()
+      │   ├─ preprocess_korean_text()
+      │   └─ speed_up_audio()
+      │       ├─ _speed_up_with_ffmpeg()
+      │       ├─ _speed_up_with_moviepy()
+      │       ├─ _speed_up_with_pydub()
+      │       └─ _speed_up_with_sampling()
+      │
+      ├─ [클립 생성 루프]
+      │   ├─ create_background_clip()
+      │   │   ├─ crop_to_square()
+      │   │   └─ linear_easing_function()
+      │   │
+      │   ├─ create_continuous_background_clip()
+      │   │   ├─ crop_to_square()
+      │   │   └─ linear_easing_function()
+      │   │
+      │   ├─ create_fullscreen_background_clip()
+      │   │   └─ linear_easing_function()
+      │   │
+      │   ├─ create_video_background_clip()
+      │   │   └─ linear_easing_function()
+      │   │
+      │   ├─ create_fullscreen_video_clip()
+      │   │   └─ linear_easing_function()
+      │   │
+      │   └─ create_text_image()
+      │       ├─ split_text_and_emoji()
+      │       ├─ _render_text_with_outline()
+      │       ├─ _render_text_with_background()
+      │       ├─ _render_text_with_white_background()
+      │       └─ _render_text_with_black_text_white_outline()
+      │           └─ draw_text_with_emoji()
+      │
+      ├─ detect_image_transitions()
+      ├─ apply_crossfade_to_clips()
+      └─ concatenate_videoclips()
+
+================================================================================
+            XII. 리팩토링 권장사항
+================================================================================
+
+1. 클립 생성 함수 통합
+   현재 문제:
+   - create_background_clip()
+   - create_continuous_background_clip()
+   - create_fullscreen_background_clip()
+   - create_video_background_clip()
+   - create_fullscreen_video_clip()
+   → 5개 함수가 유사한 로직 중복
+
+   개선 방안:
+   - MediaClipFactory 클래스 생성
+   - create_clip(media_path, duration, config) 단일 인터페이스
+   - config로 모든 옵션 전달:
+     {
+       type: 'image' | 'video',
+       mode: 'keep' | 'remove',
+       panning: true | false,
+       allocation: 'single' | 'continuous'
+     }
+
+2. 이미지 처리 파이프라인 분리
+   제안 구조:
+   ImageProcessor 클래스:
+   - load_and_validate()
+   - apply_exif_correction()
+   - crop_to_square()
+   - calculate_resize()
+   - apply_resize()
+   - generate_clip()
+
+3. 비디오 처리 파이프라인 분리
+   VideoProcessor 클래스:
+   - load_and_validate()
+   - adjust_duration()
+   - calculate_resize()
+   - apply_resize()
+   - apply_positioning()
+   - generate_clip()
+
+4. 텍스트 렌더링 엔진 분리
+   TextRenderer 클래스:
+   - calculate_layout()
+   - render_with_style()
+   - support_emoji()
+   - generate_image()
+
+5. 트랜지션 매니저 분리
+   TransitionManager 클래스:
+   - detect_transition_points()
+   - apply_crossfade()
+   - apply_wipe()
+   - apply_custom_transition()
+
+6. 오디오 프로세서 분리
+   AudioProcessor 클래스:
+   - generate_tts()
+   - adjust_speed()
+   - mix_audio()
+   - apply_volume()
+
+7. 설정 관리 개선
+   Config 클래스:
+   - VideoConfig
+   - AudioConfig
+   - TextConfig
+   - TransitionConfig
+   → 타입 안전성 향상
+
+8. 의존성 주입 패턴 적용
+   현재: 모든 로직이 VideoGenerator에 집중
+   개선: 각 프로세서를 주입받아 사용
+
+   class VideoGenerator:
+       def __init__(self,
+                    image_processor: ImageProcessor,
+                    video_processor: VideoProcessor,
+                    text_renderer: TextRenderer,
+                    audio_processor: AudioProcessor,
+                    transition_manager: TransitionManager):
+           ...
+
+9. 에러 처리 강화
+   - 커스텀 예외 클래스 정의
+   - Try-catch 블록 세분화
+   - 복구 전략 명확화
+
+10. 테스트 가능성 개선
+    - 각 함수를 순수 함수로 분리
+    - 부작용(side effect) 최소화
+    - 단위 테스트 작성 용이하도록 구조화
+
+================================================================================
+                            끝
+================================================================================

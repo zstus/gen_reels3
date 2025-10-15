@@ -92,7 +92,7 @@ const GenerateStep: React.FC<GenerateStepProps> = ({
   const [enableAsyncMode, setEnableAsyncMode] = useState<boolean>(true);
   const [jobId, setJobId] = useState<string | null>(null);
   const [asyncResponse, setAsyncResponse] = useState<AsyncVideoResponse | null>(null);
-  const [estimatedTime, setEstimatedTime] = useState<string>('약 3-10분');
+  const [estimatedTime, setEstimatedTime] = useState<number>(300); // 초 단위 (기본 5분)
 
   // 폰트 및 스타일 관련 상태 변수들
   const [availableFonts, setAvailableFonts] = useState<FontFile[]>([]);
@@ -264,11 +264,21 @@ const GenerateStep: React.FC<GenerateStepProps> = ({
       setStatusMessage('배치 작업 요청 중...');
 
       // ✅ ImageStep에서 수정된 데이터 수집
-      const { editedTexts } = imageStepRef.current?.getEditedData() || { editedTexts: {} };
+      const { editedTexts } = imageStepRef.current?.getEditedData() || {
+        editedTexts: {}
+      };
+
+      // 🎨 패닝 옵션은 projectData에서 직접 가져오기
+      const imagePanningOptions = projectData.imagePanningOptions || {};
 
       // 배치 작업 API 호출
       const contentData = JSON.stringify(projectData.content);
       const editedTextsData = JSON.stringify(editedTexts);
+      const imagePanningOptionsData = JSON.stringify(imagePanningOptions);
+
+      console.log('🎨 영상 생성 - 패닝 옵션 (raw):', imagePanningOptions);
+      console.log('🎨 영상 생성 - 패닝 옵션 (JSON):', imagePanningOptionsData);
+
       const response = await apiService.generateVideoAsync({
         userEmail: userEmail,
         content: contentData,
@@ -288,6 +298,7 @@ const GenerateStep: React.FC<GenerateStepProps> = ({
         subtitleDuration: subtitleDuration,
         jobId: projectData.jobId,  // Job ID 추가
         editedTexts: editedTextsData, // 수정된 텍스트 전달
+        imagePanningOptions: imagePanningOptionsData, // 🎨 패닝 옵션 전달
       });
 
       if (response.status === 'success') {
@@ -295,7 +306,8 @@ const GenerateStep: React.FC<GenerateStepProps> = ({
         setStatusMessage('작업이 큐에 추가되었습니다. 완료되면 이메일로 알려드립니다.');
         setJobId(response.job_id || null);
         setAsyncResponse(response);
-        setEstimatedTime(response.estimated_time || '약 3-10분');
+        // estimated_time은 문자열("약 3-10분")이므로 기본값 사용
+        setEstimatedTime(300); // 기본 5분
         setGenerationStatus('completed');
       } else {
         throw new Error(response.message || '작업 요청에 실패했습니다');
@@ -918,7 +930,7 @@ const GenerateStep: React.FC<GenerateStepProps> = ({
                   <strong>배치 작업 모드:</strong><br/>
                   • 영상 생성 요청 후 즉시 대응 가능<br/>
                   • 완료되면 이메일로 다운로드 링크 전송<br/>
-                  • 예상 시간: {estimatedTime}
+                  • 예상 시간: 약 {Math.ceil(estimatedTime / 60)}분
                 </>
               ) : (
                 <>

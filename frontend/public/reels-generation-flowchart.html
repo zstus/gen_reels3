@@ -1,0 +1,671 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>릴스 영상 생성 프로세스 플로우차트</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            padding: 40px;
+        }
+
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .flowchart {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .node {
+            padding: 20px 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            min-width: 300px;
+            text-align: center;
+            position: relative;
+        }
+
+        .node:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.25);
+        }
+
+        .node.start {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            font-weight: bold;
+            font-size: 1.2em;
+        }
+
+        .node.phase {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            font-weight: bold;
+            font-size: 1.1em;
+            width: 400px;
+        }
+
+        .node.process {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+        }
+
+        .node.decision {
+            background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+            color: white;
+            clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
+            min-width: 350px;
+            min-height: 120px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .node.end {
+            background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+            color: white;
+            font-weight: bold;
+            font-size: 1.2em;
+        }
+
+        .arrow {
+            width: 4px;
+            height: 40px;
+            background: linear-gradient(180deg, #667eea 0%, #764ba2 100%);
+            position: relative;
+        }
+
+        .arrow::after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 0;
+            border-left: 10px solid transparent;
+            border-right: 10px solid transparent;
+            border-top: 15px solid #764ba2;
+        }
+
+        .branch-container {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            width: 100%;
+            flex-wrap: wrap;
+        }
+
+        .branch {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .branch-label {
+            background: #f39c12;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 0.9em;
+        }
+
+        .info-box {
+            background: #f8f9fa;
+            border-left: 4px solid #667eea;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 8px;
+        }
+
+        .info-box h3 {
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+
+        .info-box ul {
+            margin-left: 20px;
+        }
+
+        .info-box li {
+            margin: 5px 0;
+            color: #555;
+        }
+
+        .tooltip {
+            display: none;
+            position: absolute;
+            background: rgba(0,0,0,0.9);
+            color: white;
+            padding: 10px 15px;
+            border-radius: 8px;
+            font-size: 0.9em;
+            z-index: 1000;
+            max-width: 300px;
+            top: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            margin-top: 10px;
+        }
+
+        .node:hover .tooltip {
+            display: block;
+        }
+
+        .phase-section {
+            border: 3px dashed #667eea;
+            padding: 30px;
+            border-radius: 20px;
+            margin: 20px 0;
+            background: rgba(102, 126, 234, 0.05);
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px;
+            }
+
+            h1 {
+                font-size: 1.8em;
+            }
+
+            .node {
+                min-width: 250px;
+                padding: 15px 20px;
+            }
+
+            .branch-container {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎬 릴스 영상 생성 프로세스 플로우차트</h1>
+
+        <div class="info-box">
+            <h3>📌 플로우차트 사용 가이드</h3>
+            <ul>
+                <li>각 노드에 마우스를 올려보세요 - 상세 정보가 표시됩니다</li>
+                <li>5개의 Phase로 구성된 영상 생성 프로세스를 확인할 수 있습니다</li>
+                <li>분기점(다이아몬드 모양)에서 조건에 따라 다른 경로로 진행됩니다</li>
+            </ul>
+        </div>
+
+        <div class="flowchart">
+            <!-- 시작 -->
+            <div class="node start">
+                🚀 시작: 사용자 요청
+                <div class="tooltip">텍스트 데이터, 미디어 파일, BGM, 설정 옵션을 입력받습니다</div>
+            </div>
+
+            <div class="arrow"></div>
+
+            <div class="node process">
+                입력 데이터 수집
+                <div class="tooltip">
+                    - 텍스트 (title + body1~body8)<br>
+                    - 미디어 파일 (이미지/비디오)<br>
+                    - BGM 파일<br>
+                    - 설정 옵션
+                </div>
+            </div>
+
+            <div class="arrow"></div>
+
+            <div class="node process">
+                create_video_from_uploads()
+                <div class="tooltip">메인 엔트리 포인트 - 업로드된 파일로 영상 생성 시작</div>
+            </div>
+
+            <div class="arrow"></div>
+
+            <div class="node process">
+                scan_uploads_folder()
+                <div class="tooltip">미디어 파일 자동 감지 및 타입 분류 (이미지/비디오)</div>
+            </div>
+
+            <div class="arrow"></div>
+
+            <!-- Phase 1 -->
+            <div class="phase-section">
+                <div class="node phase">
+                    📋 Phase 1: 준비 단계
+                    <div class="tooltip">타이틀 이미지 생성 및 TTS 음성 생성 (옵션)</div>
+                </div>
+
+                <div class="arrow"></div>
+
+                <div class="node process">
+                    타이틀 이미지 생성 (504x220)
+                    <div class="tooltip">create_title_image() - 한글 폰트 + 이모지 지원</div>
+                </div>
+
+                <div class="arrow"></div>
+
+                <div class="node decision">
+                    voice_narration == "enabled"?
+                    <div class="tooltip">TTS 음성 생성 여부 결정</div>
+                </div>
+
+                <div class="arrow"></div>
+
+                <div class="branch-container">
+                    <div class="branch">
+                        <div class="branch-label">Yes</div>
+                        <div class="node process">
+                            TTS 음성 생성
+                            <div class="tooltip">
+                                1. 특수문자 전처리<br>
+                                2. Google TTS 생성<br>
+                                3. 1.5배속 처리 (4단계 fallback)
+                            </div>
+                        </div>
+                    </div>
+                    <div class="branch">
+                        <div class="branch-label">No</div>
+                        <div class="node process">
+                            건너뛰기
+                            <div class="tooltip">TTS 없이 BGM만 사용</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="arrow"></div>
+
+            <!-- Phase 2 -->
+            <div class="phase-section">
+                <div class="node phase">
+                    ⏱️ Phase 2: 시간 계산 및 할당
+                    <div class="tooltip">각 body 텍스트별 읽기 시간 계산 및 미디어 할당 계획</div>
+                </div>
+
+                <div class="arrow"></div>
+
+                <div class="node process">
+                    읽기 시간 계산
+                    <div class="tooltip">한글 분당 300자 기준, 1.5배속 적용, 최소 2초</div>
+                </div>
+
+                <div class="arrow"></div>
+
+                <div class="node decision">
+                    image_allocation_mode?
+                    <div class="tooltip">미디어 할당 방식 선택</div>
+                </div>
+
+                <div class="arrow"></div>
+
+                <div class="branch-container">
+                    <div class="branch">
+                        <div class="branch-label">1_per_image</div>
+                        <div class="node process">
+                            body 1개당<br>미디어 1개
+                            <div class="tooltip">각 본문 텍스트마다 별도 미디어 파일 사용</div>
+                        </div>
+                    </div>
+                    <div class="branch">
+                        <div class="branch-label">2_per_image</div>
+                        <div class="node process">
+                            body 2개당<br>미디어 1개
+                            <div class="tooltip">연속된 2개 본문에 동일 미디어 사용 (연속 패닝)</div>
+                        </div>
+                    </div>
+                    <div class="branch">
+                        <div class="branch-label">single_image</div>
+                        <div class="node process">
+                            전체 영상<br>1개로
+                            <div class="tooltip">모든 본문에 동일 미디어 사용</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="arrow"></div>
+
+            <!-- Phase 3 -->
+            <div class="phase-section">
+                <div class="node phase">
+                    🎬 Phase 3: 클립 생성 루프
+                    <div class="tooltip">각 body별로 배경+텍스트 클립 생성</div>
+                </div>
+
+                <div class="arrow"></div>
+
+                <div class="node decision">
+                    title_area_mode?
+                    <div class="tooltip">타이틀 영역 유지 또는 제거</div>
+                </div>
+
+                <div class="arrow"></div>
+
+                <div class="branch-container">
+                    <div class="branch">
+                        <div class="branch-label">keep</div>
+                        <div class="node process">
+                            504x670<br>작업 영역
+                            <div class="tooltip">타이틀(220px) 아래 영역만 사용</div>
+                        </div>
+                    </div>
+                    <div class="branch">
+                        <div class="branch-label">remove</div>
+                        <div class="node process">
+                            504x890<br>전체 화면
+                            <div class="tooltip">타이틀 없이 전체 화면 활용</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="arrow"></div>
+
+                <div class="node decision">
+                    미디어 타입?
+                    <div class="tooltip">이미지 또는 비디오 판단</div>
+                </div>
+
+                <div class="arrow"></div>
+
+                <div class="branch-container">
+                    <div class="branch">
+                        <div class="branch-label">이미지</div>
+                        <div class="node process">
+                            이미지 클립 생성
+                            <div class="tooltip">
+                                1. EXIF 처리 & 정사각형 크롭<br>
+                                2. 종횡비 기반 리사이즈<br>
+                                3. 패닝 적용 (옵션)<br>
+                                4. 검은 배경 합성
+                            </div>
+                        </div>
+                        <div class="arrow"></div>
+                        <div class="node decision">
+                            enable_panning?
+                        </div>
+                        <div class="arrow"></div>
+                        <div class="branch-container">
+                            <div class="branch">
+                                <div class="branch-label">Yes</div>
+                                <div class="node process">
+                                    패닝 적용<br>(60px, Linear)
+                                    <div class="tooltip">
+                                        가로형: 좌우 패닝<br>
+                                        세로형: 상하 패닝<br>
+                                        종횡비 0.751 기준
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="branch">
+                                <div class="branch-label">No</div>
+                                <div class="node process">
+                                    중앙 고정<br>위로 붙임
+                                    <div class="tooltip">패닝 없이 정적 배치, 아래 검은 패딩</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="branch">
+                        <div class="branch-label">비디오</div>
+                        <div class="node process">
+                            비디오 클립 생성<br>(항상 패닝 off)
+                            <div class="tooltip">
+                                1. 비디오 로드 & 길이 조정<br>
+                                2. 종횡비 기반 리사이즈<br>
+                                3. 중앙 고정 배치<br>
+                                4. 검은 배경 합성
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="arrow"></div>
+
+                <div class="node process">
+                    텍스트 이미지 생성
+                    <div class="tooltip">create_text_image() - 이모지 지원, 다양한 스타일</div>
+                </div>
+
+                <div class="arrow"></div>
+
+                <div class="node decision">
+                    text_position?
+                    <div class="tooltip">텍스트 표시 위치 선택</div>
+                </div>
+
+                <div class="arrow"></div>
+
+                <div class="branch-container">
+                    <div class="branch">
+                        <div class="branch-label">top</div>
+                        <div class="node process">
+                            상단 영역<br>(340-520px)<br>중앙 430px
+                            <div class="tooltip">릴스 UI 회피 - 상단 배치</div>
+                        </div>
+                    </div>
+                    <div class="branch">
+                        <div class="branch-label">bottom</div>
+                        <div class="node process">
+                            하단 영역<br>(520-700px)<br>중앙 610px
+                            <div class="tooltip">릴스 UI 회피 - 하단 배치</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="arrow"></div>
+
+                <div class="node decision">
+                    text_style?
+                    <div class="tooltip">텍스트 렌더링 스타일 선택</div>
+                </div>
+
+                <div class="arrow"></div>
+
+                <div class="branch-container">
+                    <div class="branch">
+                        <div class="branch-label">outline</div>
+                        <div class="node process">
+                            2px 외곽선<br>(25개 포지션)
+                            <div class="tooltip">부드러운 검은 외곽선, 배경 완전 노출</div>
+                        </div>
+                    </div>
+                    <div class="branch">
+                        <div class="branch-label">background</div>
+                        <div class="node process">
+                            반투명 박스
+                            <div class="tooltip">검은 반투명 배경 박스</div>
+                        </div>
+                    </div>
+                    <div class="branch">
+                        <div class="branch-label">기타</div>
+                        <div class="node process">
+                            특수 스타일
+                            <div class="tooltip">white_bg, black_white 등</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="arrow"></div>
+
+                <div class="node process">
+                    CompositeVideoClip 합성
+                    <div class="tooltip">배경 + 타이틀 + 텍스트를 하나의 클립으로 합성</div>
+                </div>
+
+                <div class="arrow"></div>
+
+                <div class="node process">
+                    클립 리스트에 추가
+                    <div class="tooltip">생성된 클립을 전체 클립 목록에 추가</div>
+                </div>
+
+                <div class="arrow"></div>
+
+                <div class="node decision">
+                    다음 body로 반복?
+                    <div class="tooltip">모든 body 텍스트 처리 완료 여부 확인</div>
+                </div>
+            </div>
+
+            <div class="arrow"></div>
+
+            <!-- Phase 4 -->
+            <div class="phase-section">
+                <div class="node phase">
+                    🔀 Phase 4: 트랜지션 적용
+                    <div class="tooltip">미디어 전환 시 부드러운 효과 추가 (옵션)</div>
+                </div>
+
+                <div class="arrow"></div>
+
+                <div class="node decision">
+                    cross_dissolve == "enabled"?
+                    <div class="tooltip">크로스페이드 트랜지션 적용 여부</div>
+                </div>
+
+                <div class="arrow"></div>
+
+                <div class="branch-container">
+                    <div class="branch">
+                        <div class="branch-label">Yes</div>
+                        <div class="node process">
+                            미디어 전환 감지
+                            <div class="tooltip">detect_image_transitions() - 미디어 변경 지점 찾기</div>
+                        </div>
+                        <div class="arrow"></div>
+                        <div class="node process">
+                            크로스페이드 적용<br>(0.4초 오버랩)
+                            <div class="tooltip">apply_crossfade_to_clips() - 부드러운 전환 효과</div>
+                        </div>
+                    </div>
+                    <div class="branch">
+                        <div class="branch-label">No</div>
+                        <div class="node process">
+                            트랜지션 건너뛰기
+                            <div class="tooltip">직접 연결</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="arrow"></div>
+
+            <!-- Phase 5 -->
+            <div class="phase-section">
+                <div class="node phase">
+                    🎞️ Phase 5: 최종 렌더링
+                    <div class="tooltip">클립 결합 및 오디오 믹싱, MP4 인코딩</div>
+                </div>
+
+                <div class="arrow"></div>
+
+                <div class="node process">
+                    클립 결합 (concatenate)
+                    <div class="tooltip">모든 클립을 하나의 비디오로 연결</div>
+                </div>
+
+                <div class="arrow"></div>
+
+                <div class="node decision">
+                    voice_narration == "enabled"?
+                    <div class="tooltip">TTS 음성 포함 여부</div>
+                </div>
+
+                <div class="arrow"></div>
+
+                <div class="branch-container">
+                    <div class="branch">
+                        <div class="branch-label">Yes</div>
+                        <div class="node process">
+                            TTS + BGM 믹싱
+                            <div class="tooltip">
+                                - TTS 원본<br>
+                                - BGM 25% 볼륨<br>
+                                - CompositeAudioClip
+                            </div>
+                        </div>
+                    </div>
+                    <div class="branch">
+                        <div class="branch-label">No</div>
+                        <div class="node process">
+                            BGM만 사용
+                            <div class="tooltip">배경음악만 추가</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="arrow"></div>
+
+                <div class="node process">
+                    최종 MP4 인코딩
+                    <div class="tooltip">
+                        - codec: libx264<br>
+                        - audio_codec: aac<br>
+                        - fps: 30<br>
+                        - preset: medium
+                    </div>
+                </div>
+
+                <div class="arrow"></div>
+
+                <div class="node process">
+                    임시 파일 정리
+                    <div class="tooltip">생성 과정에서 만들어진 임시 파일 삭제</div>
+                </div>
+            </div>
+
+            <div class="arrow"></div>
+
+            <!-- 종료 -->
+            <div class="node end">
+                ✅ 완료: 504x890 릴스 영상 (MP4)
+                <div class="tooltip">영상 생성 완료! output_videos 폴더에 저장됩니다</div>
+            </div>
+        </div>
+
+        <div class="info-box" style="margin-top: 40px;">
+            <h3>🎯 주요 설정값</h3>
+            <ul>
+                <li><strong>해상도:</strong> 504x890 (릴스 최적화)</li>
+                <li><strong>타이틀 영역:</strong> 220px (상단)</li>
+                <li><strong>텍스트 위치:</strong> 상단(340-520px) / 하단(520-700px)</li>
+                <li><strong>패닝 범위:</strong> 최대 60px (Linear 이징)</li>
+                <li><strong>폰트 크기:</strong> 타이틀 42pt / Body 36pt</li>
+                <li><strong>TTS 속도:</strong> 1.5배속</li>
+                <li><strong>BGM 볼륨:</strong> 25%</li>
+                <li><strong>트랜지션:</strong> 0.4초 크로스페이드</li>
+            </ul>
+        </div>
+    </div>
+</body>
+</html>

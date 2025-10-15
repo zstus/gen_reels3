@@ -147,6 +147,19 @@ class VideoWorker:
             except (json.JSONDecodeError, AttributeError):
                 video_title = '릴스 영상'
 
+            # 이미지별 패닝 옵션 파싱
+            parsed_panning_options = None
+            if 'image_panning_options' in video_params:
+                try:
+                    panning_options_str = video_params.get('image_panning_options', '{}')
+                    panning_dict = json.loads(panning_options_str) if isinstance(panning_options_str, str) else panning_options_str
+                    if panning_dict:
+                        # 문자열 키를 정수로 변환
+                        parsed_panning_options = {int(k): v for k, v in panning_dict.items()}
+                        logger.info(f"🎨 이미지별 패닝 옵션: {parsed_panning_options}")
+                except (json.JSONDecodeError, ValueError, KeyError) as e:
+                    logger.warning(f"⚠️ 패닝 옵션 파싱 실패, 기본값(패닝 활성화) 사용: {e}")
+
             # BGM 파일 경로 설정
             bgm_file_path = None
             if selected_bgm_path:
@@ -205,7 +218,8 @@ class VideoWorker:
                     music_mood=music_mood,
                     voice_narration=voice_narration,
                     cross_dissolve=cross_dissolve,
-                    subtitle_duration=subtitle_duration
+                    subtitle_duration=subtitle_duration,
+                    image_panning_options=parsed_panning_options
                 )
             else:
                 # 업로드된 파일 사용
@@ -225,7 +239,8 @@ class VideoWorker:
                     music_mood=music_mood,
                     voice_narration=voice_narration,
                     cross_dissolve=cross_dissolve,
-                    subtitle_duration=subtitle_duration
+                    subtitle_duration=subtitle_duration,
+                    image_panning_options=parsed_panning_options
                 )
 
             if result and isinstance(result, str):

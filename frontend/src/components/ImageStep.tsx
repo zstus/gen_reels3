@@ -29,7 +29,9 @@ interface ImageStepProps {
   imageUploadMode: ImageUploadMode;
   content: ReelsContent;
   jobId: string;
+  imagePanningOptions: { [key: number]: boolean }; // 🎨 패닝 옵션 추가
   onChange: (images: File[], mode: ImageUploadMode) => void;
+  onPanningOptionsChange: (options: { [key: number]: boolean }) => void; // 🎨 패닝 옵션 변경 핸들러
   onNext: () => void;
   onBack: () => void;
 }
@@ -39,6 +41,7 @@ export interface ImageStepRef {
   getEditedData: () => {
     editedTexts: { [key: number]: string[] };
     customPrompts: { [key: number]: any };
+    imagePanningOptions: { [key: number]: boolean };
   };
 }
 
@@ -47,7 +50,9 @@ const ImageStep = forwardRef<ImageStepRef, ImageStepProps>(({
   imageUploadMode,
   content,
   jobId,
+  imagePanningOptions,
   onChange,
+  onPanningOptionsChange,
   onNext,
   onBack,
 }, ref) => {
@@ -63,7 +68,8 @@ const ImageStep = forwardRef<ImageStepRef, ImageStepProps>(({
     getEditedData: () => {
       return textImagePairManagerRef.current?.getEditedData() || {
         editedTexts: {},
-        customPrompts: {}
+        customPrompts: {},
+        imagePanningOptions: {}
       };
     }
   }), []);
@@ -532,7 +538,9 @@ const ImageStep = forwardRef<ImageStepRef, ImageStepProps>(({
           imageUploadMode={imageUploadMode}
           images={images}
           jobId={jobId}
+          imagePanningOptions={imagePanningOptions}
           onChange={onChange}
+          onPanningOptionsChange={onPanningOptionsChange}
         />
       </Box>
 

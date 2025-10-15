@@ -85,6 +85,9 @@ async def generate_video(
     # 수정된 텍스트 (JSON 문자열)
     edited_texts: str = Form(default="{}"),
 
+    # 이미지별 패닝 옵션 (JSON 문자열, 예: {"0": true, "1": false})
+    image_panning_options: str = Form(default="{}"),
+
     # 이미지 파일 업로드 (최대 8개)
     image_1: Optional[UploadFile] = File(None),
     image_2: Optional[UploadFile] = File(None),
@@ -191,6 +194,18 @@ async def generate_video(
         logger.info(f"🎬 크로스 디졸브: {cross_dissolve}")
         logger.info(f"⏱️ 자막 지속 시간: {subtitle_duration}초")
 
+        # 이미지별 패닝 옵션 파싱
+        parsed_panning_options = None
+        if image_panning_options and image_panning_options != "{}":
+            try:
+                panning_dict = json.loads(image_panning_options)
+                # 문자열 키를 정수로 변환
+                parsed_panning_options = {int(k): v for k, v in panning_dict.items()}
+                logger.info(f"🎨 이미지별 패닝 옵션: {parsed_panning_options}")
+            except Exception as parse_error:
+                logger.warning(f"⚠️ 패닝 옵션 파싱 실패, 기본값 사용: {parse_error}")
+                parsed_panning_options = None
+
         output_path = video_gen.create_video_from_uploads(
             OUTPUT_FOLDER,
             bgm_file,
@@ -206,7 +221,8 @@ async def generate_video(
             music_mood,
             voice_narration,
             cross_dissolve,
-            subtitle_duration
+            subtitle_duration,
+            parsed_panning_options
         )
 
         # 영상 생성 성공 시 job 폴더 정리
@@ -292,6 +308,9 @@ async def generate_video_async(
 
     # 수정된 텍스트 (JSON 문자열)
     edited_texts: str = Form(default="{}"),
+
+    # 이미지별 패닝 옵션 (JSON 문자열)
+    image_panning_options: str = Form(default="{}"),
 
     # 이미지 파일 업로드
     image_1: Optional[UploadFile] = File(None),
@@ -387,7 +406,8 @@ async def generate_video_async(
             'voice_narration': voice_narration,
             'cross_dissolve': cross_dissolve,
             'subtitle_duration': subtitle_duration,
-            'edited_texts': edited_texts  # 수정된 텍스트 추가
+            'edited_texts': edited_texts,  # 수정된 텍스트 추가
+            'image_panning_options': image_panning_options  # 패닝 옵션 추가
         }
 
         # 작업을 큐에 추가

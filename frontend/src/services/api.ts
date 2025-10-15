@@ -92,6 +92,8 @@ export const apiService = {
     useTestFiles?: boolean;
     titleFont?: string;
     bodyFont?: string;
+    titleFontSize?: number;
+    bodyFontSize?: number;
     voiceNarration: VoiceNarration;
     crossDissolve: CrossDissolve;
     subtitleDuration?: number;
@@ -211,6 +213,7 @@ export const apiService = {
     subtitleDuration?: number;
     jobId?: string;  // Job ID 추가
     editedTexts?: string; // 수정된 텍스트 (JSON 문자열)
+    imagePanningOptions?: string; // 🎨 이미지별 패닝 옵션 (JSON 문자열)
   }): Promise<AsyncVideoResponse> {
     const formData = new FormData();
 
@@ -223,6 +226,12 @@ export const apiService = {
     // 수정된 텍스트 추가
     if (data.editedTexts) {
       formData.append('edited_texts', data.editedTexts);
+    }
+
+    // 🎨 이미지별 패닝 옵션 추가
+    if (data.imagePanningOptions) {
+      formData.append('image_panning_options', data.imagePanningOptions);
+      console.log('🎨 apiService - 패닝 옵션 전달:', data.imagePanningOptions);
     }
 
     // 이미지 할당 모드 추가 (백엔드 형식에 맞게 변환)

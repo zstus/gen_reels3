@@ -546,6 +546,35 @@ const ContentStep: React.FC<ContentStepProps> = ({ content, onChange, onNext }) 
                   <li>200자 이내 권장</li>
                   <li>읽기 쉬운 길이로 나누어 작성</li>
                 </ul>
+
+                <Divider sx={{ my: 2 }} />
+
+                <Box sx={{ mt: 2, p: 2, bgcolor: 'primary.50', borderRadius: 1, border: '1px solid', borderColor: 'primary.200' }}>
+                  <Typography variant="body2" sx={{ fontWeight: 'bold', mb: 1, color: 'primary.main' }}>
+                    🎬 영상 생성 프로세스가 궁금하신가요?
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1 }}>
+                    대본 작성부터 최종 영상 완성까지의 전체 과정을 시각적으로 확인하세요
+                  </Typography>
+                  <Button
+                    variant="outlined"
+                    size="small"
+                    fullWidth
+                    onClick={() => window.open('/reels-generation-flowchart.html', '_blank')}
+                    startIcon={<Help />}
+                    sx={{
+                      textTransform: 'none',
+                      borderColor: 'primary.main',
+                      color: 'primary.main',
+                      '&:hover': {
+                        borderColor: 'primary.dark',
+                        bgcolor: 'primary.100'
+                      }
+                    }}
+                  >
+                    인터랙티브 플로우차트 보기
+                  </Button>
+                </Box>
               </Typography>
             </AccordionDetails>
           </Accordion>
