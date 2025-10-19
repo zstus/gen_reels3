@@ -461,18 +461,15 @@ async def generate_reels_with_chatgpt(
 - 원문 충실도 최우선: 원문 문장을 그대로 또는 아주 가볍게 다듬어 사용(핵심 어휘/감정/말투 보존).
 - 날조/추측 금지(없는 사실 추가 금지), 과장 금지, 이모지 금지.
 - 톤: 끝까지 친근한 반말. 존댓말/반말 섞지 말 것.
-- 길이: 길이: body1~body7 각 {line_len_min}자 이상, 가능하면 {line_len_max}자 안팎. 제목 {title_len_max}자 이내.
-- 구조(7줄): ①후킹(강렬 의문/갈등) → ②상황 → ③감정 → ④규범/공정성 → ⑤갈등 가중 → ⑥자의문 → ⑦양자택일(+댓글 유도 가능).
+- 길이: 길이: body1~body50 각 {line_len_min}자 이상, 가능하면 {line_len_max}자 안팎. 제목 {title_len_max}자 이내.
+- 구조(최대 50줄): 자유롭게 구성하되 강렬한 후킹으로 시작해 댓글 유도로 마무리.
 - 출력은 아래 JSON 스키마만. 여분 텍스트/설명/코드블록 절대 금지.
 {{
   "title": "...",
   "body1": "...",
   "body2": "...",
-  "body3": "...",
-  "body4": "...",
-  "body5": "...",
-  "body6": "...",
-  "body7": "..."
+  ...
+  "body50": "..."
 }}
 """
 
@@ -529,7 +526,8 @@ async def generate_reels_with_chatgpt(
 
     def _post_fix(data: dict) -> dict:
         # 이모지 제거 + 길이 보정(길면 줄이고, 짧으면 늘리고) + 제목 길이 제한
-        for k in ["body1", "body2", "body3", "body4", "body5", "body6", "body7"]:
+        for i in range(1, 51):  # body1 ~ body50
+            k = f"body{i}"
             if k in data and isinstance(data[k], str):
                 s = _strip_emoji(data[k]).strip()
                 if not _len_ok(s):
@@ -667,7 +665,7 @@ async def generate_reels_with_chatgpt(
     except Exception:
         repair_prompt = f"""
 아래 텍스트에서 JSON만 추출해 유효한 JSON으로 정리해라. 필드 누락시 공백 문자열로 채워라.
-필드는 title, body1~body7 이다. 설명 금지. JSON만 출력.
+필드는 title, body1~body50 이다. 설명 금지. JSON만 출력.
 
 [텍스트]
 {final_out}
@@ -684,7 +682,7 @@ async def generate_reels_with_chatgpt(
     data = _post_fix(data)
 
     # ---------- 5) 보존율 검사(낮으면 1회 재작성) ----------
-    joined_bodies = " ".join([data.get(k, "") for k in ["body1", "body2", "body3", "body4", "body5", "body6", "body7"]])
+    joined_bodies = " ".join([data.get(f"body{i}", "") for i in range(1, 51)])
     score = _preserve_score(content, joined_bodies)
 
     if score < preserve_threshold:
@@ -713,23 +711,17 @@ async def generate_reels_with_chatgpt(
         try:
             data2 = json.loads(_pick_json(reinforced))
             data2 = _post_fix(data2)
-            joined2 = " ".join([data2.get(k, "") for k in ["body1", "body2", "body3", "body4", "body5", "body6", "body7"]])
+            joined2 = " ".join([data2.get(f"body{i}", "") for i in range(1, 51)])
             score2 = _preserve_score(content, joined2)
             if score2 >= score:
                 data = data2
         except Exception:
             pass
 
-    # ---------- 모델 객체로 반환 (이전과 동일 ReelsContent) ----------
+    # ---------- 모델 객체로 반환 (body1-body50 지원) ----------
     reels_content = ReelsContent(
         title=data.get("title", ""),
-        body1=data.get("body1", ""),
-        body2=data.get("body2", ""),
-        body3=data.get("body3", ""),
-        body4=data.get("body4", ""),
-        body5=data.get("body5", ""),
-        body6=data.get("body6", ""),
-        body7=data.get("body7", "")
+        **{f"body{i}": data.get(f"body{i}", "") for i in range(1, 51)}
     )
     return reels_content
 

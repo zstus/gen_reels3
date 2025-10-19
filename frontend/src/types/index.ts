@@ -6,7 +6,7 @@ export interface User {
   picture?: string;
 }
 
-// 릴스 콘텐츠 타입
+// 릴스 콘텐츠 타입 (최대 50개 대사 지원)
 export interface ReelsContent {
   title: string;
   body1: string;
@@ -17,6 +17,48 @@ export interface ReelsContent {
   body6?: string;
   body7?: string;
   body8?: string;
+  body9?: string;
+  body10?: string;
+  body11?: string;
+  body12?: string;
+  body13?: string;
+  body14?: string;
+  body15?: string;
+  body16?: string;
+  body17?: string;
+  body18?: string;
+  body19?: string;
+  body20?: string;
+  body21?: string;
+  body22?: string;
+  body23?: string;
+  body24?: string;
+  body25?: string;
+  body26?: string;
+  body27?: string;
+  body28?: string;
+  body29?: string;
+  body30?: string;
+  body31?: string;
+  body32?: string;
+  body33?: string;
+  body34?: string;
+  body35?: string;
+  body36?: string;
+  body37?: string;
+  body38?: string;
+  body39?: string;
+  body40?: string;
+  body41?: string;
+  body42?: string;
+  body43?: string;
+  body44?: string;
+  body45?: string;
+  body46?: string;
+  body47?: string;
+  body48?: string;
+  body49?: string;
+  body50?: string;
 }
 
 // 이미지 업로드 모드

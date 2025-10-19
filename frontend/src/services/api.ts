@@ -155,8 +155,17 @@ export const apiService = {
     // 이미지 파일들 추가
     if (data.images.length > 0 && !data.useTestFiles) {
       // 이미지 파일을 FormData로 직접 첨부
-      data.images.forEach((image, index) => {
-        formData.append(`image_${index + 1}`, image, `${index + 1}.${image.name.split('.').pop()}`);
+      data.images.forEach((image) => {
+        // __imageIndex 속성을 사용하여 올바른 번호로 업로드
+        const imageIndex = (image as any).__imageIndex;
+        if (typeof imageIndex === 'number') {
+          const fileNumber = imageIndex + 1; // 0-based → 1-based
+          const fileExtension = image.name.split('.').pop();
+          formData.append(`image_${fileNumber}`, image, `${fileNumber}.${fileExtension}`);
+          console.log(`📤 업로드: image_${fileNumber} → ${fileNumber}.${fileExtension} (imageIndex: ${imageIndex})`);
+        } else {
+          console.warn(`⚠️ 이미지에 __imageIndex가 없습니다:`, image.name);
+        }
       });
       // image_urls는 빈 배열로 전송 (파일 업로드 방식 사용)
       formData.append('image_urls', '[]');
@@ -286,8 +295,17 @@ export const apiService = {
 
     // 이미지 파일들 추가
     if (data.images.length > 0 && !data.useTestFiles) {
-      data.images.forEach((image, index) => {
-        formData.append(`image_${index + 1}`, image, `${index + 1}.${image.name.split('.').pop()}`);
+      data.images.forEach((image) => {
+        // __imageIndex 속성을 사용하여 올바른 번호로 업로드
+        const imageIndex = (image as any).__imageIndex;
+        if (typeof imageIndex === 'number') {
+          const fileNumber = imageIndex + 1; // 0-based → 1-based
+          const fileExtension = image.name.split('.').pop();
+          formData.append(`image_${fileNumber}`, image, `${fileNumber}.${fileExtension}`);
+          console.log(`📤 비동기 업로드: image_${fileNumber} → ${fileNumber}.${fileExtension} (imageIndex: ${imageIndex})`);
+        } else {
+          console.warn(`⚠️ 비동기: 이미지에 __imageIndex가 없습니다:`, image.name);
+        }
       });
     }
 
@@ -344,6 +362,7 @@ export const apiService = {
     titleFontSize?: number;
     bodyFontSize?: number;
     image?: File;
+    imagePanningOptions?: { [key: number]: boolean };  // 패닝 옵션 추가
     jobId?: string;  // Job ID 추가
   }): Promise<{ status: string; preview_url: string; message: string }> {
     const formData = new FormData();
@@ -365,6 +384,10 @@ export const apiService = {
 
     if (data.jobId) {
       formData.append('job_id', data.jobId);  // Job ID 추가
+    }
+
+    if (data.imagePanningOptions) {
+      formData.append('image_panning_options', JSON.stringify(data.imagePanningOptions));
     }
 
     if (data.image) {

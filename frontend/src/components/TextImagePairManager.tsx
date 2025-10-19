@@ -198,7 +198,11 @@ const TextImagePairManager = forwardRef<TextImagePairManagerRef, TextImagePairMa
   const textImagePairs = useMemo((): (TextImagePair & { imageIndex: number })[] => {
     const bodyTexts = Object.entries(content)
       .filter(([key, value]) => key.startsWith('body') && value?.trim())
-      .map(([key, value], index) => ({ key, value: value.trim(), index }));
+      .map(([key, value]) => {
+        // body 번호를 key에서 추출 (예: "body1" -> 0, "body10" -> 9)
+        const bodyNumber = parseInt(key.replace('body', '')) - 1; // 0-based index
+        return { key, value: value.trim(), index: bodyNumber };
+      });
 
     // 위치 정보를 가진 이미지들을 맵으로 생성
     const imageMap = new Map<number, File>();

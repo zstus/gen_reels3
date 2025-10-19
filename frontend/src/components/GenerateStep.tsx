@@ -97,12 +97,12 @@ const GenerateStep: React.FC<GenerateStepProps> = ({
   // 폰트 및 스타일 관련 상태 변수들
   const [availableFonts, setAvailableFonts] = useState<FontFile[]>([]);
   const [loadingFonts, setLoadingFonts] = useState(true);
-  const [titleFont, setTitleFont] = useState<string>('BMYEONSUNG_otf.otf');
+  const [titleFont, setTitleFont] = useState<string>('BMHANNAPro.ttf');
   const [bodyFont, setBodyFont] = useState<string>('BMYEONSUNG_otf.otf');
   const [titleFontSize, setTitleFontSize] = useState<number>(42);
-  const [bodyFontSize, setBodyFontSize] = useState<number>(36);
+  const [bodyFontSize, setBodyFontSize] = useState<number>(27);
   const [textPosition, setTextPosition] = useState<TextPosition>('bottom');
-  const [textStyle, setTextStyle] = useState<TextStyle>('outline');
+  const [textStyle, setTextStyle] = useState<TextStyle>('white_background');
   const [titleAreaMode, setTitleAreaMode] = useState<TitleAreaMode>('keep');
   const [voiceNarration, setVoiceNarration] = useState<VoiceNarration>('enabled');
   const [crossDissolve, setCrossDissolve] = useState<CrossDissolve>('enabled');
@@ -182,6 +182,7 @@ const GenerateStep: React.FC<GenerateStepProps> = ({
         titleFontSize: titleFontSize,
         bodyFontSize: bodyFontSize,
         image: projectData.images[0] || undefined,
+        imagePanningOptions: projectData.imagePanningOptions,  // 패닝 옵션 추가
         jobId: projectData.jobId,  // Job ID 추가
       });
 
@@ -645,7 +646,7 @@ const GenerateStep: React.FC<GenerateStepProps> = ({
                       InputProps={{
                         inputProps: { min: 20, max: 72, step: 2 }
                       }}
-                      helperText="기본: 36pt (20-72pt)"
+                      helperText="기본: 27pt (20-72pt)"
                     />
                   </Grid>
                 </Grid>
@@ -729,24 +730,24 @@ const GenerateStep: React.FC<GenerateStepProps> = ({
                       onChange={(e) => setTextStyle(e.target.value as TextStyle)}
                     >
                       <FormControlLabel
-                        value="outline"
+                        value="white_background"
                         control={<Radio size="small" />}
-                        label="외곽선"
+                        label="반투명배경(흰색)"
                       />
                       <FormControlLabel
                         value="background"
                         control={<Radio size="small" />}
-                        label="검은색 반투명 배경"
-                      />
-                      <FormControlLabel
-                        value="white_background"
-                        control={<Radio size="small" />}
-                        label="흰색 반투명 배경"
+                        label="반투명배경(검은색)"
                       />
                       <FormControlLabel
                         value="black_text_white_outline"
                         control={<Radio size="small" />}
-                        label="검은색 글씨 + 흰색 외곽선"
+                        label="외곽선(흰색)"
+                      />
+                      <FormControlLabel
+                        value="outline"
+                        control={<Radio size="small" />}
+                        label="외곽선(검은색)"
                       />
                     </RadioGroup>
                   </FormControl>

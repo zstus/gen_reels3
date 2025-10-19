@@ -49,7 +49,7 @@ const ContentStep: React.FC<ContentStepProps> = ({ content, onChange, onNext }) 
   // 현재 작성된 대사 개수 계산
   const getFilledScriptCount = () => {
     let count = 0;
-    for (let i = 1; i <= 8; i++) {
+    for (let i = 1; i <= 50; i++) {
       const bodyKey = `body${i}` as keyof ReelsContent;
       if (content[bodyKey]?.trim()) {
         count++;
@@ -59,7 +59,7 @@ const ContentStep: React.FC<ContentStepProps> = ({ content, onChange, onNext }) 
   };
 
   const addScript = () => {
-    if (scriptCount < 8) {
+    if (scriptCount < 50) {
       setScriptCount(scriptCount + 1);
     }
   };
@@ -124,7 +124,7 @@ const ContentStep: React.FC<ContentStepProps> = ({ content, onChange, onNext }) 
 
   const getEstimatedDuration = () => {
     let totalChars = 0;
-    for (let i = 1; i <= 8; i++) {
+    for (let i = 1; i <= 50; i++) {
       const bodyKey = `body${i}` as keyof ReelsContent;
       totalChars += getCharacterCount(content[bodyKey] || '');
     }
@@ -145,26 +145,22 @@ const ContentStep: React.FC<ContentStepProps> = ({ content, onChange, onNext }) 
       }
 
       // ReelsContent 형태로 변환
-      const newContent: ReelsContent = {
+      const newContent: any = {
         title: parsed.title.substring(0, 50), // 길이 제한
         body1: '',
-        body2: '',
-        body3: '',
-        body4: '',
-        body5: '',
-        body6: '',
-        body7: '',
-        body8: '',
       };
 
-      // body 필드들 추가 (최대 8개)
+      // body 필드들 추가 (최대 50개)
       let bodyCount = 0;
-      for (let i = 1; i <= 8; i++) {
+      for (let i = 1; i <= 50; i++) {
         const bodyKey = `body${i}`;
         if (parsed[bodyKey]) {
           const bodyText = parsed[bodyKey].substring(0, 200); // 길이 제한
-          newContent[bodyKey as keyof ReelsContent] = bodyText;
+          newContent[bodyKey] = bodyText;
           bodyCount = i;
+        } else if (i > 1) {
+          // body2 이후는 선택사항으로 빈 문자열 초기화하지 않음
+          newContent[bodyKey] = '';
         }
       }
 
@@ -204,7 +200,7 @@ const ContentStep: React.FC<ContentStepProps> = ({ content, onChange, onNext }) 
     
     // script count 자동 조정
     let maxBodyIndex = 0;
-    for (let i = 1; i <= 8; i++) {
+    for (let i = 1; i <= 50; i++) {
       const bodyKey = `body${i}` as keyof ReelsContent;
       if (newContent[bodyKey]?.trim()) {
         maxBodyIndex = i;
@@ -445,7 +441,7 @@ const ContentStep: React.FC<ContentStepProps> = ({ content, onChange, onNext }) 
                   <Button
                     size="small"
                     onClick={addScript}
-                    disabled={scriptCount >= 8}
+                    disabled={scriptCount >= 50}
                     startIcon={<Add />}
                     variant="outlined"
                   >
@@ -656,7 +652,7 @@ const ContentStep: React.FC<ContentStepProps> = ({ content, onChange, onNext }) 
   "body2": "두 번째 대사 (200자 이내)",
   "body3": "세 번째 대사 (선택사항)",
   ...
-  "body8": "여덟 번째 대사 (최대 8개)"
+  "body50": "마지막 대사 (최대 50개)"
 }`}
             </Typography>
           </Box>
@@ -667,7 +663,7 @@ const ContentStep: React.FC<ContentStepProps> = ({ content, onChange, onNext }) 
           <Box component="ul" sx={{ pl: 2, m: 0 }}>
             <Typography component="li" variant="body2">title 필드는 필수입니다</Typography>
             <Typography component="li" variant="body2">제목은 50자, 각 대사는 200자까지 입력 가능합니다</Typography>
-            <Typography component="li" variant="body2">body1부터 body8까지 순서대로 입력하세요</Typography>
+            <Typography component="li" variant="body2">body1부터 body50까지 순서대로 입력하세요 (최대 50개)</Typography>
             <Typography component="li" variant="body2">빈 body 필드가 있어도 괜찮습니다</Typography>
           </Box>
         </DialogContent>

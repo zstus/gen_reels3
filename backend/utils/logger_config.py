@@ -30,8 +30,8 @@ LOG_LEVELS = {
 }
 
 # 통합 로그 파일
-LOG_FILE = "backend.log"
-LOG_BACKUP_DIR = "log/backendlog"
+LOG_FILE = "api.log"
+LOG_BACKUP_DIR = "log/apilog"
 LOG_MAX_BYTES = 10 * 1024 * 1024  # 10MB
 LOG_BACKUP_COUNT = 5
 
@@ -42,8 +42,8 @@ _log_initialized = False
 
 def backup_existing_log():
     """
-    서버 시작 시 기존 backend.log를 백업 폴더로 이동
-    파일명 형식: backend_until20251002_143025.log
+    서버 시작 시 기존 api.log를 백업 폴더로 이동
+    파일명 형식: api_until20251002_143025.log
     """
     global _log_initialized
 
@@ -62,15 +62,17 @@ def backup_existing_log():
 
     # 현재 시간으로 백업 파일명 생성
     now = datetime.now()
-    backup_filename = f"backend_until{now.strftime('%Y%m%d_%H%M%S')}.log"
+    backup_filename = f"api_until{now.strftime('%Y%m%d_%H%M%S')}.log"
     backup_path = os.path.join(LOG_BACKUP_DIR, backup_filename)
 
-    # 기존 로그 파일 이동
+    # 기존 로그 파일 복사 후 내용 비우기 (이동 대신)
     try:
-        shutil.move(LOG_FILE, backup_path)
-        print(f"📦 기존 로그 백업 완료: {backup_path}")
+        shutil.copy(LOG_FILE, backup_path)
+        # 원본 파일 내용 비우기 (삭제하지 않음 - 다른 프로세스가 참조할 수 있음)
+        open(LOG_FILE, 'w').close()
+        print(f"📦 기존 api.log 백업 완료: {backup_path}")
     except Exception as e:
-        print(f"⚠️ 로그 백업 실패: {e}")
+        print(f"⚠️ api.log 백업 실패: {e}")
 
 
 def setup_logger(module_name: str) -> logging.Logger:

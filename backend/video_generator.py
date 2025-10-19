@@ -390,20 +390,26 @@ class VideoGenerator:
                     font = ImageFont.load_default()
         
         # 텍스트를 여러 줄로 나누기
+        # 본문은 캔버스 폭의 70%만 사용 (타이틀은 별도 처리)
+        if is_title:
+            max_text_width = width - 60  # 타이틀: 좌우 30px 여백
+        else:
+            max_text_width = int(width * 0.70)  # 본문: 캔버스 폭의 70%만 사용
+
         words = text.split(' ')
         lines = []
         current_line = ""
-        
+
         for word in words:
             test_line = current_line + " " + word if current_line else word
             bbox = draw.textbbox((0, 0), test_line, font=font)
-            if bbox[2] - bbox[0] < width - 60:  # 여백 고려 (좌우 30씩)
+            if bbox[2] - bbox[0] < max_text_width:
                 current_line = test_line
             else:
                 if current_line:
                     lines.append(current_line)
                 current_line = word
-        
+
         if current_line:
             lines.append(current_line)
         
@@ -722,6 +728,8 @@ class VideoGenerator:
         """
         panning_status = "패닝 적용" if enable_panning else "패닝 없음"
         print(f"🎬 배경 클립 생성 시작: {image_path} (duration: {duration:.1f}s, {panning_status})")
+        logger.debug(f"🔍 [DEBUG] create_background_clip() 함수 진입 (이미지 처리)")
+        logger.debug(f"🔍 [DEBUG] 이미지 파일 존재 여부: {os.path.exists(image_path)}")
 
         try:
             # 이미지 로드 + EXIF 적용 + 고품질 리사이즈
@@ -908,11 +916,13 @@ class VideoGenerator:
         """
         panning_status = "패닝 적용" if enable_panning else "패닝 없음"
         print(f"🎬 연속 배경 클립 생성: {image_path} (duration: {total_duration:.1f}s, {panning_status})")
+        logger.debug(f"🔍 [DEBUG] create_continuous_background_clip() 함수 진입")
+        logger.debug(f"🔍 [DEBUG] 이미지 파일 존재 여부: {os.path.exists(image_path)}")
 
         # 이미지를 정사각형으로 크롭 후 716x716으로 리사이즈
         # ✅ crop_to_square()에서 EXIF orientation + LANCZOS 리사이즈 적용됨
         square_image_path = self.crop_to_square(image_path)
-        
+
         try:
             # 배경 클립 생성
             bg_clip = ImageClip(square_image_path).set_duration(total_duration)
@@ -969,8 +979,8 @@ class VideoGenerator:
                 print(f"   위아래 검은 패딩: {max(0, work_height - new_height)}px")
                 print(f"{'='*60}")
 
-                # 임시 파일에서 PIL로 이미지 로드
-                pil_img = Image.open(temp_file_path)
+                # 정사각형 이미지 파일에서 PIL로 로드
+                pil_img = Image.open(square_image_path)
 
                 # PIL 리사이즈 (호환성 처리)
                 try:
@@ -991,8 +1001,7 @@ class VideoGenerator:
                 resized_pil.save(resized_temp_file.name, format='JPEG', quality=95)
                 resized_temp_file.close()
 
-                # 새 ImageClip 생성
-                from moviepy.editor import ImageClip
+                # 새 ImageClip 생성 (global import 사용)
                 bg_clip = ImageClip(resized_temp_file.name).set_duration(total_duration)
 
                 # 임시 파일 정리
@@ -1053,10 +1062,14 @@ class VideoGenerator:
         from moviepy.editor import VideoFileClip, ColorClip, CompositeVideoClip
 
         print(f"🎬 비디오 배경 클립 생성 시작: {video_path} (duration: {duration:.1f}s, panning: {enable_panning})")
+        logger.debug(f"🔍 [DEBUG] create_video_background_clip() 함수 진입")
+        logger.debug(f"🔍 [DEBUG] 비디오 파일 존재 여부: {os.path.exists(video_path)}")
 
         try:
             # 비디오 파일 로드
+            logger.debug(f"🔍 [DEBUG] VideoFileClip() 호출 시작")
             video_clip = VideoFileClip(video_path)
+            logger.debug(f"🔍 [DEBUG] VideoFileClip() 호출 성공")
 
             # 비디오 메타데이터 검증
             if video_clip.duration is None or video_clip.duration <= 0:
@@ -1085,11 +1098,13 @@ class VideoGenerator:
 
             if original_duration > duration:
                 # 비디오가 긴 경우: 안전하게 자르기 (약간의 여유를 둠)
+                logger.debug(f"🔍 [DEBUG] 비디오 길이 조정 분기: 긴 비디오 자르기 (original={original_duration:.2f}s > target={duration:.2f}s)")
                 safe_duration = min(duration, original_duration - 0.2)  # 0.2초 여유
                 safe_duration = max(safe_duration, 0.5)  # 최소 0.5초는 보장
                 print(f"⏂ 비디오 길이 조정: {safe_duration:.2f}초로 안전하게 잘라냄")
                 video_clip = video_clip.subclip(0, safe_duration)
             elif original_duration < duration:
+                logger.debug(f"🔍 [DEBUG] 비디오 길이 조정 분기: 짧은 비디오 반복/연장 (original={original_duration:.2f}s < target={duration:.2f}s)")
                 # 비디오가 짧은 경우: 반복 재생으로 길이 맞춤
                 try:
                     # 안전한 반복 처리
@@ -1121,20 +1136,30 @@ class VideoGenerator:
 
                 except Exception as e:
                     print(f"⚠️ 비디오 반복 처리 실패: {e}")
+                    logger.error(f"🔍 [DEBUG] ============ 예외 처리 블록 진입 ============")
+                    logger.error(f"🔍 [DEBUG] 예외 타입: {type(e).__name__}")
+                    logger.error(f"🔍 [DEBUG] 예외 메시지: {str(e)}")
+
                     # 실패 시 원본 비디오를 마지막 프레임으로 연장
                     print("📸 대안: 마지막 프레임으로 연장 처리")
-                    from moviepy.editor import ImageClip, concatenate_videoclips
+                    logger.debug(f"🔍 [DEBUG] 마지막 프레임 연장 처리 시작")
 
-                    # 원본 비디오 + 마지막 프레임 정지 이미지
+                    # 원본 비디오 + 마지막 프레임 정지 이미지 (global import 사용)
                     safe_frame_time = max(0, min(original_duration - 0.3, original_duration * 0.9))
                     print(f"📸 안전한 프레임 추출 시간: {safe_frame_time:.2f}초")
 
+                    logger.debug(f"🔍 [DEBUG] video_clip.to_ImageClip() 호출 직전")
+                    logger.debug(f"🔍 [DEBUG] video_clip 타입: {type(video_clip)}")
+                    logger.debug(f"🔍 [DEBUG] ImageClip 타입: {type(ImageClip)}")
                     last_frame = video_clip.to_ImageClip(t=safe_frame_time)
+                    logger.debug(f"🔍 [DEBUG] video_clip.to_ImageClip() 호출 완료")
+
                     extension_duration = duration - original_duration
                     extension_clip = last_frame.set_duration(extension_duration)
 
                     video_clip = concatenate_videoclips([video_clip, extension_clip])
                     print(f"🖼️ 마지막 프레임 연장: {extension_duration:.2f}초 추가")
+                    logger.debug(f"🔍 [DEBUG] ============ 예외 처리 블록 종료 ============")
             
             if video_aspect_ratio > work_aspect_ratio:
                 # 가로형 비디오: 세로 높이를 작업 영역에 맞춰 배치하고 좌우 패닝
@@ -1283,11 +1308,15 @@ class VideoGenerator:
                     y_offset = 220 - ((resized_height - work_height) // 2)
                     video_clip = video_clip.set_position((0, y_offset))
                     print(f"🎨 패닝 비활성화: 중앙 고정 배치 (y_offset: {y_offset})")
-            
+
+            logger.debug(f"🔍 [DEBUG] create_video_background_clip() 정상 종료")
             return video_clip
-                
+
         except Exception as e:
             print(f"❌ 비디오 배경 클립 생성 실패: {e}")
+            logger.error(f"🔍 [DEBUG] ============ 최상위 예외 처리 블록 ============")
+            logger.error(f"🔍 [DEBUG] 예외 타입: {type(e).__name__}")
+            logger.error(f"🔍 [DEBUG] 예외 메시지: {str(e)}")
             import traceback
             traceback.print_exc()
             
@@ -1963,11 +1992,14 @@ class VideoGenerator:
             else:  # image_allocation_mode == "single_for_all"
                 # Mode 3: 모든 대사에 미디어 1개 (단일 이미지/비디오 연속 사용)
                 print("🖼️ 1:ALL 매칭 모드: 모든 대사에 동일한 미디어 1개 연속 사용")
+                logger.debug(f"🔍 [DEBUG] single_for_all 모드 진입 - body 개수: {len(body_keys)}")
 
                 # 첫 번째 이미지/비디오만 사용
                 if local_images:
                     single_media_path = local_images[0]
                     print(f"사용할 미디어: {os.path.basename(single_media_path)}")
+                    logger.debug(f"🔍 [DEBUG] 미디어 파일 경로: {single_media_path}")
+                    logger.debug(f"🔍 [DEBUG] 파일 존재 여부: {os.path.exists(single_media_path)}")
 
                     # 모든 대사의 TTS 정보 수집
                     all_tts_info = []
@@ -1987,6 +2019,7 @@ class VideoGenerator:
                     video_extensions = ['.mp4', '.mov', '.avi', '.webm', '.mkv']
                     is_video = any(single_media_path.lower().endswith(ext) for ext in video_extensions)
                     file_type = "비디오" if is_video else "이미지"
+                    logger.debug(f"🔍 [DEBUG] 파일 타입 판별: is_video={is_video}, file_type={file_type}")
 
                     print(f"📍 모든 대사 ({len(body_keys)}개): {file_type} 연속 사용 - {os.path.basename(single_media_path)} (총 {total_duration:.1f}초)")
 
@@ -1997,11 +2030,14 @@ class VideoGenerator:
                         print(f"🎨 단일 이미지: 패닝 옵션 = {enable_panning}")
 
                     # 타이틀 영역 모드에 따른 배경 클립 생성
+                    logger.debug(f"🔍 [DEBUG] title_area_mode={title_area_mode}, is_video={is_video}")
                     if title_area_mode == "keep":
                         # 기존 방식: 타이틀 영역 + 미디어 영역
                         if is_video:
                             # 비디오는 항상 패닝 off (중앙 고정 배치)
+                            logger.debug(f"🔍 [DEBUG] create_video_background_clip() 호출 시작 (keep 모드)")
                             bg_clip = self.create_video_background_clip(single_media_path, total_duration, enable_panning=False)
+                            logger.debug(f"🔍 [DEBUG] create_video_background_clip() 호출 완료 (keep 모드)")
                         else:
                             bg_clip = self.create_continuous_background_clip(single_media_path, total_duration, 0.0, enable_panning=enable_panning, title_area_mode=title_area_mode)
                         black_top = ColorClip(size=(self.video_width, 220), color=(0,0,0)).set_duration(total_duration)
@@ -2023,7 +2059,9 @@ class VideoGenerator:
                         # remove 모드: 전체 화면 미디어 + 동일한 텍스트 위치
                         if is_video:
                             # 비디오는 항상 패닝 off (중앙 고정 배치)
+                            logger.debug(f"🔍 [DEBUG] create_fullscreen_video_clip() 호출 시작 (remove 모드)")
                             bg_clip = self.create_fullscreen_video_clip(single_media_path, total_duration, enable_panning=False)
+                            logger.debug(f"🔍 [DEBUG] create_fullscreen_video_clip() 호출 완료 (remove 모드)")
                         else:
                             bg_clip = self.create_fullscreen_background_clip(single_media_path, total_duration, enable_panning=enable_panning)
 
@@ -2538,20 +2576,39 @@ class VideoGenerator:
         media_files = []
         image_files = []  # 호환성을 위한 기존 이미지 파일 리스트
         
+        # re 모듈 import (패턴 2에서 사용)
+        import re
+
         for filename in os.listdir(uploads_folder):
             if any(filename.lower().endswith(ext) for ext in all_extensions):
-                # 파일명이 숫자로 시작하는지 확인
+                # 파일명에서 숫자 추출 (엄격한 패턴만 허용)
                 name_without_ext = os.path.splitext(filename)[0]
+                file_number = None
+
+                # 패턴 1: 순수 숫자 (예: "1.jpg", "10.png", "25.webp")
                 if name_without_ext.isdigit():
                     file_number = int(name_without_ext)
+                    print(f"✅ 패턴 1 매칭: {filename} → {file_number}")
+                # 패턴 2: 숫자로 시작 + 언더스코어 (예: "1_image.jpg", "10_video.mp4")
+                elif re.match(r'^(\d+)_', name_without_ext):
+                    match = re.match(r'^(\d+)_', name_without_ext)
+                    file_number = int(match.group(1))
+                    print(f"✅ 패턴 2 매칭: {filename} → {file_number}")
+                # 그 외 모든 파일은 무시 (preview_, screenshot_, generated_image_pair_ 등)
+                else:
+                    print(f"⏭️ 무시: {filename} (업로드 파일 패턴 아님)")
+                    continue
+
+                # file_number가 추출된 경우만 처리
+                if file_number is not None:
                     full_path = os.path.join(uploads_folder, filename)
-                    
+
                     # 파일 타입 결정
                     is_video = any(filename.lower().endswith(ext) for ext in video_extensions)
                     file_type = "video" if is_video else "image"
-                    
+
                     media_files.append((file_number, full_path, file_type))
-                    
+
                     # 호환성을 위해 기존 image_files에도 추가
                     image_files.append((file_number, full_path))
         

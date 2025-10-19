@@ -24,7 +24,10 @@
       "Bash(source:*)",
       "Bash(cat:*)",
       "Bash(awk:*)",
-      "Read(//SYNOLOGYNAS/DOCKER/ubt_genReels/frontend/src/components/**)"
+      "Read(//SYNOLOGYNAS/DOCKER/ubt_genReels/frontend/src/components/**)",
+      "Read(//SYNOLOGYNAS/DOCKER/ubt_genReels/frontend/src/types/**)",
+      "Read(//SYNOLOGYNAS/DOCKER/ubt_genReels/backend/**)",
+      "Read(//SYNOLOGYNAS/DOCKER/ubt_genReels/frontend/src/**)"
     ],
     "deny": [],
     "ask": []

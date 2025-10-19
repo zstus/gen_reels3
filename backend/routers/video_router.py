@@ -88,7 +88,7 @@ async def generate_video(
     # 이미지별 패닝 옵션 (JSON 문자열, 예: {"0": true, "1": false})
     image_panning_options: str = Form(default="{}"),
 
-    # 이미지 파일 업로드 (최대 8개)
+    # 이미지 파일 업로드 (최대 50개)
     image_1: Optional[UploadFile] = File(None),
     image_2: Optional[UploadFile] = File(None),
     image_3: Optional[UploadFile] = File(None),
@@ -97,6 +97,48 @@ async def generate_video(
     image_6: Optional[UploadFile] = File(None),
     image_7: Optional[UploadFile] = File(None),
     image_8: Optional[UploadFile] = File(None),
+    image_9: Optional[UploadFile] = File(None),
+    image_10: Optional[UploadFile] = File(None),
+    image_11: Optional[UploadFile] = File(None),
+    image_12: Optional[UploadFile] = File(None),
+    image_13: Optional[UploadFile] = File(None),
+    image_14: Optional[UploadFile] = File(None),
+    image_15: Optional[UploadFile] = File(None),
+    image_16: Optional[UploadFile] = File(None),
+    image_17: Optional[UploadFile] = File(None),
+    image_18: Optional[UploadFile] = File(None),
+    image_19: Optional[UploadFile] = File(None),
+    image_20: Optional[UploadFile] = File(None),
+    image_21: Optional[UploadFile] = File(None),
+    image_22: Optional[UploadFile] = File(None),
+    image_23: Optional[UploadFile] = File(None),
+    image_24: Optional[UploadFile] = File(None),
+    image_25: Optional[UploadFile] = File(None),
+    image_26: Optional[UploadFile] = File(None),
+    image_27: Optional[UploadFile] = File(None),
+    image_28: Optional[UploadFile] = File(None),
+    image_29: Optional[UploadFile] = File(None),
+    image_30: Optional[UploadFile] = File(None),
+    image_31: Optional[UploadFile] = File(None),
+    image_32: Optional[UploadFile] = File(None),
+    image_33: Optional[UploadFile] = File(None),
+    image_34: Optional[UploadFile] = File(None),
+    image_35: Optional[UploadFile] = File(None),
+    image_36: Optional[UploadFile] = File(None),
+    image_37: Optional[UploadFile] = File(None),
+    image_38: Optional[UploadFile] = File(None),
+    image_39: Optional[UploadFile] = File(None),
+    image_40: Optional[UploadFile] = File(None),
+    image_41: Optional[UploadFile] = File(None),
+    image_42: Optional[UploadFile] = File(None),
+    image_43: Optional[UploadFile] = File(None),
+    image_44: Optional[UploadFile] = File(None),
+    image_45: Optional[UploadFile] = File(None),
+    image_46: Optional[UploadFile] = File(None),
+    image_47: Optional[UploadFile] = File(None),
+    image_48: Optional[UploadFile] = File(None),
+    image_49: Optional[UploadFile] = File(None),
+    image_50: Optional[UploadFile] = File(None),
 
     # 모드 설정
     use_test_files: bool = Form(default=False),
@@ -133,8 +175,11 @@ async def generate_video(
 
         # 업로드된 이미지 파일들 수집
         uploaded_images = [
-            image_1, image_2, image_3, image_4,
-            image_5, image_6, image_7, image_8
+            image_1, image_2, image_3, image_4, image_5, image_6, image_7, image_8, image_9, image_10,
+            image_11, image_12, image_13, image_14, image_15, image_16, image_17, image_18, image_19, image_20,
+            image_21, image_22, image_23, image_24, image_25, image_26, image_27, image_28, image_29, image_30,
+            image_31, image_32, image_33, image_34, image_35, image_36, image_37, image_38, image_39, image_40,
+            image_41, image_42, image_43, image_44, image_45, image_46, image_47, image_48, image_49, image_50
         ]
         uploaded_images = [img for img in uploaded_images if img is not None]
 
@@ -312,7 +357,7 @@ async def generate_video_async(
     # 이미지별 패닝 옵션 (JSON 문자열)
     image_panning_options: str = Form(default="{}"),
 
-    # 이미지 파일 업로드
+    # 이미지 파일 업로드 (최대 50개)
     image_1: Optional[UploadFile] = File(None),
     image_2: Optional[UploadFile] = File(None),
     image_3: Optional[UploadFile] = File(None),
@@ -321,6 +366,48 @@ async def generate_video_async(
     image_6: Optional[UploadFile] = File(None),
     image_7: Optional[UploadFile] = File(None),
     image_8: Optional[UploadFile] = File(None),
+    image_9: Optional[UploadFile] = File(None),
+    image_10: Optional[UploadFile] = File(None),
+    image_11: Optional[UploadFile] = File(None),
+    image_12: Optional[UploadFile] = File(None),
+    image_13: Optional[UploadFile] = File(None),
+    image_14: Optional[UploadFile] = File(None),
+    image_15: Optional[UploadFile] = File(None),
+    image_16: Optional[UploadFile] = File(None),
+    image_17: Optional[UploadFile] = File(None),
+    image_18: Optional[UploadFile] = File(None),
+    image_19: Optional[UploadFile] = File(None),
+    image_20: Optional[UploadFile] = File(None),
+    image_21: Optional[UploadFile] = File(None),
+    image_22: Optional[UploadFile] = File(None),
+    image_23: Optional[UploadFile] = File(None),
+    image_24: Optional[UploadFile] = File(None),
+    image_25: Optional[UploadFile] = File(None),
+    image_26: Optional[UploadFile] = File(None),
+    image_27: Optional[UploadFile] = File(None),
+    image_28: Optional[UploadFile] = File(None),
+    image_29: Optional[UploadFile] = File(None),
+    image_30: Optional[UploadFile] = File(None),
+    image_31: Optional[UploadFile] = File(None),
+    image_32: Optional[UploadFile] = File(None),
+    image_33: Optional[UploadFile] = File(None),
+    image_34: Optional[UploadFile] = File(None),
+    image_35: Optional[UploadFile] = File(None),
+    image_36: Optional[UploadFile] = File(None),
+    image_37: Optional[UploadFile] = File(None),
+    image_38: Optional[UploadFile] = File(None),
+    image_39: Optional[UploadFile] = File(None),
+    image_40: Optional[UploadFile] = File(None),
+    image_41: Optional[UploadFile] = File(None),
+    image_42: Optional[UploadFile] = File(None),
+    image_43: Optional[UploadFile] = File(None),
+    image_44: Optional[UploadFile] = File(None),
+    image_45: Optional[UploadFile] = File(None),
+    image_46: Optional[UploadFile] = File(None),
+    image_47: Optional[UploadFile] = File(None),
+    image_48: Optional[UploadFile] = File(None),
+    image_49: Optional[UploadFile] = File(None),
+    image_50: Optional[UploadFile] = File(None),
 ):
     """비동기 영상 생성 요청 - 즉시 Job ID 반환"""
     try:
@@ -370,8 +457,16 @@ async def generate_video_async(
 
         # 업로드된 파일들 저장
         uploaded_files = [
-            ("image_1", image_1), ("image_2", image_2), ("image_3", image_3), ("image_4", image_4),
-            ("image_5", image_5), ("image_6", image_6), ("image_7", image_7), ("image_8", image_8)
+            ("image_1", image_1), ("image_2", image_2), ("image_3", image_3), ("image_4", image_4), ("image_5", image_5),
+            ("image_6", image_6), ("image_7", image_7), ("image_8", image_8), ("image_9", image_9), ("image_10", image_10),
+            ("image_11", image_11), ("image_12", image_12), ("image_13", image_13), ("image_14", image_14), ("image_15", image_15),
+            ("image_16", image_16), ("image_17", image_17), ("image_18", image_18), ("image_19", image_19), ("image_20", image_20),
+            ("image_21", image_21), ("image_22", image_22), ("image_23", image_23), ("image_24", image_24), ("image_25", image_25),
+            ("image_26", image_26), ("image_27", image_27), ("image_28", image_28), ("image_29", image_29), ("image_30", image_30),
+            ("image_31", image_31), ("image_32", image_32), ("image_33", image_33), ("image_34", image_34), ("image_35", image_35),
+            ("image_36", image_36), ("image_37", image_37), ("image_38", image_38), ("image_39", image_39), ("image_40", image_40),
+            ("image_41", image_41), ("image_42", image_42), ("image_43", image_43), ("image_44", image_44), ("image_45", image_45),
+            ("image_46", image_46), ("image_47", image_47), ("image_48", image_48), ("image_49", image_49), ("image_50", image_50)
         ]
 
         saved_files = []
@@ -494,6 +589,7 @@ async def preview_video(
     title_font_size: int = Form(default=42),
     body_font_size: int = Form(default=36),
     image_1: Optional[UploadFile] = File(None),
+    image_panning_options: str = Form(default="{}"),
     job_id: Optional[str] = Form(None),
 ):
     """미리보기 이미지 생성"""
@@ -603,24 +699,79 @@ async def preview_video(
                 title_font_size
             )
 
-            # 배경 이미지 처리 (670px 영역)
+            # 배경 이미지 처리 (670px 영역) - 패닝 옵션 고려
             if os.path.exists(preview_image_path):
                 bg_image = PILImage.open(preview_image_path)
                 work_area_height = 670  # 890 - 220
-                bg_image = bg_image.resize((504, work_area_height), PILImage.Resampling.LANCZOS)
-                final_image.paste(bg_image, (0, 220))  # 타이틀 아래에 배치
+
+                # 패닝 옵션 파싱
+                enable_panning = True  # 기본값: 패닝 활성화
+                if image_panning_options and image_panning_options != "{}":
+                    try:
+                        import json
+                        panning_dict = json.loads(image_panning_options)
+                        # 첫 번째 이미지(index 0)의 패닝 옵션 확인
+                        enable_panning = panning_dict.get("0", True)
+                        logger.info(f"🎨 미리보기 패닝 옵션: {enable_panning}")
+                    except Exception as e:
+                        logger.warning(f"⚠️ 패닝 옵션 파싱 실패, 기본값(True) 사용: {e}")
+
+                if enable_panning:
+                    # 패닝 ON: 무조건 504x670 리사이즈 (기존 로직)
+                    bg_image = bg_image.resize((504, work_area_height), PILImage.Resampling.LANCZOS)
+                    final_image.paste(bg_image, (0, 220))
+                else:
+                    # 패닝 OFF: 가로 504px 맞춤 + 종횡비 유지 + 위쪽 붙임
+                    img_width, img_height = bg_image.size
+                    new_width = 504
+                    new_height = int(img_height * new_width / img_width)
+
+                    # 리사이즈 (종횡비 유지)
+                    bg_image = bg_image.resize((new_width, new_height), PILImage.Resampling.LANCZOS)
+
+                    # 타이틀 바로 아래에 붙임 (중앙 배치 아님!)
+                    y_pos = 220
+                    final_image.paste(bg_image, (0, y_pos))
+                    logger.info(f"📐 패닝 OFF 미리보기 (keep): {img_width}x{img_height} → {new_width}x{new_height}, Y=220")
 
             # 타이틀 이미지 합성 (상단)
             if os.path.exists(title_image_path):
                 title_img = PILImage.open(title_image_path)
                 final_image.paste(title_img, (0, 0))
         else:
-            # remove 모드: 전체 화면 미디어
-            # 배경 이미지 처리 (전체 890px)
+            # remove 모드: 전체 화면 미디어 (890px)
             if os.path.exists(preview_image_path):
                 bg_image = PILImage.open(preview_image_path)
-                bg_image = bg_image.resize((504, 890), PILImage.Resampling.LANCZOS)
-                final_image.paste(bg_image, (0, 0))  # 전체 화면
+                work_area_height = 890  # 전체 높이
+
+                # 패닝 옵션 파싱
+                enable_panning = True  # 기본값: 패닝 활성화
+                if image_panning_options and image_panning_options != "{}":
+                    try:
+                        import json
+                        panning_dict = json.loads(image_panning_options)
+                        enable_panning = panning_dict.get("0", True)
+                        logger.info(f"🎨 미리보기 패닝 옵션 (remove): {enable_panning}")
+                    except Exception as e:
+                        logger.warning(f"⚠️ 패닝 옵션 파싱 실패 (remove): {e}")
+
+                if enable_panning:
+                    # 패닝 ON: 504x890 리사이즈 (기존 로직)
+                    bg_image = bg_image.resize((504, work_area_height), PILImage.Resampling.LANCZOS)
+                    final_image.paste(bg_image, (0, 0))
+                else:
+                    # 패닝 OFF: 가로 504px 맞춤 + 종횡비 유지 + 위쪽 붙임
+                    img_width, img_height = bg_image.size
+                    new_width = 504
+                    new_height = int(img_height * new_width / img_width)
+
+                    # 리사이즈 (종횡비 유지)
+                    bg_image = bg_image.resize((new_width, new_height), PILImage.Resampling.LANCZOS)
+
+                    # 맨 위에 붙임
+                    y_pos = 0
+                    final_image.paste(bg_image, (0, y_pos))
+                    logger.info(f"📐 패닝 OFF 미리보기 (remove): {img_width}x{img_height} → {new_width}x{new_height}, Y=0")
 
         # 본문 텍스트 이미지 생성 (504x890) - 모든 모드 공통
         body_text_image_path = video_generator.create_text_image(
