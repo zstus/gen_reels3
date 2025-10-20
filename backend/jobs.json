@@ -1562,5 +1562,54 @@
     "error_message": null,
     "retry_count": 0,
     "max_retries": 2
+  },
+  "job_ch5fl8ass_mgyng3ni": {
+    "job_id": "job_ch5fl8ass_mgyng3ni",
+    "user_email": "xystus@gmail.com",
+    "status": "completed",
+    "created_at": "2025-10-20T04:47:41.154624",
+    "updated_at": "2025-10-20T04:49:50.361228",
+    "video_params": {
+      "content_data": "{\"title\":\"[#FEA500:KB라이프] LAS PC에 [orange:니즈분석기능] 제공!\",\"body1\":\"KB라이프의 니즈분석(종합자산분석) 기능이\",\"body2\":\"LAS PC에 제공됩니다.\",\"body3\":\"새롭게 개선된 LAS의 니즈분석 기능을 소개해볼께요!\",\"body4\":\"LAS의 니즈분석은 상단 메뉴를 통해서\",\"body5\":\"메인화면에 있는 배너 버튼에서\",\"body6\":\"심지어는 가입설계 화면에서도 이동이 가능합니다\",\"body7\":\"기존 사망보장분석은 더욱 더 강화되고\",\"body8\":\"개인화된 은퇴분석에\",\"body9\":\"상속분석까지 더해진\",\"body10\":\"더 파워풀한 니즈분석기능을 만나보실 수 있어요!\",\"body11\":\"다음편에서 좀 더 상세히 기능을 살펴볼테니\",\"body12\":\"많이 많이 기대해주세요!\",\"body13\":\"다음편이 곧 이어집니다! KB라이프\",\"body14\":\"\",\"body15\":\"\",\"body16\":\"\",\"body17\":\"\",\"body18\":\"\",\"body19\":\"\",\"body20\":\"\",\"body21\":\"\",\"body22\":\"\",\"body23\":\"\",\"body24\":\"\",\"body25\":\"\",\"body26\":\"\",\"body27\":\"\",\"body28\":\"\",\"body29\":\"\",\"body30\":\"\",\"body31\":\"\",\"body32\":\"\",\"body33\":\"\",\"body34\":\"\",\"body35\":\"\",\"body36\":\"\",\"body37\":\"\",\"body38\":\"\",\"body39\":\"\",\"body40\":\"\",\"body41\":\"\",\"body42\":\"\",\"body43\":\"\",\"body44\":\"\",\"body45\":\"\",\"body46\":\"\",\"body47\":\"\",\"body48\":\"\",\"body49\":\"\",\"body50\":\"\"}",
+      "music_mood": "bright",
+      "image_allocation_mode": "1_per_image",
+      "text_position": "bottom-edge",
+      "text_style": "background",
+      "title_area_mode": "keep",
+      "selected_bgm_path": "Excess - Freedom Trail Studio.mp3",
+      "use_test_files": false,
+      "uploaded_files": [
+        "1.png",
+        "2.png",
+        "3.mp4",
+        "4.png",
+        "5.png",
+        "6.png",
+        "7.png",
+        "8.png",
+        "9.png",
+        "10.png",
+        "11.mp4",
+        "12.mp4",
+        "13.png"
+      ],
+      "title_font": "BMHANNAPro.ttf",
+      "body_font": "BMYEONSUNG_otf.otf",
+      "title_font_size": 42,
+      "body_font_size": 27,
+      "voice_narration": "enabled",
+      "cross_dissolve": "disabled",
+      "subtitle_duration": 0.0,
+      "edited_texts": "{}",
+      "image_panning_options": "{\"0\":true,\"1\":true,\"2\":true,\"3\":false,\"4\":false,\"5\":false,\"6\":true,\"7\":true,\"8\":true,\"9\":true,\"10\":true,\"11\":true,\"12\":false}"
+    },
+    "result": {
+      "video_path": "/zstus/backend/output_videos/202510/reels_0a29cd9b.mp4",
+      "duration": "약 10-30초",
+      "completed_at": "2025-10-20T04:49:50.359588"
+    },
+    "error_message": null,
+    "retry_count": 0,
+    "max_retries": 2
   }
 }

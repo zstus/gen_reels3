@@ -358,38 +358,49 @@ const ContentStep: React.FC<ContentStepProps> = ({ content, onChange, onNext }) 
           <Paper sx={{ p: 3 }}>
             {/* 제목 입력 */}
             <TextField
-              label="영상 제목"
+              label={
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                  영상 제목?
+                  <Tooltip
+                    title={
+                      <Box sx={{ p: 1 }}>
+                        <Typography variant="body2" sx={{ fontWeight: 'bold', mb: 1 }}>
+                          🎨 색상 태그 사용법
+                        </Typography>
+                        <Typography variant="body2" sx={{ mb: 1 }}>
+                          형식: <code style={{ backgroundColor: '#555', padding: '2px 4px', borderRadius: '3px' }}>[색상:단어]</code>
+                        </Typography>
+                        <Typography variant="body2" sx={{ mb: 1 }}>
+                          예시: <code style={{ backgroundColor: '#555', padding: '2px 4px', borderRadius: '3px' }}>나는 [yellow:학교]를</code>
+                        </Typography>
+                        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mt: 1 }}>
+                          <Box component="span" sx={{ fontSize: '11px', bgcolor: '#FDCA03', color: '#000', px: 0.5, py: 0.25, borderRadius: '3px', fontWeight: 'bold' }}>yellow</Box>
+                          <Box component="span" sx={{ fontSize: '11px', bgcolor: '#0090FF', color: '#fff', px: 0.5, py: 0.25, borderRadius: '3px', fontWeight: 'bold' }}>blue</Box>
+                          <Box component="span" sx={{ fontSize: '11px', bgcolor: '#FE0102', color: '#fff', px: 0.5, py: 0.25, borderRadius: '3px', fontWeight: 'bold' }}>red</Box>
+                          <Box component="span" sx={{ fontSize: '11px', bgcolor: '#02D330', color: '#fff', px: 0.5, py: 0.25, borderRadius: '3px', fontWeight: 'bold' }}>green</Box>
+                          <Box component="span" sx={{ fontSize: '11px', bgcolor: '#FF822B', color: '#fff', px: 0.5, py: 0.25, borderRadius: '3px', fontWeight: 'bold' }}>orange</Box>
+                          <Box component="span" sx={{ fontSize: '11px', bgcolor: '#6FDAA5', color: '#000', px: 0.5, py: 0.25, borderRadius: '3px', fontWeight: 'bold' }}>mint</Box>
+                          <Box component="span" sx={{ fontSize: '11px', bgcolor: '#02FDFE', color: '#000', px: 0.5, py: 0.25, borderRadius: '3px', fontWeight: 'bold' }}>sky</Box>
+                        </Box>
+                      </Box>
+                    }
+                    arrow
+                    placement="right"
+                  >
+                    <Help fontSize="small" sx={{ color: 'action.active', cursor: 'help' }} />
+                  </Tooltip>
+                </Box>
+              }
+              placeholder="숏폼 상단 타이틀"
               value={content.title}
               onChange={(e) => handleChange('title', e.target.value)}
               fullWidth
-              required
               error={!!errors.title}
               helperText={errors.title || `${getCharacterCount(content.title)}/50자`}
-              sx={{ mb: 1 }}
+              sx={{ mb: 3 }}
               inputProps={{ maxLength: 50 }}
+              InputLabelProps={{ shrink: true }}
             />
-
-            {/* 색상 태그 가이드 */}
-            <Box sx={{ mb: 3, p: 2, bgcolor: 'info.lighter', borderRadius: 1, border: '1px solid', borderColor: 'info.light' }}>
-              <Typography variant="body2" color="text.secondary" sx={{ mb: 1, fontWeight: 'bold' }}>
-                🎨 타이틀 색상 태그 사용법
-              </Typography>
-              <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-                형식: <code style={{ backgroundColor: '#f5f5f5', padding: '2px 6px', borderRadius: '4px' }}>[색상:단어]</code>
-              </Typography>
-              <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-                예시: <code style={{ backgroundColor: '#f5f5f5', padding: '2px 6px', borderRadius: '4px' }}>나는 [yellow:학교]에서 [blue:친구]를 만났어</code>
-              </Typography>
-              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mt: 1 }}>
-                <Chip label="yellow" size="small" sx={{ bgcolor: '#FDCA03', color: '#000', fontWeight: 'bold' }} />
-                <Chip label="blue" size="small" sx={{ bgcolor: '#0090FF', color: '#fff', fontWeight: 'bold' }} />
-                <Chip label="red" size="small" sx={{ bgcolor: '#FE0102', color: '#fff', fontWeight: 'bold' }} />
-                <Chip label="green" size="small" sx={{ bgcolor: '#02D330', color: '#fff', fontWeight: 'bold' }} />
-                <Chip label="orange" size="small" sx={{ bgcolor: '#FF822B', color: '#fff', fontWeight: 'bold' }} />
-                <Chip label="mint" size="small" sx={{ bgcolor: '#6FDAA5', color: '#000', fontWeight: 'bold' }} />
-                <Chip label="sky" size="small" sx={{ bgcolor: '#02FDFE', color: '#000', fontWeight: 'bold' }} />
-              </Box>
-            </Box>
 
             {/* JSON 일괄 입력 영역 */}
             <Accordion sx={{ mb: 3 }}>
@@ -490,7 +501,7 @@ const ContentStep: React.FC<ContentStepProps> = ({ content, onChange, onNext }) 
                     helperText={errors[bodyKey] || `${getCharacterCount(value)}/200자`}
                     sx={{ mb: 2 }}
                     inputProps={{ maxLength: 200 }}
-                    placeholder="대사 내용을 입력하세요 (이모지 지원 🎯)"
+                    placeholder="대사 내용을 입력하세요"
                   />
                 );
               })}
@@ -560,7 +571,6 @@ const ContentStep: React.FC<ContentStepProps> = ({ content, onChange, onNext }) 
                 <strong>대사 작성 팁:</strong>
                 <ul>
                   <li>각 대사는 하나의 화면으로 표시됩니다</li>
-                  <li>이모지 사용 가능 😊</li>
                   <li>200자 이내 권장</li>
                   <li>읽기 쉬운 길이로 나누어 작성</li>
                 </ul>

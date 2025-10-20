@@ -237,10 +237,15 @@ class VideoGenerator:
 
     def parse_colored_title(self, title: str):
         """
-        타이틀 텍스트에서 색상 태그 파싱
+        타이틀 텍스트에서 색상 태그 파싱 (기본 색상 + 커스텀 HEX 지원)
 
-        형식: [color:단어]
-        예시: "나는 [yellow:학교]에서 [blue:친구]를 만났어"
+        형식 1 (기본 색상): [color:단어]
+        형식 2 (커스텀 HEX): [#RRGGBB:단어]
+
+        예시:
+        - "나는 [yellow:학교]에서 [blue:친구]를 만났어"
+        - "오늘은 [#FF5733:좋은] 날씨입니다"
+        - "[yellow:기본]과 [#9B59B6:커스텀] 혼합"
 
         Args:
             title: 색상 태그가 포함된 타이틀 텍스트
@@ -263,7 +268,7 @@ class VideoGenerator:
         }
 
         parts = []
-        pattern = r'\[(\w+):([^\]]+)\]'  # [color:text] 패턴
+        pattern = r'\[([#\w]+):([^\]]+)\]'  # [color:text] 또는 [#HEX:text] 패턴
         last_end = 0
 
         for match in re.finditer(pattern, title):
@@ -274,16 +279,30 @@ class VideoGenerator:
                     parts.append({'text': plain_text, 'color': 'white'})
 
             # 색상 태그
-            color_name = match.group(1).lower()
+            color_input = match.group(1)
             word = match.group(2)
 
-            if color_name in COLOR_MAP:
+            # 1순위: HEX 색상 코드 체크 (#RRGGBB 형식)
+            if color_input.startswith('#') and len(color_input) == 7:
+                try:
+                    # HEX 코드 유효성 검증 (0-9, A-F)
+                    int(color_input[1:], 16)
+                    hex_color = color_input.upper()  # 대문자로 통일
+                    parts.append({'text': word, 'color': hex_color})
+                    logger.info(f"🎨 커스텀 HEX 색상: [{color_input}:{word}] → {hex_color}")
+                except ValueError:
+                    # 잘못된 HEX 코드는 흰색 처리
+                    parts.append({'text': word, 'color': 'white'})
+                    logger.warning(f"⚠️ 잘못된 HEX 코드: {color_input}, 흰색으로 처리")
+            # 2순위: 기존 색상 이름 (yellow, blue 등)
+            elif color_input.lower() in COLOR_MAP:
+                color_name = color_input.lower()
                 parts.append({'text': word, 'color': COLOR_MAP[color_name]})
-                logger.info(f"🎨 색상 태그 감지: [{color_name}:{word}] → {COLOR_MAP[color_name]}")
+                logger.info(f"🎨 색상 이름 감지: [{color_name}:{word}] → {COLOR_MAP[color_name]}")
+            # 3순위: 알 수 없는 색상은 흰색으로
             else:
-                # 알 수 없는 색상은 흰색으로
                 parts.append({'text': word, 'color': 'white'})
-                logger.warning(f"⚠️ 알 수 없는 색상: {color_name}, 흰색으로 처리")
+                logger.warning(f"⚠️ 알 수 없는 색상: {color_input}, 흰색으로 처리")
 
             last_end = match.end()
 
