@@ -35,14 +35,25 @@ class VideoGenerator:
         self.video_height = 890  # 쇼츠/릴스 해상도 (504x890)
         self.fps = 30
         self.font_path = os.path.join(os.path.dirname(__file__), "font", "BMYEONSUNG_otf.otf")
-        
+
         # Naver Clova Voice 설정 (환경변수에서 가져오기)
         self.naver_client_id = os.getenv('NAVER_CLIENT_ID')
         self.naver_client_secret = os.getenv('NAVER_CLIENT_SECRET')
-        
+
         # Microsoft Azure Speech 설정
         self.azure_speech_key = os.getenv('AZURE_SPEECH_KEY')
         self.azure_speech_region = os.getenv('AZURE_SPEECH_REGION', 'koreacentral')
+
+        # 발음 사전 초기화 (다국어 → 한글 발음 변환)
+        from utils.pronunciation_dict import PronunciationDictionary
+        self.pronunciation_dict = PronunciationDictionary()
+        logger.info("📚 발음 사전 초기화 완료")
+
+        # 외부 사전 파일이 있으면 로드 (선택사항)
+        custom_dict_path = os.path.join(os.path.dirname(__file__), "pronunciation_dict.json")
+        if os.path.exists(custom_dict_path):
+            self.pronunciation_dict.load_from_file(custom_dict_path)
+            logger.info(f"📚 커스텀 발음 사전 로드: {custom_dict_path}")
         
     def get_emoji_font(self):
         """이모지 지원 폰트 경로 반환"""
@@ -1650,13 +1661,68 @@ class VideoGenerator:
         print(f"✅ 샘플링 속도 조정 완료")
         return speed_adjusted_file.name
     
+    def convert_foreign_to_korean(self, text: str) -> str:
+        """
+        텍스트 내 외국어(영어, 일본어, 중국어 등)를 한글 발음으로 변환
+        외국어 뒤에 한글이 붙어있어도 외국어 부분만 정확히 추출하여 변환
+
+        예시:
+        - "LAS이외의" → "라스이외의" (LAS만 검색)
+        - "AI가" → "에이아이가"
+        - "YouTube를" → "유튜브를"
+
+        Args:
+            text: 원본 텍스트
+
+        Returns:
+            외국어가 한글 발음으로 변환된 텍스트
+        """
+        import re
+
+        # 외국어 패턴 + 뒤에 붙은 한글 (0개 이상)
+        # 그룹1: 외국어 부분 (영어+숫자, 일본어, 중국어)
+        # 그룹2: 뒤에 붙은 한글 부분 (조사, 복합명사 등)
+        foreign_pattern = re.compile(
+            r'([A-Za-z0-9]+|[ぁ-ゔァ-ヴー]+|[\u4e00-\u9fff]+)'  # 외국어
+            r'([가-힣]*)'  # 뒤에 붙은 한글 (0개 이상)
+        )
+
+        def replace_word(match):
+            foreign_part = match.group(1)  # 외국어 부분 (예: "LAS", "AI", "YouTube")
+            korean_part = match.group(2)   # 뒤에 붙은 한글 (예: "이외의", "가", "를", "")
+
+            # 순수 한글만 있는 경우 스킵
+            if re.match(r'^[가-힣]+$', foreign_part):
+                return match.group(0)  # 원본 그대로
+
+            # 딕셔너리에서 외국어 부분만 검색
+            if self.pronunciation_dict.has_pronunciation(foreign_part):
+                korean_pronunciation = self.pronunciation_dict.get_pronunciation(foreign_part)
+                logger.info(f"🔄 외국어→한글 변환: {foreign_part}{korean_part} → {korean_pronunciation}{korean_part}")
+                return korean_pronunciation + korean_part  # 변환된 발음 + 원본 한글
+            else:
+                # 사전에 없으면 원본 유지
+                logger.debug(f"📖 사전 미등록: {foreign_part}")
+                return match.group(0)  # 원본 그대로
+
+        # 모든 외국어 단어를 한글 발음으로 변환
+        converted_text = foreign_pattern.sub(replace_word, text)
+
+        return converted_text
+
     def preprocess_korean_text(self, text):
-        """한국어 TTS 품질 향상을 위한 텍스트 전처리 (간단 버전)"""
+        """한국어 TTS 품질 향상을 위한 텍스트 전처리 (외국어 변환 + 괄호 제거 포함)"""
         try:
             import re
             processed = text.strip()
-            
-            # 1. 이모지만 제거 (한글 텍스트는 보존)
+
+            # 1. 외국어 → 한글 발음 변환 (영어, 일본어, 중국어 등)
+            processed = self.convert_foreign_to_korean(processed)
+
+            # 2. 괄호 내용 제거 (괄호와 그 안의 모든 내용)
+            processed = re.sub(r'\([^)]*\)', '', processed)
+
+            # 3. 이모지 제거 (한글 텍스트는 보존)
             emoji_pattern = re.compile("["
                 u"\U0001F600-\U0001F64F"  # emoticons
                 u"\U0001F300-\U0001F5FF"  # symbols & pictographs
@@ -1664,22 +1730,22 @@ class VideoGenerator:
                 u"\U0001F1E0-\U0001F1FF"  # flags (iOS)
                 "]+", flags=re.UNICODE)
             processed = emoji_pattern.sub(' ', processed)
-            
-            # 2. 물음표, 느낌표, 물결표시를 마침표로 변환
+
+            # 4. 물음표, 느낌표, 물결표시를 마침표로 변환
             processed = re.sub(r'[?!~]+', '.', processed)
-            
-            # 3. 공백 정리
+
+            # 5. 공백 정리
             processed = re.sub(r'\s+', ' ', processed).strip()
             if processed and not processed.endswith('.'):
                 processed += '.'
-            
-            print(f"TTS 전처리 전: {text}")
-            print(f"TTS 전처리 후: {processed}")
-            
+
+            logger.info(f"TTS 전처리 전: {text}")
+            logger.info(f"TTS 전처리 후: {processed}")
+
             return processed
-            
+
         except Exception as e:
-            print(f"텍스트 전처리 실패: {e}")
+            logger.error(f"텍스트 전처리 실패: {e}")
             return text  # 실패시 원본 반환
     
     def get_audio_duration(self, audio_path):
