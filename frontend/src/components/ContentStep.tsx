@@ -365,9 +365,31 @@ const ContentStep: React.FC<ContentStepProps> = ({ content, onChange, onNext }) 
               required
               error={!!errors.title}
               helperText={errors.title || `${getCharacterCount(content.title)}/50자`}
-              sx={{ mb: 3 }}
+              sx={{ mb: 1 }}
               inputProps={{ maxLength: 50 }}
             />
+
+            {/* 색상 태그 가이드 */}
+            <Box sx={{ mb: 3, p: 2, bgcolor: 'info.lighter', borderRadius: 1, border: '1px solid', borderColor: 'info.light' }}>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 1, fontWeight: 'bold' }}>
+                🎨 타이틀 색상 태그 사용법
+              </Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                형식: <code style={{ backgroundColor: '#f5f5f5', padding: '2px 6px', borderRadius: '4px' }}>[색상:단어]</code>
+              </Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                예시: <code style={{ backgroundColor: '#f5f5f5', padding: '2px 6px', borderRadius: '4px' }}>나는 [yellow:학교]에서 [blue:친구]를 만났어</code>
+              </Typography>
+              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mt: 1 }}>
+                <Chip label="yellow" size="small" sx={{ bgcolor: '#FDCA03', color: '#000', fontWeight: 'bold' }} />
+                <Chip label="blue" size="small" sx={{ bgcolor: '#0090FF', color: '#fff', fontWeight: 'bold' }} />
+                <Chip label="red" size="small" sx={{ bgcolor: '#FE0102', color: '#fff', fontWeight: 'bold' }} />
+                <Chip label="green" size="small" sx={{ bgcolor: '#02D330', color: '#fff', fontWeight: 'bold' }} />
+                <Chip label="orange" size="small" sx={{ bgcolor: '#FF822B', color: '#fff', fontWeight: 'bold' }} />
+                <Chip label="mint" size="small" sx={{ bgcolor: '#6FDAA5', color: '#000', fontWeight: 'bold' }} />
+                <Chip label="sky" size="small" sx={{ bgcolor: '#02FDFE', color: '#000', fontWeight: 'bold' }} />
+              </Box>
+            </Box>
 
             {/* JSON 일괄 입력 영역 */}
             <Accordion sx={{ mb: 3 }}>

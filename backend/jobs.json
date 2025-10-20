@@ -1525,5 +1525,42 @@
     "error_message": null,
     "retry_count": 0,
     "max_retries": 2
+  },
+  "job_90qgqammm_mgylefjy": {
+    "job_id": "job_90qgqammm_mgylefjy",
+    "user_email": "xystus@gmail.com",
+    "status": "completed",
+    "created_at": "2025-10-20T03:47:54.582333",
+    "updated_at": "2025-10-20T03:49:29.802328",
+    "video_params": {
+      "content_data": "{\"title\":\"결혼 [red:5개월] 전 나는 알고 말았던 [orange:KB라이프]\",\"body1\":\"펜션에서 컵라면 먹으려다, 커피포트 물이 튀어 발등 화상!\",\"body2\":\"너무 아파서 주저앉았는데… 예비신랑? 그냥 '헐' 한마디 하고 소파 가서 유튜브\",\"body3\":\"심지어 '괜찮아?' 이 한마디도 없음. 동태눈으로 빤히 쳐다본 게 다임\",\"body4\":\"이전에도 공감 제로, 내 얘기하면 무반응, 웃겨도 정색… 이번엔 진짜 터짐.\",\"body5\":\"따지니까 '내가 괜찮냐고 물으면 낫냐? 여자들은 너무 기대가 크다' 이딴 소리\",\"body6\":\"결혼 약속하니까 이제 보인다. 이기적이고 공감 없는 남자라는 거.\",\"body7\":\"백년해로? 아니, 예식장 취소부터 검색 중ㅋㅋ 내가 너무한 걸까?\",\"body8\":\"\",\"body9\":\"\",\"body10\":\"\",\"body11\":\"\",\"body12\":\"\",\"body13\":\"\",\"body14\":\"\",\"body15\":\"\",\"body16\":\"\",\"body17\":\"\",\"body18\":\"\",\"body19\":\"\",\"body20\":\"\",\"body21\":\"\",\"body22\":\"\",\"body23\":\"\",\"body24\":\"\",\"body25\":\"\",\"body26\":\"\",\"body27\":\"\",\"body28\":\"\",\"body29\":\"\",\"body30\":\"\",\"body31\":\"\",\"body32\":\"\",\"body33\":\"\",\"body34\":\"\",\"body35\":\"\",\"body36\":\"\",\"body37\":\"\",\"body38\":\"\",\"body39\":\"\",\"body40\":\"\",\"body41\":\"\",\"body42\":\"\",\"body43\":\"\",\"body44\":\"\",\"body45\":\"\",\"body46\":\"\",\"body47\":\"\",\"body48\":\"\",\"body49\":\"\",\"body50\":\"\"}",
+      "music_mood": "bright",
+      "image_allocation_mode": "single_for_all",
+      "text_position": "top",
+      "text_style": "background",
+      "title_area_mode": "keep",
+      "selected_bgm_path": "Soaring - The Grey Room _ Golden Palms.mp3",
+      "use_test_files": false,
+      "uploaded_files": [
+        "1.mp4"
+      ],
+      "title_font": "BMHANNAPro.ttf",
+      "body_font": "BMYEONSUNG_otf.otf",
+      "title_font_size": 42,
+      "body_font_size": 27,
+      "voice_narration": "disabled",
+      "cross_dissolve": "enabled",
+      "subtitle_duration": 3.0,
+      "edited_texts": "{}",
+      "image_panning_options": "{\"0\":true}"
+    },
+    "result": {
+      "video_path": "/zstus/backend/output_videos/202510/reels_d610e22d.mp4",
+      "duration": "약 10-30초",
+      "completed_at": "2025-10-20T03:49:29.800721"
+    },
+    "error_message": null,
+    "retry_count": 0,
+    "max_retries": 2
   }
 }

@@ -234,9 +234,73 @@ class VideoGenerator:
                 return fallback_image
             else:
                 raise Exception(f"이미지 다운로드 및 기본 이미지 생성 모두 실패: {str(e)}")
-    
+
+    def parse_colored_title(self, title: str):
+        """
+        타이틀 텍스트에서 색상 태그 파싱
+
+        형식: [color:단어]
+        예시: "나는 [yellow:학교]에서 [blue:친구]를 만났어"
+
+        Args:
+            title: 색상 태그가 포함된 타이틀 텍스트
+
+        Returns:
+            파트 리스트: [{'text': '나는 ', 'color': 'white'},
+                        {'text': '학교', 'color': '#FDCA03'}, ...]
+        """
+        import re
+
+        # 색상 매핑 (7가지 + 기본 흰색)
+        COLOR_MAP = {
+            'yellow': '#FDCA03',
+            'blue': '#0090FF',
+            'red': '#FE0102',
+            'green': '#02D330',
+            'orange': '#FF822B',
+            'mint': '#6FDAA5',
+            'sky': '#02FDFE'
+        }
+
+        parts = []
+        pattern = r'\[(\w+):([^\]]+)\]'  # [color:text] 패턴
+        last_end = 0
+
+        for match in re.finditer(pattern, title):
+            # 태그 앞의 일반 텍스트
+            if match.start() > last_end:
+                plain_text = title[last_end:match.start()]
+                if plain_text:
+                    parts.append({'text': plain_text, 'color': 'white'})
+
+            # 색상 태그
+            color_name = match.group(1).lower()
+            word = match.group(2)
+
+            if color_name in COLOR_MAP:
+                parts.append({'text': word, 'color': COLOR_MAP[color_name]})
+                logger.info(f"🎨 색상 태그 감지: [{color_name}:{word}] → {COLOR_MAP[color_name]}")
+            else:
+                # 알 수 없는 색상은 흰색으로
+                parts.append({'text': word, 'color': 'white'})
+                logger.warning(f"⚠️ 알 수 없는 색상: {color_name}, 흰색으로 처리")
+
+            last_end = match.end()
+
+        # 마지막 남은 텍스트
+        if last_end < len(title):
+            remaining = title[last_end:]
+            if remaining:
+                parts.append({'text': remaining, 'color': 'white'})
+
+        # 파트가 없으면 전체를 흰색으로
+        if not parts:
+            parts.append({'text': title, 'color': 'white'})
+
+        return parts
+
     def create_title_image(self, title, width, height, title_font="BMYEONSUNG_otf.otf", title_font_size=42):
-        """제목 이미지 생성 - 지정 영역(50,65)~(444,200)에 아래 정렬"""
+        """제목 이미지 생성 - 지정 영역(50,65)~(444,200)에 아래 정렬 (색상 태그 지원)"""
         # 검은 배경 이미지 생성 (전체 타이틀 영역)
         img = Image.new('RGB', (width, height), color='black')
         draw = ImageDraw.Draw(img)
@@ -277,23 +341,53 @@ class VideoGenerator:
                 except:
                     font = ImageFont.load_default()
         
-        # 텍스트를 여러 줄로 나누기 (타이틀 영역 폭에 맞춰)
-        words = title.split(' ')
-        lines = []
-        current_line = ""
-        
-        for word in words:
-            test_line = current_line + " " + word if current_line else word
-            bbox = draw.textbbox((0, 0), test_line, font=font)
-            if bbox[2] - bbox[0] < title_width - 20:  # 타이틀 영역 내 여백 10px씩
-                current_line = test_line
+        # 🎨 색상 태그 파싱
+        colored_parts = self.parse_colored_title(title)
+        logger.info(f"📝 색상 파트 수: {len(colored_parts)}")
+
+        # 색상 정보를 유지하며 단어 단위로 분리
+        words_with_colors = []
+        for part in colored_parts:
+            part_words = part['text'].split(' ')
+            for word in part_words:
+                if word:  # 빈 문자열 제외
+                    words_with_colors.append({
+                        'text': word,
+                        'color': part['color']
+                    })
+
+        # 줄바꿈 처리 (색상 정보 유지)
+        lines = []  # [{'words': [{text, color}, ...], 'total_width': ...}, ...]
+        current_line_words = []
+
+        for word_info in words_with_colors:
+            # 현재 줄에 단어를 추가했을 때 텍스트 생성 (공백 포함)
+            test_words = current_line_words + [word_info]
+            test_text = ' '.join([w['text'] for w in test_words])
+            bbox = draw.textbbox((0, 0), test_text, font=font)
+            test_width = bbox[2] - bbox[0]
+
+            if test_width < title_width - 20:  # 타이틀 영역 내 여백 10px씩
+                current_line_words.append(word_info)
             else:
-                if current_line:
-                    lines.append(current_line)
-                current_line = word
-        
-        if current_line:
-            lines.append(current_line)
+                # 현재 줄 저장
+                if current_line_words:
+                    line_text = ' '.join([w['text'] for w in current_line_words])
+                    bbox = draw.textbbox((0, 0), line_text, font=font)
+                    lines.append({
+                        'words': current_line_words,
+                        'total_width': bbox[2] - bbox[0]
+                    })
+                current_line_words = [word_info]
+
+        # 마지막 줄 저장
+        if current_line_words:
+            line_text = ' '.join([w['text'] for w in current_line_words])
+            bbox = draw.textbbox((0, 0), line_text, font=font)
+            lines.append({
+                'words': current_line_words,
+                'total_width': bbox[2] - bbox[0]
+            })
         
         # 이모지 폰트 준비 (제목 폰트 크기에 맞춤)
         emoji_font_path = self.get_emoji_font()
@@ -314,37 +408,51 @@ class VideoGenerator:
         print(f"📐 타이틀 배치: 영역({title_left},{title_top})~({title_right},{title_bottom})")
         print(f"📝 텍스트 시작: Y={start_y}, 줄수={len(lines)}, 전체높이={total_text_height}px")
         
-        for i, line in enumerate(lines):
-            bbox = draw.textbbox((0, 0), line, font=font)
-            text_width = bbox[2] - bbox[0]
-            
-            # X 좌표: 타이틀 영역 내 중앙 정렬
-            x = title_left + (title_width - text_width) // 2
+        # 🎨 색상별로 각 줄 렌더링
+        for i, line_info in enumerate(lines):
             y = start_y + i * line_height
-            
+
             # 타이틀 영역 범위 체크
             if y < title_top:
                 y = title_top + 10  # 최소 상단 여백 확보
-            
-            # 텍스트의 실제 바운딩 박스 계산 (렌더링 전 확인)
-            actual_bbox = draw.textbbox((x, y), line, font=font)
-            text_bottom = actual_bbox[3]  # 실제 텍스트 하단 위치
-            
-            print(f"📍 줄 {i+1}: '{line}' at ({x}, {y})")
-            print(f"📏 실제 텍스트 바운딩박스: {actual_bbox}")
-            print(f"📏 텍스트 하단 위치: {text_bottom}, 영역 하단: {title_bottom}")
-            
-            if text_bottom > title_bottom:
-                print(f"⚠️  경고: 텍스트가 영역을 {text_bottom - title_bottom}px 초과!")
-            
-            # 일단 기본 폰트로 텍스트 렌더링 (이모지 포함)
-            try:
-                draw.text((x, y), line, font=font, fill='white')
-            except Exception as e:
-                print(f"텍스트 렌더링 오류: {e}")
-                # 폴백으로 기본 폰트 사용
-                default_font = ImageFont.load_default()
-                draw.text((x, y), line, font=default_font, fill='white')
+
+            # 줄 전체 폭 (중앙 정렬용)
+            total_width = line_info['total_width']
+
+            # 시작 X 좌표 (중앙 정렬)
+            start_x = title_left + (title_width - total_width) // 2
+            current_x = start_x
+
+            # 줄 텍스트 생성 (디버깅용)
+            line_text = ' '.join([w['text'] for w in line_info['words']])
+            logger.info(f"📍 줄 {i+1}: '{line_text}' at Y={y}")
+
+            # 각 단어를 순차적으로 렌더링 (색상 적용)
+            for j, word_info in enumerate(line_info['words']):
+                word = word_info['text']
+                color = word_info['color']
+
+                # 공백 추가 (첫 번째 단어 제외)
+                if j > 0:
+                    space_bbox = draw.textbbox((0, 0), ' ', font=font)
+                    space_width = space_bbox[2] - space_bbox[0]
+                    current_x += space_width
+
+                # 텍스트 렌더링 (색상 적용)
+                try:
+                    draw.text((current_x, y), word, font=font, fill=color)
+                    if color != 'white':
+                        logger.info(f"🎨 색상 적용: '{word}' → {color}")
+                except Exception as e:
+                    logger.error(f"텍스트 렌더링 오류: {e}")
+                    # 폴백으로 기본 폰트 사용
+                    default_font = ImageFont.load_default()
+                    draw.text((current_x, y), word, font=default_font, fill=color)
+
+                # X 좌표 이동 (다음 단어 위치로)
+                word_bbox = draw.textbbox((0, 0), word, font=font)
+                word_width = word_bbox[2] - word_bbox[0]
+                current_x += word_width
         
         # 임시 파일로 저장
         temp_file = tempfile.NamedTemporaryFile(delete=False, suffix='.png')
