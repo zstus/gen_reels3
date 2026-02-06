@@ -18,6 +18,23 @@ from datetime import datetime
 from utils.logger_config import get_logger
 logger = get_logger('video_generator')
 
+# Qwen TTS 서비스 import
+try:
+    from qwen_tts_service import (
+        QwenTTSService,
+        QWEN_TTS_AVAILABLE,
+        QWEN_SPEAKERS,
+        SPEED_PRESETS,
+        check_qwen_tts_availability
+    )
+    logger.info(f"✅ Qwen TTS 모듈 로드 성공 (사용 가능: {QWEN_TTS_AVAILABLE})")
+except ImportError as e:
+    logger.warning(f"⚠️ Qwen TTS 모듈 로드 실패: {e}")
+    QWEN_TTS_AVAILABLE = False
+    QwenTTSService = None
+    QWEN_SPEAKERS = {}
+    SPEED_PRESETS = {}
+
 # HEIC 파일 지원을 위한 pillow-heif
 try:
     from pillow_heif import register_heif_opener
@@ -54,7 +71,185 @@ class VideoGenerator:
         if os.path.exists(custom_dict_path):
             self.pronunciation_dict.load_from_file(custom_dict_path)
             logger.info(f"📚 커스텀 발음 사전 로드: {custom_dict_path}")
-        
+
+        # Qwen TTS 서비스 초기화 (지연 로딩)
+        self.qwen_tts_service = None
+        self.tts_engine = "google"  # 기본 TTS 엔진: google
+        self.qwen_speaker = "Sohee"  # 기본 Qwen 화자 (한국어)
+        self.qwen_speed = "normal"   # 기본 Qwen 속도
+        self.qwen_style = "neutral"  # 기본 Qwen 스타일
+        logger.info(f"🎤 기본 TTS 엔진: {self.tts_engine}")
+
+    def set_tts_engine(self, engine: str, speaker: str = None, speed: str = None, style: str = None):
+        """
+        TTS 엔진 설정
+
+        Args:
+            engine: 'google' 또는 'qwen'
+            speaker: Qwen 화자 (Sohee, Vivian 등)
+            speed: Qwen 속도 (very_slow, slow, normal, fast, very_fast)
+            style: Qwen 스타일 (neutral, cheerful_witty, cynical_calm)
+        """
+        if engine not in ['google', 'qwen']:
+            logger.warning(f"⚠️ 알 수 없는 TTS 엔진 '{engine}', 기본값 'google' 사용")
+            engine = 'google'
+
+        self.tts_engine = engine
+        logger.info(f"🎤 TTS 엔진 설정: {engine}")
+
+        if engine == 'qwen':
+            if speaker:
+                self.qwen_speaker = speaker
+                logger.info(f"🎤 Qwen 화자 설정: {speaker}")
+            if speed:
+                self.qwen_speed = speed
+                logger.info(f"⏱️ Qwen 속도 설정: {speed}")
+            if style:
+                self.qwen_style = style
+                logger.info(f"🎭 Qwen 스타일 설정: {style}")
+
+    def _init_qwen_tts(self):
+        """Qwen TTS 서비스 지연 초기화"""
+        if self.qwen_tts_service is None and QWEN_TTS_AVAILABLE and QwenTTSService:
+            try:
+                self.qwen_tts_service = QwenTTSService(preload_model=False)
+                self.qwen_tts_service.set_speaker(self.qwen_speaker)
+                self.qwen_tts_service.set_speed(self.qwen_speed)
+                self.qwen_tts_service.set_style(self.qwen_style)
+                logger.info("✅ Qwen TTS 서비스 초기화 완료")
+            except Exception as e:
+                logger.error(f"❌ Qwen TTS 서비스 초기화 실패: {e}")
+                self.qwen_tts_service = None
+        return self.qwen_tts_service is not None
+
+    def create_tts_audio_qwen(self, text, lang='ko'):
+        """Qwen TTS로 음성 생성 (저사양 최적화)"""
+        try:
+            logger.info(f"🎙️ Qwen TTS 생성 중: {text[:50]}...")
+
+            # Qwen TTS 서비스 초기화 확인
+            if not self._init_qwen_tts():
+                logger.warning("⚠️ Qwen TTS 사용 불가, Google TTS로 폴백")
+                return self.create_tts_audio_google(text, lang)
+
+            # 화자, 속도, 스타일 설정 업데이트
+            self.qwen_tts_service.set_speaker(self.qwen_speaker)
+            self.qwen_tts_service.set_speed(self.qwen_speed)
+            self.qwen_tts_service.set_style(self.qwen_style)
+
+            # 텍스트 전처리
+            processed_text = self.preprocess_korean_text(text)
+
+            # Qwen TTS로 음성 생성
+            audio_path = self.qwen_tts_service.generate(processed_text, output_format="mp3")
+
+            if audio_path and os.path.exists(audio_path):
+                logger.info(f"✅ Qwen TTS 원본 생성 완료: {audio_path}")
+
+                # 볼륨 정규화 및 증폭 적용
+                normalized_path = self._normalize_and_boost_audio(audio_path)
+                if normalized_path != audio_path:
+                    # 원본 파일 정리
+                    if os.path.exists(audio_path):
+                        os.unlink(audio_path)
+                    audio_path = normalized_path
+                    logger.info(f"✅ Qwen TTS 볼륨 정규화 완료: {audio_path}")
+
+                # 1.5배 속도 조정 적용 (Google TTS와 동일한 후처리)
+                speed_adjusted_path = self.speed_up_audio(audio_path, speed_factor=1.5)
+                if speed_adjusted_path != audio_path and os.path.exists(speed_adjusted_path):
+                    # 원본 파일 정리
+                    if os.path.exists(audio_path):
+                        os.unlink(audio_path)
+                    audio_path = speed_adjusted_path
+                    logger.info(f"✅ Qwen TTS 속도 조정 완료 (1.5x): {audio_path}")
+
+                return audio_path
+            else:
+                logger.warning("⚠️ Qwen TTS 생성 실패, Google TTS로 폴백")
+                return self.create_tts_audio_google(text, lang)
+
+        except Exception as e:
+            logger.error(f"❌ Qwen TTS 생성 오류: {e}")
+            logger.info("🔄 Google TTS로 폴백 시도...")
+            return self.create_tts_audio_google(text, lang)
+
+    def _normalize_and_boost_audio(self, audio_path, target_db=-14.0):
+        """오디오 볼륨 정규화 및 증폭 (Qwen TTS용)"""
+        try:
+            from pydub import AudioSegment
+            from pydub.effects import normalize
+
+            logger.info(f"🔊 오디오 볼륨 정규화 시작 (목표: {target_db}dB)")
+
+            # 오디오 로드
+            audio = AudioSegment.from_file(audio_path)
+            original_dbfs = audio.dBFS
+            logger.info(f"📊 원본 볼륨: {original_dbfs:.1f}dBFS")
+
+            # 정규화 적용
+            normalized_audio = normalize(audio)
+
+            # 목표 볼륨까지 증폭
+            current_dbfs = normalized_audio.dBFS
+            boost_db = target_db - current_dbfs
+            if boost_db > 0:
+                normalized_audio = normalized_audio + boost_db
+                logger.info(f"📈 볼륨 증폭: +{boost_db:.1f}dB")
+
+            # 새 파일로 저장
+            output_path = tempfile.NamedTemporaryFile(delete=False, suffix='.mp3').name
+            normalized_audio.export(output_path, format="mp3")
+
+            final_dbfs = normalized_audio.dBFS
+            logger.info(f"✅ 볼륨 정규화 완료: {original_dbfs:.1f}dBFS → {final_dbfs:.1f}dBFS")
+
+            return output_path
+
+        except Exception as e:
+            logger.warning(f"⚠️ 볼륨 정규화 실패, 원본 사용: {e}")
+            return audio_path
+
+    def create_tts_audio_google(self, text, lang='ko'):
+        """Google TTS로 음성 생성 (기존 로직 분리)"""
+        try:
+            print(f"Google TTS 생성 중: {text[:50]}...")
+
+            # 한국어 텍스트 전처리 (더 자연스럽게)
+            processed_text = self.preprocess_korean_text(text)
+
+            # 최적화된 한국어 Google TTS 설정
+            tts = gTTS(
+                text=processed_text,
+                lang='ko',
+                slow=False,
+                tld='com'
+            )
+
+            # 임시 파일에 저장 (원본 속도)
+            original_temp_file = tempfile.NamedTemporaryFile(delete=False, suffix='.mp3')
+            tts.save(original_temp_file.name)
+            original_temp_file.close()
+            print(f"Google TTS 원본 생성 완료: {original_temp_file.name}")
+
+            # 70% 빠르게 속도 조정 (1.7배속)
+            speed_adjusted_file = self.speed_up_audio(original_temp_file.name, speed_factor=1.7)
+
+            # 속도 조정이 실패하면 원본 파일 사용, 성공하면 원본 파일만 정리
+            if speed_adjusted_file != original_temp_file.name and os.path.exists(speed_adjusted_file):
+                if os.path.exists(original_temp_file.name):
+                    os.unlink(original_temp_file.name)
+                    print(f"🗑️ 원본 TTS 파일 정리: {original_temp_file.name}")
+                print(f"Google TTS 생성 완료 (70% 고속화): {speed_adjusted_file}")
+            else:
+                print(f"Google TTS 생성 완료 (원본 속도): {speed_adjusted_file}")
+
+            return speed_adjusted_file
+
+        except Exception as e:
+            print(f"Google TTS 생성 실패: {e}")
+            return None
+
     def get_emoji_font(self):
         """이모지 지원 폰트 경로 반환"""
         emoji_fonts = [
@@ -1057,9 +1252,14 @@ class VideoGenerator:
         logger.debug(f"🔍 [DEBUG] create_continuous_background_clip() 함수 진입")
         logger.debug(f"🔍 [DEBUG] 이미지 파일 존재 여부: {os.path.exists(image_path)}")
 
-        # 이미지를 정사각형으로 크롭 후 716x716으로 리사이즈
-        # ✅ crop_to_square()에서 EXIF orientation + LANCZOS 리사이즈 적용됨
-        square_image_path = self.crop_to_square(image_path)
+        # 패닝 활성화 시에만 정사각형 크롭 (패닝 비활성화 시에는 원본 유지)
+        if enable_panning:
+            # 패닝 ON: 정사각형으로 크롭 후 716x716으로 리사이즈
+            # ✅ crop_to_square()에서 EXIF orientation + LANCZOS 리사이즈 적용됨
+            square_image_path = self.crop_to_square(image_path)
+        else:
+            # 패닝 OFF: 원본 이미지 그대로 사용 (미리보기와 동일한 처리)
+            square_image_path = image_path
 
         try:
             # 배경 클립 생성
@@ -1099,10 +1299,13 @@ class VideoGenerator:
                     print(f"🎬 연속 패턴 2: 우 → 좌 패닝 (duration: {total_duration:.1f}s)")
             else:
                 # === 패닝 비활성화: 가로 꽉 채우기 + 위아래 검은색 패딩 ===
-                # 정사각형 이미지 (716x716)를 작업영역 가로에 맞춤
+                # 원본 이미지를 작업영역 가로에 맞춤 (미리보기와 동일한 처리)
                 work_width = 504
-                img_width = 716
-                img_height = 716
+
+                # 원본 이미지 파일에서 크기 확인 (EXIF 적용)
+                with Image.open(square_image_path) as img:
+                    img = ImageOps.exif_transpose(img) or img
+                    img_width, img_height = img.size
 
                 # 패닝 비활성화 시: 항상 가로를 캔버스 폭(504px)에 맞춤
                 new_width = work_width  # 504px 고정
@@ -1117,8 +1320,9 @@ class VideoGenerator:
                 print(f"   위아래 검은 패딩: {max(0, work_height - new_height)}px")
                 print(f"{'='*60}")
 
-                # 정사각형 이미지 파일에서 PIL로 로드
+                # 원본 이미지 파일에서 PIL로 로드 (EXIF 적용)
                 pil_img = Image.open(square_image_path)
+                pil_img = ImageOps.exif_transpose(pil_img) or pil_img
 
                 # PIL 리사이즈 (호환성 처리)
                 try:
@@ -1547,46 +1751,19 @@ class VideoGenerator:
             return None
     
     def create_tts_audio(self, text, lang='ko'):
-        """Google TTS로 최적화된 한국어 음성 생성 - 1.7배 빠른 속도 적용"""
-        try:
-            print(f"Google TTS 생성 중: {text[:50]}...")
-            
-            # 한국어 텍스트 전처리 (더 자연스럽게)
-            processed_text = self.preprocess_korean_text(text)
-            
-            # 최적화된 한국어 Google TTS 설정
-            tts = gTTS(
-                text=processed_text, 
-                lang='ko',  # 명시적으로 한국어 설정
-                slow=False,
-                tld='com'   # 구글 도메인 최적화
-            )
-            
-            # 임시 파일에 저장 (원본 속도)
-            original_temp_file = tempfile.NamedTemporaryFile(delete=False, suffix='.mp3')
-            tts.save(original_temp_file.name)
-            original_temp_file.close()
-            print(f"Google TTS 원본 생성 완료: {original_temp_file.name}")
-            
-            # 70% 빠르게 속도 조정 (1.7배속)
-            speed_adjusted_file = self.speed_up_audio(original_temp_file.name, speed_factor=1.7)
-            
-            # 속도 조정이 실패하면 원본 파일 사용, 성공하면 원본 파일만 정리
-            if speed_adjusted_file != original_temp_file.name and os.path.exists(speed_adjusted_file):
-                # 속도 조정 성공: 새로운 파일이 생성됨, 원본 파일만 정리
-                if os.path.exists(original_temp_file.name):
-                    os.unlink(original_temp_file.name)
-                    print(f"🗑️ 원본 TTS 파일 정리: {original_temp_file.name}")
-                print(f"Google TTS 생성 완료 (70% 고속화): {speed_adjusted_file}")
-            else:
-                # 속도 조정 실패: 원본 파일 그대로 사용 (삭제하지 않음)
-                print(f"Google TTS 생성 완료 (원본 속도): {speed_adjusted_file}")
-            
-            return speed_adjusted_file
-            
-        except Exception as e:
-            print(f"TTS 생성 실패: {e}")
-            return None
+        """
+        TTS 음성 생성 - 엔진에 따라 분기
+
+        설정된 TTS 엔진(self.tts_engine)에 따라 적절한 TTS 서비스 호출
+        - google: Google TTS (gTTS) - 기본값
+        - qwen: Qwen TTS (저사양 최적화 0.6B 모델)
+        """
+        logger.info(f"🎤 TTS 생성 요청 (엔진: {self.tts_engine}): {text[:50]}...")
+
+        if self.tts_engine == 'qwen' and QWEN_TTS_AVAILABLE:
+            return self.create_tts_audio_qwen(text, lang)
+        else:
+            return self.create_tts_audio_google(text, lang)
     
     def speed_up_audio(self, audio_path, speed_factor=1.5):
         """고급 오디오 속도 조정 (다중 알고리즘 지원)"""
@@ -1923,7 +2100,7 @@ class VideoGenerator:
         
         return image_files
     
-    def create_video_with_local_images(self, content, music_path, output_folder, image_allocation_mode="2_per_image", text_position="bottom", text_style="outline", title_area_mode="keep", title_font="BMYEONSUNG_otf.otf", body_font="BMYEONSUNG_otf.otf", title_font_size=42, body_font_size=36, music_mood="bright", media_files=None, voice_narration="enabled", cross_dissolve="enabled", subtitle_duration=0.0, image_panning_options=None):
+    def create_video_with_local_images(self, content, music_path, output_folder, image_allocation_mode="2_per_image", text_position="bottom", text_style="outline", title_area_mode="keep", title_font="BMYEONSUNG_otf.otf", body_font="BMYEONSUNG_otf.otf", title_font_size=42, body_font_size=36, music_mood="bright", media_files=None, voice_narration="enabled", cross_dissolve="enabled", subtitle_duration=0.0, image_panning_options=None, tts_engine="google", qwen_speaker="Sohee", qwen_speed="normal", qwen_style="neutral"):
         """로컬 이미지 파일들을 사용한 릴스 영상 생성
 
         Args:
@@ -1938,6 +2115,11 @@ class VideoGenerator:
             logging.info(f"🔍 create_video_with_local_images 호출됨!")
             logging.info(f"🔍 cross_dissolve 파라미터: '{cross_dissolve}' (타입: {type(cross_dissolve)})")
             logging.info(f"🔍 image_panning_options: {image_panning_options}")
+
+            # TTS 엔진 설정 적용
+            self.set_tts_engine(tts_engine, qwen_speaker, qwen_speed, qwen_style)
+            logger.info(f"🎤 TTS 설정: 엔진={tts_engine}, 화자={qwen_speaker}, 속도={qwen_speed}, 스타일={qwen_style}")
+
             # 로컬 이미지 파일들 가져오기
             local_images = self.get_local_images()
 
@@ -1951,7 +2133,7 @@ class VideoGenerator:
                 logging.info("🔍 media_files가 None이므로 자동 생성합니다...")
                 print("🔍 media_files가 None이므로 자동 생성합니다...")
                 media_files = []
-                video_extensions = ['.mp4', '.mov', '.avi', '.webm', '.mkv']
+                video_extensions = ['.mp4', '.mov', '.avi', '.webm', '.mkv', '.gif']
                 for i, image_path in enumerate(local_images):
                     # 파일 확장자로 타입 판단
                     is_video = any(image_path.lower().endswith(ext) for ext in video_extensions)
@@ -2043,7 +2225,7 @@ class VideoGenerator:
                         body_tts_info = (body_key, content[body_key], None, 3.0)
                     
                     # 파일 타입 확인 (비디오 vs 이미지)
-                    video_extensions = ['.mp4', '.mov', '.avi', '.webm', '.mkv']
+                    video_extensions = ['.mp4', '.mov', '.avi', '.webm', '.mkv', '.gif']
                     is_video = any(current_image_path.lower().endswith(ext) for ext in video_extensions)
                     file_type = "비디오" if is_video else "이미지"
                     
@@ -2119,7 +2301,7 @@ class VideoGenerator:
                             group_total_duration += 3.0
                     
                     # 파일 타입 확인 (비디오 vs 이미지)
-                    video_extensions = ['.mp4', '.mov', '.avi', '.webm', '.mkv']
+                    video_extensions = ['.mp4', '.mov', '.avi', '.webm', '.mkv', '.gif']
                     is_video = any(current_image_path.lower().endswith(ext) for ext in video_extensions)
                     file_type = "비디오" if is_video else "이미지"
                     
@@ -2209,7 +2391,7 @@ class VideoGenerator:
                             total_duration += 3.0
 
                     # 파일 타입 확인 (비디오 vs 이미지)
-                    video_extensions = ['.mp4', '.mov', '.avi', '.webm', '.mkv']
+                    video_extensions = ['.mp4', '.mov', '.avi', '.webm', '.mkv', '.gif']
                     is_video = any(single_media_path.lower().endswith(ext) for ext in video_extensions)
                     file_type = "비디오" if is_video else "이미지"
                     logger.debug(f"🔍 [DEBUG] 파일 타입 판별: is_video={is_video}, file_type={file_type}")
@@ -2369,7 +2551,7 @@ class VideoGenerator:
                     print("🔇 자막 읽어주기 제거: 배경음악 100%")
                 else:
                     # 자막 읽어주기 추가: TTS + 배경음악 합성
-                    background_music = background_music.volumex(0.17)  # 볼륨 17%
+                    background_music = background_music.volumex(0.15)  # 볼륨 15% (TTS가 잘 들리도록)
                     final_audio = CompositeAudioClip([final_audio, background_music])
                     print("🎵 TTS + 배경음악 합성 완료")
 
@@ -2575,8 +2757,14 @@ class VideoGenerator:
 
                     print(f"📍 모든 대사 ({len(body_keys)}개): 이미지 연속 사용 - {single_image_path} (총 {total_duration:.1f}초)")
 
+                    # 이미지별 패닝 옵션 확인 (단일 이미지는 인덱스 0)
+                    enable_panning = True  # 기본값
+                    if image_panning_options is not None and 0 in image_panning_options:
+                        enable_panning = image_panning_options[0]
+                        print(f"🎨 단일 이미지: 패닝 옵션 = {enable_panning}")
+
                     # 연속된 배경 클립 생성
-                    bg_clip = self.create_continuous_background_clip(single_image_path, total_duration, 0.0)
+                    bg_clip = self.create_continuous_background_clip(single_image_path, total_duration, 0.0, enable_panning=enable_panning, title_area_mode=title_area_mode)
                     black_top = ColorClip(size=(self.video_width, 220), color=(0,0,0)).set_duration(total_duration)
 
                     # 타이틀 클립 생성
@@ -2642,7 +2830,7 @@ class VideoGenerator:
                 if music_mood == "none":
                     print("음악 선택 안함 - 원본 비디오 소리 추출 및 추가 중...")
                     # 원본 비디오 소리 추출
-                    video_extensions = ['.mp4', '.mov', '.avi', '.webm', '.mkv']
+                    video_extensions = ['.mp4', '.mov', '.avi', '.webm', '.mkv', '.gif']
                     if media_files:
                         for media_file in media_files:
                             media_path, file_type = media_file
@@ -2681,9 +2869,9 @@ class VideoGenerator:
                         bg_music = AudioFileClip(music_path).volumex(1.0)
                         print("🎵 자막 읽어주기 꺼짐 - 배경음악 100%")
                     else:
-                        # TTS가 더 잘 들리도록 17%로 낮춤
-                        bg_music = AudioFileClip(music_path).volumex(0.17)
-                        print("🎵 자막 읽어주기 켜짐 - 배경음악 17%")
+                        # TTS가 더 잘 들리도록 15%로 낮춤
+                        bg_music = AudioFileClip(music_path).volumex(0.15)
+                        print("🎵 자막 읽어주기 켜짐 - 배경음악 15%")
 
                     # 배경음악 길이 조정: TTS가 있으면 TTS 길이에, 없으면 영상 길이에 맞춤
                     target_duration = combined_tts.duration if combined_tts else final_video.duration
@@ -2819,7 +3007,7 @@ class VideoGenerator:
         
         return scan_result
     
-    def create_video_from_uploads(self, output_folder, bgm_file_path=None, image_allocation_mode="2_per_image", text_position="bottom", text_style="outline", title_area_mode="keep", title_font="BMYEONSUNG_otf.otf", body_font="BMYEONSUNG_otf.otf", title_font_size=42, body_font_size=36, uploads_folder="uploads", music_mood="bright", voice_narration="enabled", cross_dissolve="enabled", subtitle_duration=0.0, image_panning_options=None):
+    def create_video_from_uploads(self, output_folder, bgm_file_path=None, image_allocation_mode="2_per_image", text_position="bottom", text_style="outline", title_area_mode="keep", title_font="BMYEONSUNG_otf.otf", body_font="BMYEONSUNG_otf.otf", title_font_size=42, body_font_size=36, uploads_folder="uploads", music_mood="bright", voice_narration="enabled", cross_dissolve="enabled", subtitle_duration=0.0, image_panning_options=None, tts_engine="google", qwen_speaker="Sohee", qwen_speed="normal", qwen_style="neutral"):
         """uploads 폴더의 파일들을 사용하여 영상 생성 (기존 메서드 재사용)
 
         Args:
@@ -2855,8 +3043,8 @@ class VideoGenerator:
             # 스캔된 이미지 파일들로 로컬 이미지 리스트 대체
             self._temp_local_images = scan_result['image_files']
 
-            # 기존 메서드 호출 (이미지 할당 모드, 텍스트 위치, 텍스트 스타일, 타이틀 영역 모드, 폰트 설정, 폰트 크기, 자막 읽어주기, 자막 지속 시간, 패닝 옵션 전달)
-            return self.create_video_with_local_images(content, music_path, output_folder, image_allocation_mode, text_position, text_style, title_area_mode, title_font, body_font, title_font_size, body_font_size, music_mood, scan_result['media_files'], voice_narration, cross_dissolve, subtitle_duration, image_panning_options)
+            # 기존 메서드 호출 (이미지 할당 모드, 텍스트 위치, 텍스트 스타일, 타이틀 영역 모드, 폰트 설정, 폰트 크기, 자막 읽어주기, 자막 지속 시간, 패닝 옵션, TTS 설정 전달)
+            return self.create_video_with_local_images(content, music_path, output_folder, image_allocation_mode, text_position, text_style, title_area_mode, title_font, body_font, title_font_size, body_font_size, music_mood, scan_result['media_files'], voice_narration, cross_dissolve, subtitle_duration, image_panning_options, tts_engine, qwen_speaker, qwen_speed, qwen_style)
 
         except Exception as e:
             raise Exception(f"uploads 폴더 기반 영상 생성 실패: {str(e)}")

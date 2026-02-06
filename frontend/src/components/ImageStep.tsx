@@ -111,8 +111,8 @@ const ImageStep = forwardRef<ImageStepRef, ImageStepProps>(({
       const isVideoByType = file.type.startsWith('video/');
 
       // HEIC/HEIF는 브라우저에서 MIME 타입이 없을 수 있으므로 확장자로 검증
-      const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.bmp', '.heic', '.heif'];
-      const videoExtensions = ['.mp4', '.mov', '.avi', '.webm', '.mkv'];
+      const imageExtensions = ['.jpg', '.jpeg', '.png', '.webp', '.bmp', '.heic', '.heif'];
+      const videoExtensions = ['.mp4', '.mov', '.avi', '.webm', '.mkv', '.gif'];
 
       const isImageByExt = imageExtensions.some(ext => fileName.endsWith(ext));
       const isVideoByExt = videoExtensions.some(ext => fileName.endsWith(ext));
@@ -182,8 +182,8 @@ const ImageStep = forwardRef<ImageStepRef, ImageStepProps>(({
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
     accept: {
-      'image/*': ['.jpeg', '.jpg', '.png', '.gif', '.webp', '.bmp', '.heic', '.heif'],
-      'video/*': ['.mp4', '.mov', '.avi', '.webm', '.mkv']
+      'image/*': ['.jpeg', '.jpg', '.png', '.webp', '.bmp', '.heic', '.heif'],
+      'video/*': ['.mp4', '.mov', '.avi', '.webm', '.mkv', '.gif']
     },
     // 무제한 파일 업로드 허용 (빈 슬롯에 자동 할당)
     maxFiles: undefined,
@@ -228,7 +228,7 @@ const ImageStep = forwardRef<ImageStepRef, ImageStepProps>(({
 
   const isVideoFile = (file: File) => {
     const fileName = file.name.toLowerCase();
-    const videoExtensions = ['.mp4', '.mov', '.avi', '.webm', '.mkv'];
+    const videoExtensions = ['.mp4', '.mov', '.avi', '.webm', '.mkv', '.gif'];
     return file.type.startsWith('video/') || videoExtensions.some(ext => fileName.endsWith(ext));
   };
 

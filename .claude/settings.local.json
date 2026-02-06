@@ -27,7 +27,8 @@
       "Read(//SYNOLOGYNAS/DOCKER/ubt_genReels/frontend/src/components/**)",
       "Read(//SYNOLOGYNAS/DOCKER/ubt_genReels/frontend/src/types/**)",
       "Read(//SYNOLOGYNAS/DOCKER/ubt_genReels/backend/**)",
-      "Read(//SYNOLOGYNAS/DOCKER/ubt_genReels/frontend/src/**)"
+      "Read(//SYNOLOGYNAS/DOCKER/ubt_genReels/frontend/src/**)",
+      "WebFetch(domain:github.com)"
     ],
     "deny": [],
     "ask": []

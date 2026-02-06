@@ -51,7 +51,7 @@ import {
   Style,
   FormatColorText,
 } from '@mui/icons-material';
-import { ProjectData, GenerationStatus, AsyncVideoResponse, FontFile, TextPosition, TextStyle, VoiceNarration, TitleAreaMode, CrossDissolve } from '../types';
+import { ProjectData, GenerationStatus, AsyncVideoResponse, FontFile, TextPosition, TextStyle, VoiceNarration, TitleAreaMode, CrossDissolve, TTSEngine, QwenSpeaker, QwenSpeed, QwenStyle, QWEN_SPEAKERS, QWEN_SPEED_PRESETS, QWEN_STYLE_PRESETS } from '../types';
 import apiService from '../services/api';
 
 interface GenerateStepProps {
@@ -108,6 +108,12 @@ const GenerateStep: React.FC<GenerateStepProps> = ({
   const [crossDissolve, setCrossDissolve] = useState<CrossDissolve>('enabled');
   const [subtitleDuration, setSubtitleDuration] = useState<number>(0);
 
+  // TTS 엔진 설정 상태
+  const [ttsEngine, setTtsEngine] = useState<TTSEngine>(projectData.ttsEngine || 'google');
+  const [qwenSpeaker, setQwenSpeaker] = useState<QwenSpeaker>(projectData.qwenSpeaker || 'Sohee');
+  const [qwenSpeed, setQwenSpeed] = useState<QwenSpeed>(projectData.qwenSpeed || 'normal');
+  const [qwenStyle, setQwenStyle] = useState<QwenStyle>(projectData.qwenStyle || 'neutral');
+
   // 미리보기 관련 상태
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [loadingPreview, setLoadingPreview] = useState(false);
@@ -123,6 +129,10 @@ const GenerateStep: React.FC<GenerateStepProps> = ({
     setTitleAreaMode(projectData.titleAreaMode);
     setVoiceNarration(projectData.voiceNarration);
     setCrossDissolve(projectData.crossDissolve);
+    // TTS 설정 초기화
+    if (projectData.ttsEngine) setTtsEngine(projectData.ttsEngine);
+    if (projectData.qwenSpeaker) setQwenSpeaker(projectData.qwenSpeaker);
+    if (projectData.qwenSpeed) setQwenSpeed(projectData.qwenSpeed);
   }, [projectData]);
 
   // 예상 생성 시간 계산
@@ -300,6 +310,11 @@ const GenerateStep: React.FC<GenerateStepProps> = ({
         jobId: projectData.jobId,  // Job ID 추가
         editedTexts: editedTextsData, // 수정된 텍스트 전달
         imagePanningOptions: imagePanningOptionsData, // 🎨 패닝 옵션 전달
+        // TTS 설정
+        ttsEngine: ttsEngine,
+        qwenSpeaker: qwenSpeaker,
+        qwenSpeed: qwenSpeed,
+        qwenStyle: qwenStyle,
       });
 
       if (response.status === 'success') {
@@ -363,6 +378,11 @@ const GenerateStep: React.FC<GenerateStepProps> = ({
         voiceNarration: voiceNarration,
         crossDissolve: crossDissolve,
         subtitleDuration: subtitleDuration,
+        // TTS 설정
+        ttsEngine: ttsEngine,
+        qwenSpeaker: qwenSpeaker,
+        qwenSpeed: qwenSpeed,
+        qwenStyle: qwenStyle,
       });
 
       if (response.status === 'success') {
@@ -790,6 +810,94 @@ const GenerateStep: React.FC<GenerateStepProps> = ({
                         inputProps={{ min: 0, step: 0.5 }}
                         helperText="0초: 음성 파일 길이만큼 표시 (기존 방식) | 0초 초과: 입력한 시간만큼 각 대사 표시 (TTS 생성 건너뜀, 빠른 처리)"
                       />
+                    </Box>
+                  )}
+
+                  {/* TTS 엔진 선택 (자막 읽어주기가 활성화된 경우에만 표시) */}
+                  {voiceNarration === 'enabled' && (
+                    <Box sx={{ mt: 2, p: 2, bgcolor: 'grey.50', borderRadius: 1 }}>
+                      <FormControl component="fieldset">
+                        <FormLabel component="legend">TTS 엔진 선택</FormLabel>
+                        <RadioGroup
+                          row
+                          value={ttsEngine}
+                          onChange={(e) => setTtsEngine(e.target.value as TTSEngine)}
+                        >
+                          <FormControlLabel
+                            value="google"
+                            control={<Radio size="small" />}
+                            label="Google TTS (기본)"
+                          />
+                          <FormControlLabel
+                            value="qwen"
+                            control={<Radio size="small" />}
+                            label="Qwen TTS (로컬)"
+                          />
+                        </RadioGroup>
+                      </FormControl>
+                      <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1 }}>
+                        - Google TTS: 인터넷 연결 필요, 빠른 생성<br/>
+                        - Qwen TTS: 로컬 실행 (0.6B 모델), 다양한 화자/속도 지원
+                      </Typography>
+
+                      {/* Qwen TTS 선택 시 추가 옵션 */}
+                      {ttsEngine === 'qwen' && (
+                        <Box sx={{ mt: 2 }}>
+                          <Grid container spacing={2}>
+                            <Grid item xs={12} sm={6}>
+                              <FormControl fullWidth size="small">
+                                <InputLabel>화자 선택</InputLabel>
+                                <Select
+                                  value={qwenSpeaker}
+                                  label="화자 선택"
+                                  onChange={(e) => setQwenSpeaker(e.target.value as QwenSpeaker)}
+                                >
+                                  {QWEN_SPEAKERS.map((speaker) => (
+                                    <MenuItem key={speaker.id} value={speaker.id}>
+                                      {speaker.id} - {speaker.description}
+                                    </MenuItem>
+                                  ))}
+                                </Select>
+                              </FormControl>
+                            </Grid>
+                            <Grid item xs={12} sm={6}>
+                              <FormControl fullWidth size="small">
+                                <InputLabel>음성 스타일</InputLabel>
+                                <Select
+                                  value={qwenStyle}
+                                  label="음성 스타일"
+                                  onChange={(e) => setQwenStyle(e.target.value as QwenStyle)}
+                                >
+                                  {QWEN_STYLE_PRESETS.map((preset) => (
+                                    <MenuItem key={preset.id} value={preset.id}>
+                                      {preset.label} - {preset.description}
+                                    </MenuItem>
+                                  ))}
+                                </Select>
+                              </FormControl>
+                            </Grid>
+                            <Grid item xs={12} sm={6}>
+                              <FormControl fullWidth size="small">
+                                <InputLabel>음성 속도</InputLabel>
+                                <Select
+                                  value={qwenSpeed}
+                                  label="음성 속도"
+                                  onChange={(e) => setQwenSpeed(e.target.value as QwenSpeed)}
+                                >
+                                  {QWEN_SPEED_PRESETS.map((preset) => (
+                                    <MenuItem key={preset.id} value={preset.id}>
+                                      {preset.label} - {preset.description}
+                                    </MenuItem>
+                                  ))}
+                                </Select>
+                              </FormControl>
+                            </Grid>
+                          </Grid>
+                          <Typography variant="caption" color="warning.main" sx={{ display: 'block', mt: 1 }}>
+                            * Qwen TTS 사용 시 첫 실행에서 모델 로딩 시간이 소요될 수 있습니다 (16GB 메모리 권장)
+                          </Typography>
+                        </Box>
+                      )}
                     </Box>
                   )}
                 </Box>

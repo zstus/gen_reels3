@@ -113,9 +113,15 @@ class VideoWorker:
             cross_dissolve = video_params.get('cross_dissolve', 'enabled')
             # 자막 지속 시간 파라미터 추출
             subtitle_duration = video_params.get('subtitle_duration', 0.0)
+            # TTS 파라미터 추출
+            tts_engine = video_params.get('tts_engine', 'google')
+            qwen_speaker = video_params.get('qwen_speaker', 'Sohee')
+            qwen_speed = video_params.get('qwen_speed', 'normal')
+            qwen_style = video_params.get('qwen_style', 'neutral')
 
             # 영상 파라미터 로깅
             logger.info(f"📋 영상 파라미터: 음악={music_mood}, 테스트파일={use_test_files}, 텍스트위치={text_position}, 타이틀폰트={title_font}({title_font_size}pt), 본문폰트={body_font}({body_font_size}pt), 자막음성={voice_narration}, 크로스디졸브={cross_dissolve}, 자막지속시간={subtitle_duration}초")
+            logger.info(f"🔊 TTS 파라미터: 엔진={tts_engine}, Qwen화자={qwen_speaker}, Qwen속도={qwen_speed}, Qwen스타일={qwen_style}")
             logger.debug(f"🔍 voice_narration='{voice_narration}' (타입: {type(voice_narration).__name__})")
             logger.debug(f"🔍 subtitle_duration={subtitle_duration} (타입: {type(subtitle_duration).__name__})")
 
@@ -219,7 +225,11 @@ class VideoWorker:
                     voice_narration=voice_narration,
                     cross_dissolve=cross_dissolve,
                     subtitle_duration=subtitle_duration,
-                    image_panning_options=parsed_panning_options
+                    image_panning_options=parsed_panning_options,
+                    tts_engine=tts_engine,
+                    qwen_speaker=qwen_speaker,
+                    qwen_speed=qwen_speed,
+                    qwen_style=qwen_style
                 )
             else:
                 # 업로드된 파일 사용
@@ -240,7 +250,11 @@ class VideoWorker:
                     voice_narration=voice_narration,
                     cross_dissolve=cross_dissolve,
                     subtitle_duration=subtitle_duration,
-                    image_panning_options=parsed_panning_options
+                    image_panning_options=parsed_panning_options,
+                    tts_engine=tts_engine,
+                    qwen_speaker=qwen_speaker,
+                    qwen_speed=qwen_speed,
+                    qwen_style=qwen_style
                 )
 
             if result and isinstance(result, str):

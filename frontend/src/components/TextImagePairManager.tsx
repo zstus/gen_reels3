@@ -330,8 +330,8 @@ const TextImagePairManager = forwardRef<TextImagePairManagerRef, TextImagePairMa
     const isVideoByType = file.type.startsWith('video/');
 
     // HEIC/HEIF는 브라우저에서 MIME 타입이 없을 수 있으므로 확장자로 검증
-    const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.bmp', '.heic', '.heif'];
-    const videoExtensions = ['.mp4', '.mov', '.avi', '.webm', '.mkv'];
+    const imageExtensions = ['.jpg', '.jpeg', '.png', '.webp', '.bmp', '.heic', '.heif'];
+    const videoExtensions = ['.mp4', '.mov', '.avi', '.webm', '.mkv', '.gif'];
 
     const isImageByExt = imageExtensions.some(ext => fileName.endsWith(ext));
     const isVideoByExt = videoExtensions.some(ext => fileName.endsWith(ext));
@@ -693,8 +693,8 @@ const TextImagePairManager = forwardRef<TextImagePairManagerRef, TextImagePairMa
     const { getRootProps, getInputProps, isDragActive } = useDropzone({
       onDrop,
       accept: {
-        'image/*': ['.jpeg', '.jpg', '.png', '.gif', '.webp', '.bmp', '.heic', '.heif'],
-        'video/*': ['.mp4', '.mov', '.avi', '.webm', '.mkv']
+        'image/*': ['.jpeg', '.jpg', '.png', '.webp', '.bmp', '.heic', '.heif'],
+        'video/*': ['.mp4', '.mov', '.avi', '.webm', '.mkv', '.gif']
       },
       maxFiles: 1,
       multiple: false
@@ -860,16 +860,52 @@ const TextImagePairManager = forwardRef<TextImagePairManagerRef, TextImagePairMa
           {pair.image ? (
             <Box sx={{ position: 'relative', mb: 2 }}>
               {(() => {
-                // 비디오 파일 확인 (MIME 타입 + 확장자)
+                // 파일 타입 확인 (MIME 타입 + 확장자)
                 const fileName = pair.image.name.toLowerCase();
                 const videoExtensions = ['.mp4', '.mov', '.avi', '.webm', '.mkv'];
+                const gifExtensions = ['.gif'];
                 const isVideo = pair.image.type.startsWith('video/') || videoExtensions.some(ext => fileName.endsWith(ext));
+                const isGif = pair.image.type === 'image/gif' || gifExtensions.some(ext => fileName.endsWith(ext));
 
                 // HEIC 파일 확인
                 const heicExtensions = ['.heic', '.heif'];
                 const isHEIC = heicExtensions.some(ext => fileName.endsWith(ext));
 
-                if (isVideo) {
+                if (isGif) {
+                  // GIF는 img 태그로 애니메이션 재생
+                  return (
+                    <Box sx={{ position: 'relative' }}>
+                      <img
+                        src={URL.createObjectURL(pair.image)}
+                        alt="GIF preview"
+                        style={{
+                          width: '100%',
+                          aspectRatio: '1/1',
+                          objectFit: 'cover',
+                          borderRadius: '8px'
+                        }}
+                      />
+                      {/* GIF 아이콘 오버레이 */}
+                      <Box
+                        sx={{
+                          position: 'absolute',
+                          top: 8,
+                          left: 8,
+                          bgcolor: 'rgba(0,0,0,0.7)',
+                          borderRadius: 1,
+                          p: 0.5,
+                          display: 'flex',
+                          alignItems: 'center'
+                        }}
+                      >
+                        <MovieIcon sx={{ fontSize: 16, color: 'white' }} />
+                        <Typography variant="caption" color="white" sx={{ ml: 0.5 }}>
+                          GIF
+                        </Typography>
+                      </Box>
+                    </Box>
+                  );
+                } else if (isVideo) {
                   return <VideoPreview file={pair.image} />;
                 } else if (isHEIC) {
                   // HEIC 파일은 브라우저에서 미리보기 불가 → 파일명 표시

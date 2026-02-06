@@ -88,6 +88,12 @@ async def generate_video(
     # 이미지별 패닝 옵션 (JSON 문자열, 예: {"0": true, "1": false})
     image_panning_options: str = Form(default="{}"),
 
+    # TTS 설정
+    tts_engine: str = Form(default="google"),  # 'google' 또는 'qwen'
+    qwen_speaker: str = Form(default="Sohee"),  # Qwen TTS 화자
+    qwen_speed: str = Form(default="normal"),  # Qwen TTS 속도
+    qwen_style: str = Form(default="neutral"),  # Qwen TTS 스타일
+
     # 이미지 파일 업로드 (최대 50개)
     image_1: Optional[UploadFile] = File(None),
     image_2: Optional[UploadFile] = File(None),
@@ -238,6 +244,9 @@ async def generate_video(
         logger.info(f"🎤 자막 읽어주기: {voice_narration}")
         logger.info(f"🎬 크로스 디졸브: {cross_dissolve}")
         logger.info(f"⏱️ 자막 지속 시간: {subtitle_duration}초")
+        logger.info(f"🔊 TTS 엔진: {tts_engine}")
+        if tts_engine == 'qwen':
+            logger.info(f"🎙️ Qwen 화자: {qwen_speaker}, 속도: {qwen_speed}, 스타일: {qwen_style}")
 
         # 이미지별 패닝 옵션 파싱
         parsed_panning_options = None
@@ -267,7 +276,11 @@ async def generate_video(
             voice_narration,
             cross_dissolve,
             subtitle_duration,
-            parsed_panning_options
+            parsed_panning_options,
+            tts_engine,
+            qwen_speaker,
+            qwen_speed,
+            qwen_style
         )
 
         # 영상 생성 성공 시 job 폴더 정리
@@ -356,6 +369,12 @@ async def generate_video_async(
 
     # 이미지별 패닝 옵션 (JSON 문자열)
     image_panning_options: str = Form(default="{}"),
+
+    # TTS 설정
+    tts_engine: str = Form(default="google"),  # 'google' 또는 'qwen'
+    qwen_speaker: str = Form(default="Sohee"),  # Qwen TTS 화자
+    qwen_speed: str = Form(default="normal"),  # Qwen TTS 속도
+    qwen_style: str = Form(default="neutral"),  # Qwen TTS 스타일
 
     # 이미지 파일 업로드 (최대 50개)
     image_1: Optional[UploadFile] = File(None),
@@ -502,7 +521,12 @@ async def generate_video_async(
             'cross_dissolve': cross_dissolve,
             'subtitle_duration': subtitle_duration,
             'edited_texts': edited_texts,  # 수정된 텍스트 추가
-            'image_panning_options': image_panning_options  # 패닝 옵션 추가
+            'image_panning_options': image_panning_options,  # 패닝 옵션 추가
+            # TTS 설정
+            'tts_engine': tts_engine,
+            'qwen_speaker': qwen_speaker,
+            'qwen_speed': qwen_speed,
+            'qwen_style': qwen_style,
         }
 
         # 작업을 큐에 추가

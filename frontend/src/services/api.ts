@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { ApiResponse, GenerateVideoRequest, MusicFolder, MusicFile, MusicMood, ImageUploadMode, TextPosition, TextStyle, AsyncVideoRequest, AsyncVideoResponse, JobInfo, VoiceNarration, TitleAreaMode, CrossDissolve, CreateJobFolderResponse, CleanupJobFolderResponse, BookmarkVideo, BookmarkImage } from '../types';
+import { ApiResponse, GenerateVideoRequest, MusicFolder, MusicFile, MusicMood, ImageUploadMode, TextPosition, TextStyle, AsyncVideoRequest, AsyncVideoResponse, JobInfo, VoiceNarration, TitleAreaMode, CrossDissolve, CreateJobFolderResponse, CleanupJobFolderResponse, BookmarkVideo, BookmarkImage, TTSEngine, QwenSpeaker, QwenSpeed, QwenStyle } from '../types';
 
 // API 베이스 URL 설정
 const API_BASE_URL = '/api';
@@ -97,6 +97,11 @@ export const apiService = {
     voiceNarration: VoiceNarration;
     crossDissolve: CrossDissolve;
     subtitleDuration?: number;
+    // TTS 설정
+    ttsEngine?: TTSEngine;
+    qwenSpeaker?: QwenSpeaker;
+    qwenSpeed?: QwenSpeed;
+    qwenStyle?: QwenStyle;
   }): Promise<ApiResponse> {
     const formData = new FormData();
     
@@ -145,6 +150,20 @@ export const apiService = {
     }
     if (data.bodyFontSize) {
       formData.append('body_font_size', String(data.bodyFontSize));
+    }
+
+    // TTS 설정 추가
+    if (data.ttsEngine) {
+      formData.append('tts_engine', data.ttsEngine);
+    }
+    if (data.qwenSpeaker) {
+      formData.append('qwen_speaker', data.qwenSpeaker);
+    }
+    if (data.qwenSpeed) {
+      formData.append('qwen_speed', data.qwenSpeed);
+    }
+    if (data.qwenStyle) {
+      formData.append('qwen_style', data.qwenStyle);
     }
 
     // 선택된 음악 파일 경로 추가
@@ -223,6 +242,11 @@ export const apiService = {
     jobId?: string;  // Job ID 추가
     editedTexts?: string; // 수정된 텍스트 (JSON 문자열)
     imagePanningOptions?: string; // 🎨 이미지별 패닝 옵션 (JSON 문자열)
+    // TTS 설정
+    ttsEngine?: TTSEngine;
+    qwenSpeaker?: QwenSpeaker;
+    qwenSpeed?: QwenSpeed;
+    qwenStyle?: QwenStyle;
   }): Promise<AsyncVideoResponse> {
     const formData = new FormData();
 
@@ -281,6 +305,20 @@ export const apiService = {
     }
     if (data.bodyFontSize) {
       formData.append('body_font_size', String(data.bodyFontSize));
+    }
+
+    // TTS 설정 추가
+    if (data.ttsEngine) {
+      formData.append('tts_engine', data.ttsEngine);
+    }
+    if (data.qwenSpeaker) {
+      formData.append('qwen_speaker', data.qwenSpeaker);
+    }
+    if (data.qwenSpeed) {
+      formData.append('qwen_speed', data.qwenSpeed);
+    }
+    if (data.qwenStyle) {
+      formData.append('qwen_style', data.qwenStyle);
     }
 
     // 선택된 음악 파일 경로 추가

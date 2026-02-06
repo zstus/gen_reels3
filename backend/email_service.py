@@ -6,10 +6,12 @@ Gmail SMTP 이메일 발송 서비스
 import smtplib
 import os
 import jwt
+import traceback
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from email.mime.base import MIMEBase
 from email import encoders
+from email.utils import formatdate
 from datetime import datetime, timedelta
 from typing import Optional, Dict, Any
 from jinja2 import Template
@@ -223,12 +225,28 @@ class EmailService:
                              duration: str = "약 10-30초") -> bool:
         """영상 생성 완료 이메일 발송"""
         try:
+            logger.info(f"📧 [완료메일] 발송 시작 - 수신자: {user_email}, 제목: {video_title}")
+
+            # 설정 검증
+            if not self.gmail_email or not self.gmail_password:
+                logger.error(f"❌ [완료메일] Gmail 설정 누락 - email: {'설정됨' if self.gmail_email else '없음'}, password: {'설정됨' if self.gmail_password else '없음'}")
+                return False
+
+            # 수신자 이메일 형식 검증
+            if not user_email or '@' not in user_email:
+                logger.error(f"❌ [완료메일] 유효하지 않은 수신자 이메일: {user_email}")
+                return False
+
+            logger.debug(f"📧 [완료메일] 발신자: {self.gmail_email}, 수신자: {user_email}")
+
             # 다운로드 토큰 생성
             download_token = self.generate_download_token(video_path, user_email)
+            logger.debug(f"📧 [완료메일] 다운로드 토큰 생성 완료 (길이: {len(download_token)})")
 
             # 다운로드 링크 생성 (기존 /download-video 엔드포인트 사용)
             base_url = os.getenv("BASE_URL", "http://localhost:8097")
             download_link = f"{base_url}/api/download-video?token={download_token}"
+            logger.debug(f"📧 [완료메일] 다운로드 링크: {download_link[:80]}...")
 
             # 이메일 템플릿 렌더링
             template = Template(self.get_email_template())
@@ -239,12 +257,16 @@ class EmailService:
                 duration=duration,
                 download_link=download_link
             )
+            logger.debug(f"📧 [완료메일] HTML 템플릿 렌더링 완료 (길이: {len(html_content)})")
 
             # 이메일 메시지 생성
             msg = MIMEMultipart('alternative')
             msg['From'] = f"{self.from_name} <{self.gmail_email}>"
             msg['To'] = user_email
             msg['Subject'] = f"🎬 릴스 영상 생성 완료 - {video_title}"
+            msg['Date'] = formatdate(localtime=True)  # 현재 시간으로 Date 헤더 설정
+
+            logger.debug(f"📧 [완료메일] Date 헤더: {msg['Date']}")
 
             # HTML 내용 추가
             html_part = MIMEText(html_content, 'html')
@@ -270,22 +292,80 @@ class EmailService:
             text_part = MIMEText(text_content, 'plain')
             msg.attach(text_part)
 
-            # SMTP 서버 연결 및 메일 발송
-            with smtplib.SMTP(self.smtp_server, self.smtp_port) as server:
-                server.starttls()
-                server.login(self.gmail_email, self.gmail_password)
-                server.send_message(msg)
+            logger.info(f"📧 [완료메일] 메시지 구성 완료 - From: {msg['From']}, To: {msg['To']}, Subject: {msg['Subject']}")
 
-            logger.info(f"✅ 완료 이메일 발송 성공: {user_email}")
+            # SMTP 서버 연결 및 메일 발송
+            logger.info(f"📧 [완료메일] SMTP 서버 연결 시작: {self.smtp_server}:{self.smtp_port}")
+
+            with smtplib.SMTP(self.smtp_server, self.smtp_port, timeout=30) as server:
+                # SMTP 디버그 모드 (환경변수로 제어)
+                if os.getenv("SMTP_DEBUG", "").lower() == "true":
+                    server.set_debuglevel(2)
+                    logger.info("📧 [완료메일] SMTP 디버그 모드 활성화")
+
+                logger.info(f"📧 [완료메일] SMTP 연결 성공, STARTTLS 시작...")
+                server.starttls()
+                logger.info(f"📧 [완료메일] STARTTLS 완료, 로그인 시도: {self.gmail_email}")
+
+                server.login(self.gmail_email, self.gmail_password)
+                logger.info(f"📧 [완료메일] SMTP 로그인 성공")
+
+                # send_message 결과 확인 (거부된 수신자 딕셔너리 반환)
+                logger.info(f"📧 [완료메일] 메시지 발송 중...")
+                refused = server.send_message(msg)
+
+                if refused:
+                    # 일부 수신자가 거부됨
+                    logger.error(f"❌ [완료메일] 일부 수신자 거부됨: {refused}")
+                    return False
+
+                # SMTP 서버 응답 확인
+                logger.info(f"📧 [완료메일] SMTP 발송 완료 - 거부된 수신자 없음")
+
+            logger.info(f"✅ [완료메일] 발송 성공: {user_email} (제목: {video_title})")
             return True
 
+        except smtplib.SMTPAuthenticationError as e:
+            logger.error(f"❌ [완료메일] SMTP 인증 실패 - Gmail 앱 비밀번호를 확인하세요: {e}")
+            return False
+        except smtplib.SMTPRecipientsRefused as e:
+            logger.error(f"❌ [완료메일] 수신자 거부됨 - 이메일 주소 확인 필요: {user_email}, 상세: {e}")
+            return False
+        except smtplib.SMTPSenderRefused as e:
+            logger.error(f"❌ [완료메일] 발신자 거부됨 - Gmail 설정 확인 필요: {e}")
+            return False
+        except smtplib.SMTPDataError as e:
+            logger.error(f"❌ [완료메일] SMTP 데이터 오류 - 메일 내용 문제: {e}")
+            return False
+        except smtplib.SMTPConnectError as e:
+            logger.error(f"❌ [완료메일] SMTP 연결 실패 - 네트워크 또는 서버 문제: {e}")
+            return False
+        except smtplib.SMTPServerDisconnected as e:
+            logger.error(f"❌ [완료메일] SMTP 서버 연결 끊김: {e}")
+            return False
+        except TimeoutError as e:
+            logger.error(f"❌ [완료메일] SMTP 연결 타임아웃 (30초): {e}")
+            return False
         except Exception as e:
-            logger.error(f"❌ 이메일 발송 실패: {e}")
+            logger.error(f"❌ [완료메일] 예상치 못한 오류 발생: {type(e).__name__}: {e}")
+            logger.error(f"❌ [완료메일] 스택 트레이스:\n{traceback.format_exc()}")
             return False
 
     def send_error_email(self, user_email: str, job_id: str, error_message: str) -> bool:
         """영상 생성 실패 이메일 발송"""
         try:
+            logger.info(f"📧 [실패메일] 발송 시작 - 수신자: {user_email}, job_id: {job_id}")
+
+            # 설정 검증
+            if not self.gmail_email or not self.gmail_password:
+                logger.error(f"❌ [실패메일] Gmail 설정 누락 - email: {'설정됨' if self.gmail_email else '없음'}, password: {'설정됨' if self.gmail_password else '없음'}")
+                return False
+
+            # 수신자 이메일 형식 검증
+            if not user_email or '@' not in user_email:
+                logger.error(f"❌ [실패메일] 유효하지 않은 수신자 이메일: {user_email}")
+                return False
+
             subject = "⚠️ 릴스 영상 생성 실패 안내"
 
             html_content = f"""
@@ -312,18 +392,59 @@ class EmailService:
             msg['From'] = f"{self.from_name} <{self.gmail_email}>"
             msg['To'] = user_email
             msg['Subject'] = subject
+            msg['Date'] = formatdate(localtime=True)  # 현재 시간으로 Date 헤더 설정
             msg.attach(MIMEText(html_content, 'html'))
 
-            with smtplib.SMTP(self.smtp_server, self.smtp_port) as server:
-                server.starttls()
-                server.login(self.gmail_email, self.gmail_password)
-                server.send_message(msg)
+            logger.info(f"📧 [실패메일] 메시지 구성 완료 - From: {msg['From']}, To: {msg['To']}, Date: {msg['Date']}")
+            logger.info(f"📧 [실패메일] SMTP 서버 연결 시작: {self.smtp_server}:{self.smtp_port}")
 
-            logger.info(f"✅ 실패 이메일 발송 성공: {user_email}")
+            with smtplib.SMTP(self.smtp_server, self.smtp_port, timeout=30) as server:
+                if os.getenv("SMTP_DEBUG", "").lower() == "true":
+                    server.set_debuglevel(2)
+
+                logger.info(f"📧 [실패메일] SMTP 연결 성공, STARTTLS 시작...")
+                server.starttls()
+                logger.info(f"📧 [실패메일] STARTTLS 완료, 로그인 시도: {self.gmail_email}")
+
+                server.login(self.gmail_email, self.gmail_password)
+                logger.info(f"📧 [실패메일] SMTP 로그인 성공")
+
+                logger.info(f"📧 [실패메일] 메시지 발송 중...")
+                refused = server.send_message(msg)
+
+                if refused:
+                    logger.error(f"❌ [실패메일] 일부 수신자 거부됨: {refused}")
+                    return False
+
+                logger.info(f"📧 [실패메일] SMTP 발송 완료 - 거부된 수신자 없음")
+
+            logger.info(f"✅ [실패메일] 발송 성공: {user_email} (job_id: {job_id})")
             return True
 
+        except smtplib.SMTPAuthenticationError as e:
+            logger.error(f"❌ [실패메일] SMTP 인증 실패 - Gmail 앱 비밀번호를 확인하세요: {e}")
+            return False
+        except smtplib.SMTPRecipientsRefused as e:
+            logger.error(f"❌ [실패메일] 수신자 거부됨 - 이메일 주소 확인 필요: {user_email}, 상세: {e}")
+            return False
+        except smtplib.SMTPSenderRefused as e:
+            logger.error(f"❌ [실패메일] 발신자 거부됨 - Gmail 설정 확인 필요: {e}")
+            return False
+        except smtplib.SMTPDataError as e:
+            logger.error(f"❌ [실패메일] SMTP 데이터 오류 - 메일 내용 문제: {e}")
+            return False
+        except smtplib.SMTPConnectError as e:
+            logger.error(f"❌ [실패메일] SMTP 연결 실패 - 네트워크 또는 서버 문제: {e}")
+            return False
+        except smtplib.SMTPServerDisconnected as e:
+            logger.error(f"❌ [실패메일] SMTP 서버 연결 끊김: {e}")
+            return False
+        except TimeoutError as e:
+            logger.error(f"❌ [실패메일] SMTP 연결 타임아웃 (30초): {e}")
+            return False
         except Exception as e:
-            logger.error(f"❌ 실패 이메일 발송 실패: {e}")
+            logger.error(f"❌ [실패메일] 예상치 못한 오류 발생: {type(e).__name__}: {e}")
+            logger.error(f"❌ [실패메일] 스택 트레이스:\n{traceback.format_exc()}")
             return False
 
 # 전역 인스턴스

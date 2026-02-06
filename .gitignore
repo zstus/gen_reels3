@@ -53,3 +53,12 @@ Thumbs.db
 *.log
 logs/
 
+# qwen
+backend/qwen/
+*.safetensors
+*.bin
+*.pth
+frontend/node_modules/
+frontend/.cache/
+.eslintcache
+

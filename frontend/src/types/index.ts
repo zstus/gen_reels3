@@ -73,6 +73,54 @@ export type TextStyle = 'outline' | 'background' | 'white_background' | 'black_t
 // 자막 읽어주기 타입
 export type VoiceNarration = 'enabled' | 'disabled';
 
+// TTS 엔진 타입
+export type TTSEngine = 'google' | 'qwen';
+
+// Qwen TTS 화자 타입
+export type QwenSpeaker = 'Sohee' | 'Vivian' | 'Serena' | 'Uncle_Fu' | 'Dylan' | 'Eric' | 'Ryan' | 'Aiden' | 'Ono_Anna';
+
+// Qwen TTS 속도 타입
+export type QwenSpeed = 'very_slow' | 'slow' | 'normal' | 'fast' | 'very_fast';
+
+// Qwen TTS 스타일 타입
+export type QwenStyle = 'neutral' | 'cheerful_witty' | 'cynical_calm';
+
+// Qwen 화자 정보
+export interface QwenSpeakerInfo {
+  id: QwenSpeaker;
+  language: string;
+  description: string;
+}
+
+// Qwen 화자 목록
+export const QWEN_SPEAKERS: QwenSpeakerInfo[] = [
+  { id: 'Sohee', language: 'Korean', description: '한국어 여성 (기본)' },
+  { id: 'Vivian', language: 'Chinese', description: '중국어 여성' },
+  { id: 'Serena', language: 'Chinese', description: '중국어 여성' },
+  { id: 'Uncle_Fu', language: 'Chinese', description: '중국어 남성' },
+  { id: 'Dylan', language: 'Chinese', description: '중국어 남성' },
+  { id: 'Eric', language: 'Chinese', description: '중국어 남성' },
+  { id: 'Ryan', language: 'English', description: '영어 남성' },
+  { id: 'Aiden', language: 'English', description: '영어 남성' },
+  { id: 'Ono_Anna', language: 'Japanese', description: '일본어 여성' },
+];
+
+// Qwen 속도 프리셋
+export const QWEN_SPEED_PRESETS: { id: QwenSpeed; label: string; description: string }[] = [
+  { id: 'very_slow', label: '매우 느림', description: '천천히 명확하게 발음' },
+  { id: 'slow', label: '느림', description: '느린 속도로 발음' },
+  { id: 'normal', label: '보통', description: '일반적인 속도 (기본값)' },
+  { id: 'fast', label: '빠름', description: '빠른 속도로 발음' },
+  { id: 'very_fast', label: '매우 빠름', description: '매우 빠르고 활기차게 발음' },
+];
+
+// Qwen 스타일 프리셋
+export const QWEN_STYLE_PRESETS: { id: QwenStyle; label: string; description: string }[] = [
+  { id: 'neutral', label: '기본', description: '자연스러운 말투' },
+  { id: 'cheerful_witty', label: '쾌활/익살', description: '쾌활하게 익살스러운 목소리로' },
+  { id: 'cynical_calm', label: '덤덤/시니컬', description: '덤덤한 말투로 시니컬하게' },
+];
+
 // 타이틀 영역 모드 타입
 export type TitleAreaMode = 'keep' | 'remove';
 
@@ -129,6 +177,11 @@ export interface ProjectData {
   voiceNarration: VoiceNarration;
   crossDissolve: CrossDissolve;
   imagePanningOptions?: { [key: number]: boolean }; // 이미지별 패닝 옵션 (선택적)
+  // TTS 설정
+  ttsEngine: TTSEngine;
+  qwenSpeaker: QwenSpeaker;
+  qwenSpeed: QwenSpeed;
+  qwenStyle: QwenStyle;
 }
 
 // API 응답 타입
@@ -158,6 +211,11 @@ export interface GenerateVideoRequest {
   voice_narration: VoiceNarration;
   cross_dissolve: CrossDissolve;
   subtitle_duration?: number;
+  // TTS 설정
+  tts_engine?: TTSEngine;
+  qwen_speaker?: QwenSpeaker;
+  qwen_speed?: QwenSpeed;
+  qwen_style?: QwenStyle;
 }
 
 // 영상 생성 상태 타입
@@ -199,6 +257,11 @@ export interface AsyncVideoRequest {
   voice_narration: VoiceNarration;
   cross_dissolve: CrossDissolve;
   subtitle_duration?: number;
+  // TTS 설정
+  tts_engine?: TTSEngine;
+  qwen_speaker?: QwenSpeaker;
+  qwen_speed?: QwenSpeed;
+  qwen_style?: QwenStyle;
 }
 
 // 비동기 영상 생성 응답 타입
