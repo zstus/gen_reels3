@@ -102,6 +102,7 @@ export const apiService = {
     qwenSpeaker?: QwenSpeaker;
     qwenSpeed?: QwenSpeed;
     qwenStyle?: QwenStyle;
+    perBodyTTSSettings?: string; // 대사별 TTS 설정 (JSON 문자열)
   }): Promise<ApiResponse> {
     const formData = new FormData();
     
@@ -164,6 +165,9 @@ export const apiService = {
     }
     if (data.qwenStyle) {
       formData.append('qwen_style', data.qwenStyle);
+    }
+    if (data.perBodyTTSSettings) {
+      formData.append('per_body_tts_settings', data.perBodyTTSSettings);
     }
 
     // 선택된 음악 파일 경로 추가
@@ -247,6 +251,7 @@ export const apiService = {
     qwenSpeaker?: QwenSpeaker;
     qwenSpeed?: QwenSpeed;
     qwenStyle?: QwenStyle;
+    perBodyTTSSettings?: string; // 대사별 TTS 설정 (JSON 문자열)
   }): Promise<AsyncVideoResponse> {
     const formData = new FormData();
 
@@ -319,6 +324,9 @@ export const apiService = {
     }
     if (data.qwenStyle) {
       formData.append('qwen_style', data.qwenStyle);
+    }
+    if (data.perBodyTTSSettings) {
+      formData.append('per_body_tts_settings', data.perBodyTTSSettings);
     }
 
     // 선택된 음악 파일 경로 추가

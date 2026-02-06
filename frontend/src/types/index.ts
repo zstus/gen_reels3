@@ -121,6 +121,12 @@ export const QWEN_STYLE_PRESETS: { id: QwenStyle; label: string; description: st
   { id: 'cynical_calm', label: '덤덤/시니컬', description: '덤덤한 말투로 시니컬하게' },
 ];
 
+// 대사별 TTS 설정 타입
+export interface PerBodyTTSSetting {
+  speaker: QwenSpeaker;
+  style: QwenStyle;
+}
+
 // 타이틀 영역 모드 타입
 export type TitleAreaMode = 'keep' | 'remove';
 
@@ -182,6 +188,9 @@ export interface ProjectData {
   qwenSpeaker: QwenSpeaker;
   qwenSpeed: QwenSpeed;
   qwenStyle: QwenStyle;
+  // 대사별 TTS 설정
+  perBodyTTSEnabled: boolean;
+  perBodyTTSSettings: { [bodyKey: string]: PerBodyTTSSetting };
 }
 
 // API 응답 타입

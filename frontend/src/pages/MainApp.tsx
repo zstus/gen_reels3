@@ -78,6 +78,8 @@ const MainApp: React.FC = () => {
     qwenSpeaker: 'Sohee',
     qwenSpeed: 'normal',
     qwenStyle: 'neutral',
+    perBodyTTSEnabled: false,
+    perBodyTTSSettings: {},
   });
 
   const handleNext = () => {
@@ -124,6 +126,8 @@ const MainApp: React.FC = () => {
       qwenSpeaker: 'Sohee',
       qwenSpeed: 'normal',
       qwenStyle: 'neutral',
+      perBodyTTSEnabled: false,
+      perBodyTTSSettings: {},
     });
   };
 

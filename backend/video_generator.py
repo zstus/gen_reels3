@@ -78,9 +78,10 @@ class VideoGenerator:
         self.qwen_speaker = "Sohee"  # 기본 Qwen 화자 (한국어)
         self.qwen_speed = "normal"   # 기본 Qwen 속도
         self.qwen_style = "neutral"  # 기본 Qwen 스타일
+        self.per_body_tts_settings = None  # 대사별 TTS 설정 (None이면 전역 설정 사용)
         logger.info(f"🎤 기본 TTS 엔진: {self.tts_engine}")
 
-    def set_tts_engine(self, engine: str, speaker: str = None, speed: str = None, style: str = None):
+    def set_tts_engine(self, engine: str, speaker: str = None, speed: str = None, style: str = None, per_body_tts_settings: dict = None):
         """
         TTS 엔진 설정
 
@@ -89,6 +90,7 @@ class VideoGenerator:
             speaker: Qwen 화자 (Sohee, Vivian 등)
             speed: Qwen 속도 (very_slow, slow, normal, fast, very_fast)
             style: Qwen 스타일 (neutral, cheerful_witty, cynical_calm)
+            per_body_tts_settings: 대사별 TTS 설정 dict (예: {"body1": {"speaker": "Sohee", "style": "cheerful_witty"}, ...})
         """
         if engine not in ['google', 'qwen']:
             logger.warning(f"⚠️ 알 수 없는 TTS 엔진 '{engine}', 기본값 'google' 사용")
@@ -107,6 +109,12 @@ class VideoGenerator:
             if style:
                 self.qwen_style = style
                 logger.info(f"🎭 Qwen 스타일 설정: {style}")
+
+        # 대사별 TTS 설정 저장 (명시적으로 전달된 경우에만 덮어쓰기)
+        if per_body_tts_settings is not None:
+            self.per_body_tts_settings = per_body_tts_settings
+            if per_body_tts_settings:
+                logger.info(f"🎭 대사별 TTS 설정 적용: {list(per_body_tts_settings.keys())}")
 
     def _init_qwen_tts(self):
         """Qwen TTS 서비스 지연 초기화"""
@@ -2188,18 +2196,32 @@ class VideoGenerator:
                     logger.info(f"⏱️ {body_key} TTS 건너뜀 (자막 지속 시간 {subtitle_duration}초 사용)")
                     tts_files.append((body_key, None, subtitle_duration))
                 else:
+                    # 대사별 TTS 설정이 있으면 임시로 화자/스타일 교체
+                    original_speaker = self.qwen_speaker
+                    original_style = self.qwen_style
+                    if self.per_body_tts_settings and self.tts_engine == 'qwen' and body_key in self.per_body_tts_settings:
+                        body_setting = self.per_body_tts_settings[body_key]
+                        self.qwen_speaker = body_setting.get('speaker', original_speaker)
+                        self.qwen_style = body_setting.get('style', original_style)
+                        logger.info(f"🎭 {body_key} 개별 TTS: 화자={self.qwen_speaker}, 스타일={self.qwen_style}")
+
                     logger.info(f"🎙️ {body_key} TTS 생성 중... 내용: '{content[body_key][:50]}...'")
                     body_tts = self.create_tts_audio(content[body_key])
+
+                    # 원래 설정 복원
+                    self.qwen_speaker = original_speaker
+                    self.qwen_style = original_style
+
                     if body_tts:
                         body_duration = self.get_audio_duration(body_tts)
                         tts_files.append((body_key, body_tts, body_duration))
                         logger.info(f"✅ {body_key} TTS 완료: {body_duration:.1f}초")
                     else:
                         logger.error(f"❌ {body_key} TTS 생성 실패")
-            
+
             # 이미지 할당 모드에 따른 처리 분기
             print(f"🎬 이미지 할당 모드: {image_allocation_mode}")
-            
+
             group_clips = []
             audio_segments = []
             
@@ -2624,15 +2646,29 @@ class VideoGenerator:
                     logger.info(f"⏱️ {body_key} TTS 건너뜀 (자막 지속 시간 {subtitle_duration}초 사용)")
                     tts_files.append((body_key, None, subtitle_duration))
                 else:
+                    # 대사별 TTS 설정이 있으면 임시로 화자/스타일 교체
+                    original_speaker = self.qwen_speaker
+                    original_style = self.qwen_style
+                    if self.per_body_tts_settings and self.tts_engine == 'qwen' and body_key in self.per_body_tts_settings:
+                        body_setting = self.per_body_tts_settings[body_key]
+                        self.qwen_speaker = body_setting.get('speaker', original_speaker)
+                        self.qwen_style = body_setting.get('style', original_style)
+                        logger.info(f"🎭 {body_key} 개별 TTS: 화자={self.qwen_speaker}, 스타일={self.qwen_style}")
+
                     logger.info(f"🎙️ {body_key} TTS 생성 중... 내용: '{content[body_key][:50]}...'")
                     body_tts = self.create_tts_audio(content[body_key])
+
+                    # 원래 설정 복원
+                    self.qwen_speaker = original_speaker
+                    self.qwen_style = original_style
+
                     if body_tts:
                         body_duration = self.get_audio_duration(body_tts)
                         tts_files.append((body_key, body_tts, body_duration))
                         logger.info(f"✅ {body_key} TTS 완료: {body_duration:.1f}초")
                     else:
                         logger.error(f"❌ {body_key} TTS 생성 실패")
-            
+
             # 이미지 할당 모드에 따른 처리 분기
             print(f"🎬 이미지 할당 모드: {image_allocation_mode}")
             body_clips = []

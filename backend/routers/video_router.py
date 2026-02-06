@@ -93,6 +93,7 @@ async def generate_video(
     qwen_speaker: str = Form(default="Sohee"),  # Qwen TTS 화자
     qwen_speed: str = Form(default="normal"),  # Qwen TTS 속도
     qwen_style: str = Form(default="neutral"),  # Qwen TTS 스타일
+    per_body_tts_settings: str = Form(default=""),  # 대사별 TTS 설정 (JSON 문자열)
 
     # 이미지 파일 업로드 (최대 50개)
     image_1: Optional[UploadFile] = File(None),
@@ -198,6 +199,16 @@ async def generate_video(
 
         # 영상 생성
         video_gen = VideoGenerator()
+
+        # 대사별 TTS 설정 파싱 및 인스턴스에 설정
+        if per_body_tts_settings and per_body_tts_settings.strip():
+            try:
+                parsed_per_body_tts = json.loads(per_body_tts_settings)
+                if parsed_per_body_tts:
+                    video_gen.per_body_tts_settings = parsed_per_body_tts
+                    logger.info(f"🎭 대사별 TTS 설정 적용: {list(parsed_per_body_tts.keys())}")
+            except Exception as parse_error:
+                logger.warning(f"⚠️ 대사별 TTS 설정 파싱 실패: {parse_error}")
 
         # BGM 파일 경로 결정
         if background_music:
@@ -375,6 +386,7 @@ async def generate_video_async(
     qwen_speaker: str = Form(default="Sohee"),  # Qwen TTS 화자
     qwen_speed: str = Form(default="normal"),  # Qwen TTS 속도
     qwen_style: str = Form(default="neutral"),  # Qwen TTS 스타일
+    per_body_tts_settings: str = Form(default=""),  # 대사별 TTS 설정 (JSON 문자열)
 
     # 이미지 파일 업로드 (최대 50개)
     image_1: Optional[UploadFile] = File(None),
@@ -527,6 +539,7 @@ async def generate_video_async(
             'qwen_speaker': qwen_speaker,
             'qwen_speed': qwen_speed,
             'qwen_style': qwen_style,
+            'per_body_tts_settings': per_body_tts_settings,
         }
 
         # 작업을 큐에 추가

@@ -30,6 +30,8 @@ import {
   AccordionSummary,
   AccordionDetails,
   Skeleton,
+  Tooltip,
+  IconButton,
 } from '@mui/material';
 import { ImageStepRef } from './ImageStep';
 import {
@@ -50,8 +52,9 @@ import {
   FontDownload,
   Style,
   FormatColorText,
+  RecordVoiceOver,
 } from '@mui/icons-material';
-import { ProjectData, GenerationStatus, AsyncVideoResponse, FontFile, TextPosition, TextStyle, VoiceNarration, TitleAreaMode, CrossDissolve, TTSEngine, QwenSpeaker, QwenSpeed, QwenStyle, QWEN_SPEAKERS, QWEN_SPEED_PRESETS, QWEN_STYLE_PRESETS } from '../types';
+import { ProjectData, GenerationStatus, AsyncVideoResponse, FontFile, TextPosition, TextStyle, VoiceNarration, TitleAreaMode, CrossDissolve, TTSEngine, QwenSpeaker, QwenSpeed, QwenStyle, QWEN_SPEAKERS, QWEN_SPEED_PRESETS, QWEN_STYLE_PRESETS, PerBodyTTSSetting } from '../types';
 import apiService from '../services/api';
 
 interface GenerateStepProps {
@@ -113,6 +116,10 @@ const GenerateStep: React.FC<GenerateStepProps> = ({
   const [qwenSpeaker, setQwenSpeaker] = useState<QwenSpeaker>(projectData.qwenSpeaker || 'Sohee');
   const [qwenSpeed, setQwenSpeed] = useState<QwenSpeed>(projectData.qwenSpeed || 'normal');
   const [qwenStyle, setQwenStyle] = useState<QwenStyle>(projectData.qwenStyle || 'neutral');
+
+  // 대사별 TTS 설정 상태
+  const [perBodyTTSEnabled, setPerBodyTTSEnabled] = useState<boolean>(projectData.perBodyTTSEnabled || false);
+  const [perBodyTTSSettings, setPerBodyTTSSettings] = useState<{ [bodyKey: string]: PerBodyTTSSetting }>(projectData.perBodyTTSSettings || {});
 
   // 미리보기 관련 상태
   const [previewImage, setPreviewImage] = useState<string | null>(null);
@@ -315,6 +322,9 @@ const GenerateStep: React.FC<GenerateStepProps> = ({
         qwenSpeaker: qwenSpeaker,
         qwenSpeed: qwenSpeed,
         qwenStyle: qwenStyle,
+        // 대사별 TTS 설정
+        perBodyTTSSettings: (perBodyTTSEnabled && ttsEngine === 'qwen' && Object.keys(perBodyTTSSettings).length > 0)
+          ? JSON.stringify(perBodyTTSSettings) : undefined,
       });
 
       if (response.status === 'success') {
@@ -383,6 +393,9 @@ const GenerateStep: React.FC<GenerateStepProps> = ({
         qwenSpeaker: qwenSpeaker,
         qwenSpeed: qwenSpeed,
         qwenStyle: qwenStyle,
+        // 대사별 TTS 설정
+        perBodyTTSSettings: (perBodyTTSEnabled && ttsEngine === 'qwen' && Object.keys(perBodyTTSSettings).length > 0)
+          ? JSON.stringify(perBodyTTSSettings) : undefined,
       });
 
       if (response.status === 'success') {
@@ -896,6 +909,117 @@ const GenerateStep: React.FC<GenerateStepProps> = ({
                           <Typography variant="caption" color="warning.main" sx={{ display: 'block', mt: 1 }}>
                             * Qwen TTS 사용 시 첫 실행에서 모델 로딩 시간이 소요될 수 있습니다 (16GB 메모리 권장)
                           </Typography>
+
+                          {/* 대사별 화자/어투 지정 */}
+                          <Divider sx={{ my: 2 }} />
+                          <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                            <RecordVoiceOver sx={{ mr: 1, fontSize: 20 }} />
+                            <FormControlLabel
+                              control={
+                                <Switch
+                                  checked={perBodyTTSEnabled}
+                                  onChange={(e) => {
+                                    setPerBodyTTSEnabled(e.target.checked);
+                                    if (!e.target.checked) {
+                                      setPerBodyTTSSettings({});
+                                    }
+                                  }}
+                                  size="small"
+                                />
+                              }
+                              label={<Typography variant="body2">대사별 화자/어투 개별 지정</Typography>}
+                            />
+                          </Box>
+
+                          {perBodyTTSEnabled && (
+                            <Box sx={{ mt: 1 }}>
+                              <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1 }}>
+                                각 대사마다 다른 화자와 어투를 지정할 수 있습니다. 미지정 시 위의 전역 설정이 적용됩니다.
+                              </Typography>
+                              <Box sx={{ maxHeight: 300, overflow: 'auto', pr: 1 }}>
+                                {Object.entries(projectData.content)
+                                  .filter(([key, value]) => key.startsWith('body') && typeof value === 'string' && value.trim() !== '')
+                                  .map(([bodyKey, bodyText]) => {
+                                    const setting = perBodyTTSSettings[bodyKey];
+                                    const hasCustomSetting = !!setting;
+                                    return (
+                                      <Card key={bodyKey} variant="outlined" sx={{ mb: 1, bgcolor: hasCustomSetting ? 'action.hover' : 'transparent' }}>
+                                        <CardContent sx={{ py: 1, px: 2, '&:last-child': { pb: 1 } }}>
+                                          <Typography variant="caption" color="primary" fontWeight="bold">
+                                            {bodyKey.replace('body', '대사 ')}
+                                          </Typography>
+                                          <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                            {bodyText as string}
+                                          </Typography>
+                                          <Grid container spacing={1}>
+                                            <Grid item xs={6}>
+                                              <FormControl fullWidth size="small">
+                                                <InputLabel sx={{ fontSize: '0.75rem' }}>화자</InputLabel>
+                                                <Select
+                                                  value={setting?.speaker || ''}
+                                                  label="화자"
+                                                  onChange={(e) => {
+                                                    const newValue = e.target.value as QwenSpeaker;
+                                                    setPerBodyTTSSettings(prev => ({
+                                                      ...prev,
+                                                      [bodyKey]: {
+                                                        speaker: newValue,
+                                                        style: prev[bodyKey]?.style || qwenStyle,
+                                                      }
+                                                    }));
+                                                  }}
+                                                  sx={{ fontSize: '0.75rem' }}
+                                                >
+                                                  {QWEN_SPEAKERS.map((s) => (
+                                                    <MenuItem key={s.id} value={s.id} sx={{ fontSize: '0.75rem' }}>
+                                                      {s.id} - {s.description}
+                                                    </MenuItem>
+                                                  ))}
+                                                </Select>
+                                              </FormControl>
+                                            </Grid>
+                                            <Grid item xs={6}>
+                                              <FormControl fullWidth size="small">
+                                                <InputLabel sx={{ fontSize: '0.75rem' }}>어투</InputLabel>
+                                                <Select
+                                                  value={setting?.style || ''}
+                                                  label="어투"
+                                                  onChange={(e) => {
+                                                    const newValue = e.target.value as QwenStyle;
+                                                    setPerBodyTTSSettings(prev => ({
+                                                      ...prev,
+                                                      [bodyKey]: {
+                                                        speaker: prev[bodyKey]?.speaker || qwenSpeaker,
+                                                        style: newValue,
+                                                      }
+                                                    }));
+                                                  }}
+                                                  sx={{ fontSize: '0.75rem' }}
+                                                >
+                                                  {QWEN_STYLE_PRESETS.map((p) => (
+                                                    <MenuItem key={p.id} value={p.id} sx={{ fontSize: '0.75rem' }}>
+                                                      {p.label}
+                                                    </MenuItem>
+                                                  ))}
+                                                </Select>
+                                              </FormControl>
+                                            </Grid>
+                                          </Grid>
+                                        </CardContent>
+                                      </Card>
+                                    );
+                                  })}
+                              </Box>
+                              <Button
+                                size="small"
+                                variant="text"
+                                onClick={() => setPerBodyTTSSettings({})}
+                                sx={{ mt: 1 }}
+                              >
+                                전체 초기화
+                              </Button>
+                            </Box>
+                          )}
                         </Box>
                       )}
                     </Box>

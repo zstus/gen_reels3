@@ -119,6 +119,18 @@ class VideoWorker:
             qwen_speed = video_params.get('qwen_speed', 'normal')
             qwen_style = video_params.get('qwen_style', 'neutral')
 
+            # 대사별 TTS 설정 파싱
+            parsed_per_body_tts = None
+            per_body_tts_str = video_params.get('per_body_tts_settings', '')
+            if per_body_tts_str and per_body_tts_str.strip():
+                try:
+                    parsed_per_body_tts = json.loads(per_body_tts_str) if isinstance(per_body_tts_str, str) else per_body_tts_str
+                    if parsed_per_body_tts:
+                        logger.info(f"🎭 대사별 TTS 설정: {list(parsed_per_body_tts.keys())}")
+                except Exception as parse_error:
+                    logger.warning(f"⚠️ 대사별 TTS 설정 파싱 실패: {parse_error}")
+                    parsed_per_body_tts = None
+
             # 영상 파라미터 로깅
             logger.info(f"📋 영상 파라미터: 음악={music_mood}, 테스트파일={use_test_files}, 텍스트위치={text_position}, 타이틀폰트={title_font}({title_font_size}pt), 본문폰트={body_font}({body_font_size}pt), 자막음성={voice_narration}, 크로스디졸브={cross_dissolve}, 자막지속시간={subtitle_duration}초")
             logger.info(f"🔊 TTS 파라미터: 엔진={tts_engine}, Qwen화자={qwen_speaker}, Qwen속도={qwen_speed}, Qwen스타일={qwen_style}")
@@ -204,6 +216,11 @@ class VideoWorker:
             except Exception as e:
                 logger.error(f"❌ text.json 저장 실패: {e}")
                 raise
+
+            # 대사별 TTS 설정을 인스턴스에 적용
+            if parsed_per_body_tts:
+                self.video_generator.per_body_tts_settings = parsed_per_body_tts
+                logger.info(f"🎭 VideoGenerator에 대사별 TTS 설정 적용 완료")
 
             # 영상 생성 실행
             if use_test_files:
