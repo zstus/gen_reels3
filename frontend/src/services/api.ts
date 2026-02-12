@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { ApiResponse, GenerateVideoRequest, MusicFolder, MusicFile, MusicMood, ImageUploadMode, TextPosition, TextStyle, AsyncVideoRequest, AsyncVideoResponse, JobInfo, VoiceNarration, TitleAreaMode, CrossDissolve, CreateJobFolderResponse, CleanupJobFolderResponse, BookmarkVideo, BookmarkImage, TTSEngine, QwenSpeaker, QwenSpeed, QwenStyle } from '../types';
+import { ApiResponse, GenerateVideoRequest, MusicFolder, MusicFile, MusicMood, ImageUploadMode, TextPosition, TextStyle, AsyncVideoRequest, AsyncVideoResponse, JobInfo, VoiceNarration, TitleAreaMode, CrossDissolve, CreateJobFolderResponse, CleanupJobFolderResponse, BookmarkVideo, BookmarkImage, TTSEngine, QwenSpeaker, QwenSpeed, QwenStyle, EdgeSpeaker, EdgeSpeed, EdgePitch } from '../types';
 
 // API 베이스 URL 설정
 const API_BASE_URL = '/api';
@@ -102,7 +102,11 @@ export const apiService = {
     qwenSpeaker?: QwenSpeaker;
     qwenSpeed?: QwenSpeed;
     qwenStyle?: QwenStyle;
+    edgeSpeaker?: EdgeSpeaker;
+    edgeSpeed?: EdgeSpeed;
+    edgePitch?: EdgePitch;
     perBodyTTSSettings?: string; // 대사별 TTS 설정 (JSON 문자열)
+    videoFormat?: string; // 영상 포맷 (reels / youtube)
   }): Promise<ApiResponse> {
     const formData = new FormData();
     
@@ -168,6 +172,20 @@ export const apiService = {
     }
     if (data.perBodyTTSSettings) {
       formData.append('per_body_tts_settings', data.perBodyTTSSettings);
+    }
+    if (data.edgeSpeaker) {
+      formData.append('edge_speaker', data.edgeSpeaker);
+    }
+    if (data.edgeSpeed) {
+      formData.append('edge_speed', data.edgeSpeed);
+    }
+    if (data.edgePitch) {
+      formData.append('edge_pitch', data.edgePitch);
+    }
+
+    // 영상 포맷 추가
+    if (data.videoFormat) {
+      formData.append('video_format', data.videoFormat);
     }
 
     // 선택된 음악 파일 경로 추가
@@ -251,7 +269,11 @@ export const apiService = {
     qwenSpeaker?: QwenSpeaker;
     qwenSpeed?: QwenSpeed;
     qwenStyle?: QwenStyle;
+    edgeSpeaker?: EdgeSpeaker;
+    edgeSpeed?: EdgeSpeed;
+    edgePitch?: EdgePitch;
     perBodyTTSSettings?: string; // 대사별 TTS 설정 (JSON 문자열)
+    videoFormat?: string; // 영상 포맷 (reels / youtube)
   }): Promise<AsyncVideoResponse> {
     const formData = new FormData();
 
@@ -327,6 +349,20 @@ export const apiService = {
     }
     if (data.perBodyTTSSettings) {
       formData.append('per_body_tts_settings', data.perBodyTTSSettings);
+    }
+    if (data.edgeSpeaker) {
+      formData.append('edge_speaker', data.edgeSpeaker);
+    }
+    if (data.edgeSpeed) {
+      formData.append('edge_speed', data.edgeSpeed);
+    }
+    if (data.edgePitch) {
+      formData.append('edge_pitch', data.edgePitch);
+    }
+
+    // 영상 포맷 추가
+    if (data.videoFormat) {
+      formData.append('video_format', data.videoFormat);
     }
 
     // 선택된 음악 파일 경로 추가
@@ -410,6 +446,7 @@ export const apiService = {
     image?: File;
     imagePanningOptions?: { [key: number]: boolean };  // 패닝 옵션 추가
     jobId?: string;  // Job ID 추가
+    videoFormat?: string;  // 영상 포맷
   }): Promise<{ status: string; preview_url: string; message: string }> {
     const formData = new FormData();
 
@@ -434,6 +471,10 @@ export const apiService = {
 
     if (data.imagePanningOptions) {
       formData.append('image_panning_options', JSON.stringify(data.imagePanningOptions));
+    }
+
+    if (data.videoFormat) {
+      formData.append('video_format', data.videoFormat);
     }
 
     if (data.image) {

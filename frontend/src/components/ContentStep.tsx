@@ -136,7 +136,13 @@ const ContentStep: React.FC<ContentStepProps> = ({ content, onChange, onNext }) 
   // JSON 파싱 함수
   const parseJsonContent = (jsonString: string): ReelsContent | null => {
     try {
-      const parsed = JSON.parse(jsonString);
+      // 스마트 따옴표 → 일반 따옴표 정규화 (맥 등에서 자동 변환되는 문제 대응)
+      const normalized = jsonString
+        .replace(/\u201c/g, '"')   // " → "
+        .replace(/\u201d/g, '"')   // " → "
+        .replace(/\u2018/g, "'")   // ' → '
+        .replace(/\u2019/g, "'");  // ' → '
+      const parsed = JSON.parse(normalized);
       
       // 필수 필드 검증
       if (!parsed.title) {

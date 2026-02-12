@@ -20,7 +20,7 @@ import ContentStep from '../components/ContentStep';
 import ImageStep, { ImageStepRef } from '../components/ImageStep';
 import MusicStep from '../components/MusicStep';
 import GenerateStep from '../components/GenerateStep';
-import { ProjectData, ReelsContent, MusicMood, ImageUploadMode, MusicFile, TextPosition, TextStyle, TitleAreaMode, CrossDissolve, TTSEngine, QwenSpeaker, QwenSpeed } from '../types';
+import { ProjectData, ReelsContent, MusicMood, ImageUploadMode, MusicFile, TextPosition, TextStyle, TitleAreaMode, CrossDissolve, TTSEngine, QwenSpeaker, QwenSpeed, VideoFormat } from '../types';
 import * as apiService from '../services/api';
 
 // UUID 생성 유틸리티 함수
@@ -74,12 +74,16 @@ const MainApp: React.FC = () => {
     crossDissolve: 'enabled',
     imagePanningOptions: {}, // 🎨 패닝 옵션 초기화
     // TTS 설정 초기화
-    ttsEngine: 'google',
+    ttsEngine: 'edge',
     qwenSpeaker: 'Sohee',
     qwenSpeed: 'normal',
     qwenStyle: 'neutral',
+    edgeSpeaker: 'female',
+    edgeSpeed: 'normal',
+    edgePitch: 'normal',
     perBodyTTSEnabled: false,
     perBodyTTSSettings: {},
+    videoFormat: 'reels',
   });
 
   const handleNext = () => {
@@ -122,12 +126,16 @@ const MainApp: React.FC = () => {
       crossDissolve: 'enabled',
       imagePanningOptions: {},
       // TTS 설정 초기화
-      ttsEngine: 'google',
+      ttsEngine: 'edge',
       qwenSpeaker: 'Sohee',
       qwenSpeed: 'normal',
       qwenStyle: 'neutral',
+      edgeSpeaker: 'female',
+      edgeSpeed: 'normal',
+      edgePitch: 'normal',
       perBodyTTSEnabled: false,
       perBodyTTSSettings: {},
+      videoFormat: 'reels',
     });
   };
 

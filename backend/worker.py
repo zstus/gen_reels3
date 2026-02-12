@@ -114,10 +114,16 @@ class VideoWorker:
             # 자막 지속 시간 파라미터 추출
             subtitle_duration = video_params.get('subtitle_duration', 0.0)
             # TTS 파라미터 추출
-            tts_engine = video_params.get('tts_engine', 'google')
+            tts_engine = video_params.get('tts_engine', 'edge')
             qwen_speaker = video_params.get('qwen_speaker', 'Sohee')
             qwen_speed = video_params.get('qwen_speed', 'normal')
             qwen_style = video_params.get('qwen_style', 'neutral')
+            edge_speaker = video_params.get('edge_speaker', 'female')
+            edge_speed = video_params.get('edge_speed', 'normal')
+            edge_pitch = video_params.get('edge_pitch', 'normal')
+
+            # 영상 포맷 설정
+            video_format = video_params.get('video_format', 'reels')
 
             # 대사별 TTS 설정 파싱
             parsed_per_body_tts = None
@@ -217,6 +223,9 @@ class VideoWorker:
                 logger.error(f"❌ text.json 저장 실패: {e}")
                 raise
 
+            # 영상 포맷 설정
+            self.video_generator.set_video_format(video_format)
+
             # 대사별 TTS 설정을 인스턴스에 적용
             if parsed_per_body_tts:
                 self.video_generator.per_body_tts_settings = parsed_per_body_tts
@@ -246,7 +255,10 @@ class VideoWorker:
                     tts_engine=tts_engine,
                     qwen_speaker=qwen_speaker,
                     qwen_speed=qwen_speed,
-                    qwen_style=qwen_style
+                    qwen_style=qwen_style,
+                    edge_speaker=edge_speaker,
+                    edge_speed=edge_speed,
+                    edge_pitch=edge_pitch
                 )
             else:
                 # 업로드된 파일 사용
@@ -271,7 +283,10 @@ class VideoWorker:
                     tts_engine=tts_engine,
                     qwen_speaker=qwen_speaker,
                     qwen_speed=qwen_speed,
-                    qwen_style=qwen_style
+                    qwen_style=qwen_style,
+                    edge_speaker=edge_speaker,
+                    edge_speed=edge_speed,
+                    edge_pitch=edge_pitch
                 )
 
             if result and isinstance(result, str):
@@ -307,7 +322,8 @@ class VideoWorker:
                     user_email=user_email,
                     video_path=video_path,
                     video_title=video_title,
-                    duration=duration
+                    duration=duration,
+                    content_data=content
                 )
 
                 if email_sent:
@@ -366,20 +382,6 @@ class VideoWorker:
             return False
 
         finally:
-            # Job 폴더 정리 (성공/실패 관계없이)
-            if FOLDER_MANAGER_AVAILABLE:
-                try:
-                    logger.info(f"🗑️ Job 폴더 정리 시작: {job_id}")
-                    cleaned = folder_manager.cleanup_job_folders(job_id, keep_output=True)
-                    if cleaned:
-                        logger.info(f"✅ Job 폴더 정리 완료: {job_id}")
-                    else:
-                        logger.warning(f"⚠️ Job 폴더 정리 부분 실패: {job_id}")
-                except Exception as cleanup_error:
-                    logger.error(f"❌ Job 폴더 정리 실패: {job_id} - {cleanup_error}")
-            else:
-                logger.info(f"ℹ️ Folder Manager 미사용으로 폴더 정리 생략: {job_id}")
-
             self.current_job = None
 
     def start(self, poll_interval: int = 5):
@@ -409,13 +411,24 @@ class VideoWorker:
 
                     if success:
                         logger.info(f"✅ 작업 처리 완료: {job_id} (총 처리: {processed_jobs}개)")
+                        # 성공 시 Job 폴더 정리 (output 보존, uploads 정리)
+                        if FOLDER_MANAGER_AVAILABLE:
+                            try:
+                                logger.info(f"🗑️ Job 폴더 정리 (성공): {job_id}")
+                                cleaned = folder_manager.cleanup_job_folders(job_id, keep_output=True)
+                                if cleaned:
+                                    logger.info(f"✅ Job 폴더 정리 완료: {job_id}")
+                                else:
+                                    logger.warning(f"⚠️ Job 폴더 정리 부분 실패: {job_id}")
+                            except Exception as cleanup_error:
+                                logger.error(f"❌ Job 폴더 정리 실패: {job_id} - {cleanup_error}")
                     else:
                         logger.error(f"❌ 작업 처리 실패: {job_id}")
 
                         # 재시도 가능한 경우 재시도 큐에 추가
                         can_retry = job_queue.retry_job(job_id)
                         if can_retry:
-                            logger.info(f"🔄 작업 재시도 큐에 추가: {job_id}")
+                            logger.info(f"🔄 작업 재시도 큐에 추가: {job_id} (Job 폴더 유지)")
                         else:
                             # 최대 재시도 횟수 초과 - 최종 실패 이메일 발송
                             logger.error(f"💀 최종 실패: {job_id} - 실패 이메일 발송")
@@ -427,14 +440,35 @@ class VideoWorker:
                                 latest_job_data = job_queue.get_job(job_id)
                                 error_msg = latest_job_data.get('error_message', '알 수 없는 오류') if latest_job_data else '작업 처리 실패'
 
+                                # video_params에서 대사 데이터 추출
+                                video_params = job_data.get('video_params', {})
+                                try:
+                                    content_data_str = video_params.get('content_data', '{}')
+                                    error_content = json.loads(content_data_str) if isinstance(content_data_str, str) else content_data_str
+                                except Exception:
+                                    error_content = None
+
                                 email_service.send_error_email(
                                     user_email=user_email,
                                     job_id=job_id,
-                                    error_message=error_msg
+                                    error_message=error_msg,
+                                    content_data=error_content
                                 )
                                 logger.info(f"📧 최종 실패 이메일 발송 완료: {user_email}")
                             except Exception as email_error:
                                 logger.error(f"❌ 실패 이메일 발송 실패: {email_error}")
+
+                            # 최종 실패 시 Job 폴더 정리 (모든 폴더 삭제)
+                            if FOLDER_MANAGER_AVAILABLE:
+                                try:
+                                    logger.info(f"🗑️ Job 폴더 정리 (최종 실패): {job_id}")
+                                    cleaned = folder_manager.cleanup_job_folders(job_id, keep_output=False)
+                                    if cleaned:
+                                        logger.info(f"✅ Job 폴더 정리 완료: {job_id}")
+                                    else:
+                                        logger.warning(f"⚠️ Job 폴더 정리 부분 실패: {job_id}")
+                                except Exception as cleanup_error:
+                                    logger.error(f"❌ Job 폴더 정리 실패: {job_id} - {cleanup_error}")
 
                 else:
                     # 작업이 없으면 대기

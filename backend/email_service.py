@@ -5,6 +5,7 @@ Gmail SMTP 이메일 발송 서비스
 
 import smtplib
 import os
+import json
 import jwt
 import traceback
 from email.mime.text import MIMEText
@@ -187,6 +188,13 @@ class EmailService:
                 <p><strong>영상 길이:</strong> {{ duration }}</p>
             </div>
 
+            {% if script_json %}
+            <div class="video-info" style="border-left-color: #27ae60;">
+                <h3><span class="emoji">📝</span>대본 내용</h3>
+                <pre style="background: #f5f5f5; padding: 12px; border-radius: 6px; font-size: 13px; line-height: 1.5; white-space: pre-wrap; word-wrap: break-word; overflow-x: auto;">{{ script_json }}</pre>
+            </div>
+            {% endif %}
+
             <div style="text-align: center;">
                 <a href="{{ download_link }}" class="download-btn">
                     <span class="emoji">⬇️</span>영상 다운로드
@@ -218,11 +226,18 @@ class EmailService:
         """
         return template
 
+    def _build_script_json(self, content_data: Optional[Dict[str, Any]] = None) -> str:
+        """대사 데이터를 JSON 문자열로 변환 (이메일 표시용)"""
+        if not content_data:
+            return ""
+        return json.dumps(content_data, ensure_ascii=False, indent=2)
+
     def send_completion_email(self,
                              user_email: str,
                              video_path: str,
                              video_title: str = "릴스 영상",
-                             duration: str = "약 10-30초") -> bool:
+                             duration: str = "약 10-30초",
+                             content_data: Optional[Dict[str, Any]] = None) -> bool:
         """영상 생성 완료 이메일 발송"""
         try:
             logger.info(f"📧 [완료메일] 발송 시작 - 수신자: {user_email}, 제목: {video_title}")
@@ -250,12 +265,14 @@ class EmailService:
 
             # 이메일 템플릿 렌더링
             template = Template(self.get_email_template())
+            script_json = self._build_script_json(content_data)
             html_content = template.render(
                 user_email=user_email,
                 video_title=video_title,
                 completed_at=datetime.now().strftime("%Y년 %m월 %d일 %H시 %M분"),
                 duration=duration,
-                download_link=download_link
+                download_link=download_link,
+                script_json=script_json
             )
             logger.debug(f"📧 [완료메일] HTML 템플릿 렌더링 완료 (길이: {len(html_content)})")
 
@@ -273,13 +290,17 @@ class EmailService:
             msg.attach(html_part)
 
             # 텍스트 버전도 추가 (HTML 미지원 클라이언트용)
+            script_text = ""
+            if script_json:
+                script_text = f"\n📝 대본 내용:\n{script_json}\n"
+
             text_content = f"""
 릴스 영상 생성 완료!
 
 {user_email}님, 안녕하세요!
 
 요청해주신 릴스 영상 '{video_title}'이 성공적으로 생성되었습니다.
-
+{script_text}
 다운로드 링크: {download_link}
 
 ⚠️ 중요 안내:
@@ -351,7 +372,8 @@ class EmailService:
             logger.error(f"❌ [완료메일] 스택 트레이스:\n{traceback.format_exc()}")
             return False
 
-    def send_error_email(self, user_email: str, job_id: str, error_message: str) -> bool:
+    def send_error_email(self, user_email: str, job_id: str, error_message: str,
+                        content_data: Optional[Dict[str, Any]] = None) -> bool:
         """영상 생성 실패 이메일 발송"""
         try:
             logger.info(f"📧 [실패메일] 발송 시작 - 수신자: {user_email}, job_id: {job_id}")
@@ -368,6 +390,15 @@ class EmailService:
 
             subject = "⚠️ 릴스 영상 생성 실패 안내"
 
+            # 대사 HTML 생성 (JSON 형식)
+            script_json = self._build_script_json(content_data)
+            script_html = ""
+            if script_json:
+                script_html = '<div style="background: #f0f7f0; padding: 15px; border-radius: 5px; margin: 15px 0; border-left: 4px solid #27ae60;">\n'
+                script_html += '        <strong>📝 대본 내용:</strong><br>\n'
+                script_html += f'        <pre style="background: #f5f5f5; padding: 12px; border-radius: 6px; font-size: 13px; line-height: 1.5; white-space: pre-wrap; word-wrap: break-word; overflow-x: auto;">{script_json}</pre>\n'
+                script_html += '    </div>'
+
             html_content = f"""
 <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
     <h2 style="color: #e74c3c;">⚠️ 릴스 영상 생성 실패</h2>
@@ -380,6 +411,8 @@ class EmailService:
         <strong>작업 ID:</strong> {job_id}<br>
         <strong>오류 내용:</strong> {error_message}
     </div>
+
+    {script_html}
 
     <p>이 문제가 지속되면 관리자에게 문의해주세요.</p>
 

@@ -32,6 +32,8 @@ import {
   Skeleton,
   Tooltip,
   IconButton,
+  ToggleButton,
+  ToggleButtonGroup,
 } from '@mui/material';
 import { ImageStepRef } from './ImageStep';
 import {
@@ -54,7 +56,7 @@ import {
   FormatColorText,
   RecordVoiceOver,
 } from '@mui/icons-material';
-import { ProjectData, GenerationStatus, AsyncVideoResponse, FontFile, TextPosition, TextStyle, VoiceNarration, TitleAreaMode, CrossDissolve, TTSEngine, QwenSpeaker, QwenSpeed, QwenStyle, QWEN_SPEAKERS, QWEN_SPEED_PRESETS, QWEN_STYLE_PRESETS, PerBodyTTSSetting } from '../types';
+import { ProjectData, GenerationStatus, AsyncVideoResponse, FontFile, TextPosition, TextStyle, VoiceNarration, TitleAreaMode, CrossDissolve, TTSEngine, QwenSpeaker, QwenSpeed, QwenStyle, QWEN_SPEAKERS, QWEN_SPEED_PRESETS, QWEN_STYLE_PRESETS, PerBodyTTSSetting, VideoFormat, EdgeSpeaker, EdgeSpeed, EdgePitch, EDGE_SPEAKERS, EDGE_SPEED_PRESETS, EDGE_PITCH_PRESETS } from '../types';
 import apiService from '../services/api';
 
 interface GenerateStepProps {
@@ -112,14 +114,20 @@ const GenerateStep: React.FC<GenerateStepProps> = ({
   const [subtitleDuration, setSubtitleDuration] = useState<number>(0);
 
   // TTS 엔진 설정 상태
-  const [ttsEngine, setTtsEngine] = useState<TTSEngine>(projectData.ttsEngine || 'google');
+  const [ttsEngine, setTtsEngine] = useState<TTSEngine>(projectData.ttsEngine || 'edge');
   const [qwenSpeaker, setQwenSpeaker] = useState<QwenSpeaker>(projectData.qwenSpeaker || 'Sohee');
   const [qwenSpeed, setQwenSpeed] = useState<QwenSpeed>(projectData.qwenSpeed || 'normal');
   const [qwenStyle, setQwenStyle] = useState<QwenStyle>(projectData.qwenStyle || 'neutral');
+  const [edgeSpeaker, setEdgeSpeaker] = useState<EdgeSpeaker>(projectData.edgeSpeaker || 'female');
+  const [edgeSpeed, setEdgeSpeed] = useState<EdgeSpeed>(projectData.edgeSpeed || 'normal');
+  const [edgePitch, setEdgePitch] = useState<EdgePitch>(projectData.edgePitch || 'normal');
 
   // 대사별 TTS 설정 상태
   const [perBodyTTSEnabled, setPerBodyTTSEnabled] = useState<boolean>(projectData.perBodyTTSEnabled || false);
   const [perBodyTTSSettings, setPerBodyTTSSettings] = useState<{ [bodyKey: string]: PerBodyTTSSetting }>(projectData.perBodyTTSSettings || {});
+
+  // 영상 포맷 상태
+  const [videoFormat, setVideoFormat] = useState<VideoFormat>(projectData.videoFormat || 'reels');
 
   // 미리보기 관련 상태
   const [previewImage, setPreviewImage] = useState<string | null>(null);
@@ -201,6 +209,7 @@ const GenerateStep: React.FC<GenerateStepProps> = ({
         image: projectData.images[0] || undefined,
         imagePanningOptions: projectData.imagePanningOptions,  // 패닝 옵션 추가
         jobId: projectData.jobId,  // Job ID 추가
+        videoFormat: videoFormat,  // 영상 포맷 추가
       });
 
       if (response.status === 'success') {
@@ -228,7 +237,8 @@ const GenerateStep: React.FC<GenerateStepProps> = ({
     titleFont,
     bodyFont,
     titleFontSize,
-    bodyFontSize
+    bodyFontSize,
+    videoFormat
   ]);
 
   // 자동 미리보기 생성
@@ -322,9 +332,14 @@ const GenerateStep: React.FC<GenerateStepProps> = ({
         qwenSpeaker: qwenSpeaker,
         qwenSpeed: qwenSpeed,
         qwenStyle: qwenStyle,
+        edgeSpeaker: edgeSpeaker,
+        edgeSpeed: edgeSpeed,
+        edgePitch: edgePitch,
         // 대사별 TTS 설정
         perBodyTTSSettings: (perBodyTTSEnabled && ttsEngine === 'qwen' && Object.keys(perBodyTTSSettings).length > 0)
           ? JSON.stringify(perBodyTTSSettings) : undefined,
+        // 영상 포맷
+        videoFormat: videoFormat,
       });
 
       if (response.status === 'success') {
@@ -393,9 +408,14 @@ const GenerateStep: React.FC<GenerateStepProps> = ({
         qwenSpeaker: qwenSpeaker,
         qwenSpeed: qwenSpeed,
         qwenStyle: qwenStyle,
+        edgeSpeaker: edgeSpeaker,
+        edgeSpeed: edgeSpeed,
+        edgePitch: edgePitch,
         // 대사별 TTS 설정
         perBodyTTSSettings: (perBodyTTSEnabled && ttsEngine === 'qwen' && Object.keys(perBodyTTSSettings).length > 0)
           ? JSON.stringify(perBodyTTSSettings) : undefined,
+        // 영상 포맷
+        videoFormat: videoFormat,
       });
 
       if (response.status === 'success') {
@@ -589,6 +609,35 @@ const GenerateStep: React.FC<GenerateStepProps> = ({
 
         {/* 오른쪽: 폰트/스타일 설정 & 이메일 설정 & 생성 상태 */}
         <Grid item xs={12} md={6}>
+          {/* 영상 포맷 선택 */}
+          <Paper sx={{ p: 3, mb: 2 }}>
+            <Typography variant="h6" gutterBottom>
+              <VideoCall sx={{ mr: 1, verticalAlign: 'middle' }} />
+              영상 포맷
+            </Typography>
+            <ToggleButtonGroup
+              value={videoFormat}
+              exclusive
+              onChange={(_, newFormat) => {
+                if (newFormat !== null) setVideoFormat(newFormat as VideoFormat);
+              }}
+              fullWidth
+              size="small"
+            >
+              <ToggleButton value="reels">
+                릴스 / 쇼츠 (9:16)
+              </ToggleButton>
+              <ToggleButton value="youtube">
+                YouTube (16:9)
+              </ToggleButton>
+            </ToggleButtonGroup>
+            <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
+              {videoFormat === 'reels'
+                ? '세로 영상 504x890 - Instagram Reels, YouTube Shorts, TikTok'
+                : '가로 영상 1280x720 - YouTube, 웹사이트 등'}
+            </Typography>
+          </Paper>
+
           {/* 폰트 및 스타일 설정 */}
           <Paper sx={{ p: 3, mb: 2 }}>
             <Typography variant="h6" gutterBottom>
@@ -837,9 +886,9 @@ const GenerateStep: React.FC<GenerateStepProps> = ({
                           onChange={(e) => setTtsEngine(e.target.value as TTSEngine)}
                         >
                           <FormControlLabel
-                            value="google"
+                            value="edge"
                             control={<Radio size="small" />}
-                            label="Google TTS (기본)"
+                            label="Edge TTS (기본)"
                           />
                           <FormControlLabel
                             value="qwen"
@@ -849,9 +898,59 @@ const GenerateStep: React.FC<GenerateStepProps> = ({
                         </RadioGroup>
                       </FormControl>
                       <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1 }}>
-                        - Google TTS: 인터넷 연결 필요, 빠른 생성<br/>
+                        - Edge TTS: 인터넷 연결 필요, 자연스러운 음성<br/>
                         - Qwen TTS: 로컬 실행 (0.6B 모델), 다양한 화자/속도 지원
                       </Typography>
+
+                      {/* Edge TTS 선택 시 추가 옵션 */}
+                      {ttsEngine === 'edge' && (
+                        <Box sx={{ mt: 2 }}>
+                          <Grid container spacing={2}>
+                            <Grid item xs={12} sm={4}>
+                              <FormControl fullWidth size="small">
+                                <InputLabel>화자</InputLabel>
+                                <Select
+                                  value={edgeSpeaker}
+                                  label="화자"
+                                  onChange={(e) => setEdgeSpeaker(e.target.value as EdgeSpeaker)}
+                                >
+                                  {EDGE_SPEAKERS.map((s) => (
+                                    <MenuItem key={s.id} value={s.id}>{s.label}</MenuItem>
+                                  ))}
+                                </Select>
+                              </FormControl>
+                            </Grid>
+                            <Grid item xs={12} sm={4}>
+                              <FormControl fullWidth size="small">
+                                <InputLabel>속도</InputLabel>
+                                <Select
+                                  value={edgeSpeed}
+                                  label="속도"
+                                  onChange={(e) => setEdgeSpeed(e.target.value as EdgeSpeed)}
+                                >
+                                  {EDGE_SPEED_PRESETS.map((s) => (
+                                    <MenuItem key={s.id} value={s.id}>{s.label}</MenuItem>
+                                  ))}
+                                </Select>
+                              </FormControl>
+                            </Grid>
+                            <Grid item xs={12} sm={4}>
+                              <FormControl fullWidth size="small">
+                                <InputLabel>톤</InputLabel>
+                                <Select
+                                  value={edgePitch}
+                                  label="톤"
+                                  onChange={(e) => setEdgePitch(e.target.value as EdgePitch)}
+                                >
+                                  {EDGE_PITCH_PRESETS.map((s) => (
+                                    <MenuItem key={s.id} value={s.id}>{s.label}</MenuItem>
+                                  ))}
+                                </Select>
+                              </FormControl>
+                            </Grid>
+                          </Grid>
+                        </Box>
+                      )}
 
                       {/* Qwen TTS 선택 시 추가 옵션 */}
                       {ttsEngine === 'qwen' && (

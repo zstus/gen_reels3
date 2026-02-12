@@ -5,7 +5,8 @@ from moviepy.editor import *
 import numpy as np
 import uuid
 import tempfile
-from gtts import gTTS
+import edge_tts
+import asyncio
 import re
 import base64
 import json
@@ -51,6 +52,15 @@ class VideoGenerator:
         self.video_width = 504
         self.video_height = 890  # 쇼츠/릴스 해상도 (504x890)
         self.fps = 30
+
+        # 레이아웃 설정 (릴스 기본값)
+        self.title_height = 220
+        self.work_height_keep = 670      # title_area_mode='keep'일 때 (video_height - title_height)
+        self.work_height_remove = 890    # title_area_mode='remove'일 때 (video_height)
+        self.text_y_top = 430            # 상단 텍스트 영역 중앙 Y
+        self.text_y_bottom = 610         # 하단 텍스트 영역 중앙 Y
+        self.text_y_bottom_edge_margin = 80  # 최하단 텍스트 여백
+        self.panning_range = 60          # 패닝 최대 범위 (px)
         self.font_path = os.path.join(os.path.dirname(__file__), "font", "BMYEONSUNG_otf.otf")
 
         # Naver Clova Voice 설정 (환경변수에서 가져오기)
@@ -74,32 +84,75 @@ class VideoGenerator:
 
         # Qwen TTS 서비스 초기화 (지연 로딩)
         self.qwen_tts_service = None
-        self.tts_engine = "google"  # 기본 TTS 엔진: google
+        self.tts_engine = "edge"  # 기본 TTS 엔진: edge
         self.qwen_speaker = "Sohee"  # 기본 Qwen 화자 (한국어)
         self.qwen_speed = "normal"   # 기본 Qwen 속도
         self.qwen_style = "neutral"  # 기본 Qwen 스타일
         self.per_body_tts_settings = None  # 대사별 TTS 설정 (None이면 전역 설정 사용)
+        self.edge_speaker = "female"   # 기본 Edge 화자
+        self.edge_speed = "normal"     # 기본 Edge 속도
+        self.edge_pitch = "normal"     # 기본 Edge 톤
         logger.info(f"🎤 기본 TTS 엔진: {self.tts_engine}")
 
-    def set_tts_engine(self, engine: str, speaker: str = None, speed: str = None, style: str = None, per_body_tts_settings: dict = None):
+    def set_video_format(self, video_format: str):
+        """
+        영상 포맷 설정 (레이아웃 관련 인스턴스 변수 일괄 변경)
+
+        Args:
+            video_format: 'reels' (세로 504x890) 또는 'youtube' (가로 1280x720)
+        """
+        if video_format == 'youtube':
+            self.video_width = 1280
+            self.video_height = 720
+            self.title_height = 120
+            self.work_height_keep = 600
+            self.work_height_remove = 720
+            self.text_y_top = 340
+            self.text_y_bottom = 520
+            self.text_y_bottom_edge_margin = 60
+            self.panning_range = 60
+        else:  # reels (기본값)
+            self.video_width = 504
+            self.video_height = 890
+            self.title_height = 220
+            self.work_height_keep = 670
+            self.work_height_remove = 890
+            self.text_y_top = 430
+            self.text_y_bottom = 610
+            self.text_y_bottom_edge_margin = 80
+            self.panning_range = 60
+        logger.info(f"🎬 영상 포맷 설정: {video_format} ({self.video_width}x{self.video_height})")
+
+    def set_tts_engine(self, engine: str, speaker: str = None, speed: str = None, style: str = None, per_body_tts_settings: dict = None, edge_speaker: str = None, edge_speed: str = None, edge_pitch: str = None):
         """
         TTS 엔진 설정
 
         Args:
-            engine: 'google' 또는 'qwen'
+            engine: 'edge' 또는 'qwen'
             speaker: Qwen 화자 (Sohee, Vivian 등)
             speed: Qwen 속도 (very_slow, slow, normal, fast, very_fast)
             style: Qwen 스타일 (neutral, cheerful_witty, cynical_calm)
             per_body_tts_settings: 대사별 TTS 설정 dict (예: {"body1": {"speaker": "Sohee", "style": "cheerful_witty"}, ...})
+            edge_speaker: Edge TTS 화자 (female, male_news, male_young)
+            edge_speed: Edge TTS 속도 (fast, normal, slow)
+            edge_pitch: Edge TTS 톤 (high, normal, low)
         """
-        if engine not in ['google', 'qwen']:
-            logger.warning(f"⚠️ 알 수 없는 TTS 엔진 '{engine}', 기본값 'google' 사용")
-            engine = 'google'
+        if engine not in ['edge', 'qwen']:
+            logger.warning(f"⚠️ 알 수 없는 TTS 엔진 '{engine}', 기본값 'edge' 사용")
+            engine = 'edge'
 
         self.tts_engine = engine
         logger.info(f"🎤 TTS 엔진 설정: {engine}")
 
-        if engine == 'qwen':
+        if engine == 'edge':
+            if edge_speaker:
+                self.edge_speaker = edge_speaker
+            if edge_speed:
+                self.edge_speed = edge_speed
+            if edge_pitch:
+                self.edge_pitch = edge_pitch
+            logger.info(f"🔊 Edge TTS 설정: 화자={self.edge_speaker}, 속도={self.edge_speed}, 톤={self.edge_pitch}")
+        elif engine == 'qwen':
             if speaker:
                 self.qwen_speaker = speaker
                 logger.info(f"🎤 Qwen 화자 설정: {speaker}")
@@ -137,8 +190,8 @@ class VideoGenerator:
 
             # Qwen TTS 서비스 초기화 확인
             if not self._init_qwen_tts():
-                logger.warning("⚠️ Qwen TTS 사용 불가, Google TTS로 폴백")
-                return self.create_tts_audio_google(text, lang)
+                logger.warning("⚠️ Qwen TTS 사용 불가, Edge TTS로 폴백")
+                return self.create_tts_audio_edge(text, lang)
 
             # 화자, 속도, 스타일 설정 업데이트
             self.qwen_tts_service.set_speaker(self.qwen_speaker)
@@ -163,24 +216,34 @@ class VideoGenerator:
                     audio_path = normalized_path
                     logger.info(f"✅ Qwen TTS 볼륨 정규화 완료: {audio_path}")
 
-                # 1.5배 속도 조정 적용 (Google TTS와 동일한 후처리)
-                speed_adjusted_path = self.speed_up_audio(audio_path, speed_factor=1.5)
-                if speed_adjusted_path != audio_path and os.path.exists(speed_adjusted_path):
-                    # 원본 파일 정리
-                    if os.path.exists(audio_path):
-                        os.unlink(audio_path)
-                    audio_path = speed_adjusted_path
-                    logger.info(f"✅ Qwen TTS 속도 조정 완료 (1.5x): {audio_path}")
+                # Qwen 속도 옵션에 따른 후처리 배속 적용
+                qwen_speed_factors = {
+                    'very_slow': 0.5,
+                    'slow': 0.8,
+                    'normal': 1.0,
+                    'fast': 1.5,
+                    'very_fast': 1.8,
+                }
+                speed_factor = qwen_speed_factors.get(self.qwen_speed, 1.0)
+                if speed_factor != 1.0:
+                    speed_adjusted_path = self.speed_up_audio(audio_path, speed_factor=speed_factor)
+                    if speed_adjusted_path != audio_path and os.path.exists(speed_adjusted_path):
+                        if os.path.exists(audio_path):
+                            os.unlink(audio_path)
+                        audio_path = speed_adjusted_path
+                        logger.info(f"✅ Qwen TTS 속도 조정 완료 ({speed_factor}x): {audio_path}")
+                else:
+                    logger.info(f"✅ Qwen TTS 속도 조정 생략 (normal: 원본 속도 유지)")
 
                 return audio_path
             else:
-                logger.warning("⚠️ Qwen TTS 생성 실패, Google TTS로 폴백")
-                return self.create_tts_audio_google(text, lang)
+                logger.warning("⚠️ Qwen TTS 생성 실패, Edge TTS로 폴백")
+                return self.create_tts_audio_edge(text, lang)
 
         except Exception as e:
             logger.error(f"❌ Qwen TTS 생성 오류: {e}")
-            logger.info("🔄 Google TTS로 폴백 시도...")
-            return self.create_tts_audio_google(text, lang)
+            logger.info("🔄 Edge TTS로 폴백 시도...")
+            return self.create_tts_audio_edge(text, lang)
 
     def _normalize_and_boost_audio(self, audio_path, target_db=-14.0):
         """오디오 볼륨 정규화 및 증폭 (Qwen TTS용)"""
@@ -218,44 +281,48 @@ class VideoGenerator:
             logger.warning(f"⚠️ 볼륨 정규화 실패, 원본 사용: {e}")
             return audio_path
 
-    def create_tts_audio_google(self, text, lang='ko'):
-        """Google TTS로 음성 생성 (기존 로직 분리)"""
+    def create_tts_audio_edge(self, text, lang='ko'):
+        """Edge TTS로 음성 생성 (화자/속도/톤 옵션 적용)"""
         try:
-            print(f"Google TTS 생성 중: {text[:50]}...")
+            logger.info(f"Edge TTS 생성 중: {text[:50]}...")
 
             # 한국어 텍스트 전처리 (더 자연스럽게)
             processed_text = self.preprocess_korean_text(text)
 
-            # 최적화된 한국어 Google TTS 설정
-            tts = gTTS(
-                text=processed_text,
-                lang='ko',
-                slow=False,
-                tld='com'
-            )
+            # 화자 매핑
+            voice_map = {
+                'female': 'ko-KR-SunHiNeural',
+                'male_news': 'ko-KR-InJoonNeural',
+                'male_young': 'ko-KR-HyunsuNeural',
+            }
+            voice = voice_map.get(self.edge_speaker, 'ko-KR-SunHiNeural')
 
-            # 임시 파일에 저장 (원본 속도)
+            # 속도 매핑
+            rate_map = {'fast': '+80%', 'normal': '+40%', 'slow': '+0%'}
+            rate = rate_map.get(self.edge_speed, '+40%')
+
+            # 톤 매핑
+            pitch_map = {'high': '+5Hz', 'normal': '+0Hz', 'low': '-5Hz'}
+            pitch = pitch_map.get(self.edge_pitch, '+0Hz')
+
+            logger.info(f"🔊 Edge TTS 옵션: voice={voice}, rate={rate}, pitch={pitch}")
+
+            # edge-tts는 async이므로 asyncio.run() 사용
             original_temp_file = tempfile.NamedTemporaryFile(delete=False, suffix='.mp3')
-            tts.save(original_temp_file.name)
             original_temp_file.close()
-            print(f"Google TTS 원본 생성 완료: {original_temp_file.name}")
 
-            # 70% 빠르게 속도 조정 (1.7배속)
-            speed_adjusted_file = self.speed_up_audio(original_temp_file.name, speed_factor=1.7)
+            async def _generate():
+                communicate = edge_tts.Communicate(processed_text, voice, rate=rate, pitch=pitch)
+                await communicate.save(original_temp_file.name)
 
-            # 속도 조정이 실패하면 원본 파일 사용, 성공하면 원본 파일만 정리
-            if speed_adjusted_file != original_temp_file.name and os.path.exists(speed_adjusted_file):
-                if os.path.exists(original_temp_file.name):
-                    os.unlink(original_temp_file.name)
-                    print(f"🗑️ 원본 TTS 파일 정리: {original_temp_file.name}")
-                print(f"Google TTS 생성 완료 (70% 고속화): {speed_adjusted_file}")
-            else:
-                print(f"Google TTS 생성 완료 (원본 속도): {speed_adjusted_file}")
+            asyncio.run(_generate())
+            logger.info(f"Edge TTS 생성 완료: {original_temp_file.name}")
 
-            return speed_adjusted_file
+            # Edge TTS 자체에서 속도를 제어하므로 후처리 speed_up_audio 스킵
+            return original_temp_file.name
 
         except Exception as e:
-            print(f"Google TTS 생성 실패: {e}")
+            logger.error(f"Edge TTS 생성 실패: {e}")
             return None
 
     def get_emoji_font(self):
@@ -765,20 +832,18 @@ class VideoGenerator:
         # 상단 텍스트 영역: 340-520 (중앙: 430px)
         # 하단 텍스트 영역: 520-700 (중앙: 610px)
 
-        title_height = 220  # 타이틀 영역 높이 (고정)
+        title_height = self.title_height  # 타이틀 영역 높이
 
         if text_position == "top":
-            # 상단 텍스트 영역 중앙: 340-520 (중앙 430px)
-            zone_center_y = 430
+            # 상단 텍스트 영역 중앙
+            zone_center_y = self.text_y_top
             start_y = zone_center_y - (total_height // 2)
         elif text_position == "bottom-edge":
-            # 최하단: 바닥에서 80px 위
-            # 타이틀 유지 모드: 890px 기준 (전체 높이)
-            # 타이틀 제거 모드: 890px 기준 (전체 높이 동일)
-            start_y = 890 - 80 - total_height
+            # 최하단: 바닥에서 여백만큼 위
+            start_y = self.video_height - self.text_y_bottom_edge_margin - total_height
         else:  # bottom (middle도 bottom과 동일하게 처리)
-            # 하단 텍스트 영역 중앙: 520-700 (중앙 610px)
-            zone_center_y = 610
+            # 하단 텍스트 영역 중앙
+            zone_center_y = self.text_y_bottom
             start_y = zone_center_y - (total_height // 2)
 
         # 최소값 보장 (타이틀 영역 침범 방지) - bottom-edge는 예외
@@ -983,8 +1048,48 @@ class VideoGenerator:
                             draw.text((x + dx, y + dy), line, font=font, fill='white')
                 draw.text((x, y), line, font=font, fill='black')
 
+    def _ensure_valid_image(self, image_path):
+        """이미지 파일 검증 및 포맷 자동변환. 유효한 이미지 경로 반환 (실패 시 None)"""
+        try:
+            with Image.open(image_path) as img:
+                img.verify()  # 파일 무결성 검증
+            return image_path  # 정상 파일 그대로 반환
+        except Exception:
+            logger.warning(f"⚠️ 이미지 검증 실패, 자동 변환 시도: {image_path}")
+            try:
+                # verify() 후에는 다시 열어야 함
+                with Image.open(image_path) as img:
+                    rgb_img = img.convert('RGB')
+                    converted_path = image_path + '.converted.jpg'
+                    rgb_img.save(converted_path, 'JPEG', quality=95)
+                    logger.info(f"✅ 이미지 자동 변환 완료: {converted_path}")
+                    return converted_path
+            except Exception as e2:
+                logger.error(f"❌ 이미지 자동 변환 실패: {image_path} - {e2}")
+                # 에러 이미지를 error_img 폴더에 보존 (원인 분석용)
+                try:
+                    import shutil
+                    error_img_dir = os.path.join(os.path.dirname(__file__), "uploads", "error_img")
+                    os.makedirs(error_img_dir, exist_ok=True)
+                    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+                    original_name = os.path.basename(image_path)
+                    error_copy_name = f"{timestamp}_{original_name}"
+                    error_copy_path = os.path.join(error_img_dir, error_copy_name)
+                    shutil.copy2(image_path, error_copy_path)
+                    logger.info(f"📋 에러 이미지 보존: {error_copy_path}")
+                except Exception as copy_err:
+                    logger.warning(f"⚠️ 에러 이미지 보존 실패: {copy_err}")
+                return None
+
     def crop_to_square(self, image_path):
         """이미지를 중앙 기준 정사각형으로 크롭하여 716x716으로 리사이즈"""
+        # 이미지 파일 검증 및 포맷 자동변환
+        validated_path = self._ensure_valid_image(image_path)
+        if validated_path is None:
+            logger.error(f"❌ 유효하지 않은 이미지, 원본 경로 반환: {image_path}")
+            return image_path
+        image_path = validated_path
+
         try:
             with Image.open(image_path) as img:
                 # ✅ EXIF orientation 적용 (아이폰 사진 회전 문제 해결)
@@ -1072,6 +1177,11 @@ class VideoGenerator:
         logger.debug(f"🔍 [DEBUG] create_background_clip() 함수 진입 (이미지 처리)")
         logger.debug(f"🔍 [DEBUG] 이미지 파일 존재 여부: {os.path.exists(image_path)}")
 
+        # 이미지 파일 검증 및 포맷 자동변환
+        validated_path = self._ensure_valid_image(image_path)
+        if validated_path is not None:
+            image_path = validated_path
+
         try:
             # 이미지 로드 + EXIF 적용 + 고품질 리사이즈
             with Image.open(image_path) as img:
@@ -1081,12 +1191,12 @@ class VideoGenerator:
                 print(f"📐 이미지 원본: {orig_width}x{orig_height}")
 
                 # 작업 영역 정의: 타이틀 모드에 따라 결정
-                work_width = 504
+                work_width = self.video_width
                 if title_area_mode == "keep":
-                    work_height = 670  # 890 - 220
-                    y_offset = 220  # 타이틀 아래 시작
+                    work_height = self.work_height_keep
+                    y_offset = self.title_height  # 타이틀 아래 시작
                 else:
-                    work_height = 890  # 전체 높이
+                    work_height = self.work_height_remove
                     y_offset = 0  # 맨 위부터 시작
 
                 work_aspect_ratio = work_width / work_height
@@ -1154,7 +1264,7 @@ class VideoGenerator:
                 # === 패닝 활성화: 기존 패닝 로직 ===
                 if image_aspect_ratio > work_aspect_ratio:
                     # 가로형 이미지: 좌우 패닝
-                    pan_range = min(60, (resized_width - work_width) // 2)
+                    pan_range = min(self.panning_range, (resized_width - work_width) // 2)
                     pattern = random.randint(1, 2)
 
                     if pattern == 1:
@@ -1177,7 +1287,7 @@ class VideoGenerator:
                         print(f"🎬 패턴 2: 우 → 좌 패닝 ({pan_range}px 이동)")
                 else:
                     # 세로형 이미지: 상하 패닝
-                    pan_range = min(60, (resized_height - work_height) // 2)
+                    pan_range = min(self.panning_range, (resized_height - work_height) // 2)
                     pattern = random.randint(3, 4)
 
                     if pattern == 3:
@@ -1236,11 +1346,11 @@ class VideoGenerator:
 
                 fallback_temp = tempfile.NamedTemporaryFile(delete=False, suffix='.jpg')
                 resized_fallback.save(fallback_temp.name, 'JPEG', quality=95)
-                fallback_clip = ImageClip(fallback_temp.name).set_duration(duration).set_position((0, 220))
+                fallback_clip = ImageClip(fallback_temp.name).set_duration(duration).set_position((0, self.title_height))
                 os.unlink(fallback_temp.name)
             except:
                 # 최종 fallback: 원본 그대로 사용
-                fallback_clip = ImageClip(image_path).set_duration(duration).set_position((0, 220))
+                fallback_clip = ImageClip(image_path).set_duration(duration).set_position((0, self.title_height))
             return fallback_clip
 
 
@@ -1260,6 +1370,11 @@ class VideoGenerator:
         logger.debug(f"🔍 [DEBUG] create_continuous_background_clip() 함수 진입")
         logger.debug(f"🔍 [DEBUG] 이미지 파일 존재 여부: {os.path.exists(image_path)}")
 
+        # 이미지 파일 검증 및 포맷 자동변환
+        validated_path = self._ensure_valid_image(image_path)
+        if validated_path is not None:
+            image_path = validated_path
+
         # 패닝 활성화 시에만 정사각형 크롭 (패닝 비활성화 시에는 원본 유지)
         if enable_panning:
             # 패닝 ON: 정사각형으로 크롭 후 716x716으로 리사이즈
@@ -1275,11 +1390,11 @@ class VideoGenerator:
 
             # 타이틀 영역 모드에 따른 Y 오프셋 결정
             if title_area_mode == "keep":
-                y_offset = 220  # 타이틀 아래 시작
-                work_height = 670
+                y_offset = self.title_height  # 타이틀 아래 시작
+                work_height = self.work_height_keep
             else:
                 y_offset = 0  # 맨 위부터 시작
-                work_height = 890
+                work_height = self.work_height_remove
 
             if enable_panning:
                 # === 패닝 활성화: 기존 패닝 로직 ===
@@ -1436,7 +1551,7 @@ class VideoGenerator:
             
             # 작업 영역 정의: (0, 220) ~ (504, 890)
             work_width = 504
-            work_height = 670  # 890 - 220
+            work_height = self.work_height_keep
             work_aspect_ratio = work_width / work_height  # 252:335 = 0.751
             video_aspect_ratio = orig_width / orig_height
             
@@ -1555,7 +1670,7 @@ class VideoGenerator:
                 # 🎨 패닝 옵션에 따른 처리
                 if enable_panning:
                     # 좌우 패닝 범위 계산
-                    pan_range = min(60, (resized_width - work_width) // 2)  # 최대 60px 또는 여유 공간의 절반
+                    pan_range = min(self.panning_range, (resized_width - work_width) // 2)  # 최대 60px 또는 여유 공간의 절반
 
                     # 2가지 좌우 패닝 패턴 중 랜덤 선택
                     pattern = random.randint(1, 2)
@@ -1582,7 +1697,7 @@ class VideoGenerator:
                 else:
                     # 패닝 비활성화: 중앙 고정 배치
                     x_offset = -((resized_width - work_width) // 2)
-                    video_clip = video_clip.set_position((x_offset, 220))
+                    video_clip = video_clip.set_position((x_offset, self.title_height))
                     print(f"🎨 패닝 비활성화: 중앙 고정 배치 (x_offset: {x_offset})")
                     
             else:
@@ -1629,7 +1744,7 @@ class VideoGenerator:
                 # 🎨 패닝 옵션에 따른 처리
                 if enable_panning:
                     # 상하 패닝 범위 계산
-                    pan_range = min(60, (resized_height - work_height) // 2)  # 최대 60px 또는 여유 공간의 절반
+                    pan_range = min(self.panning_range, (resized_height - work_height) // 2)  # 최대 60px 또는 여유 공간의 절반
 
                     # 2가지 상하 패닝 패턴 중 랜덤 선택
                     pattern = random.randint(3, 4)  # 패턴 3, 4로 구분
@@ -1638,7 +1753,7 @@ class VideoGenerator:
                         # 패턴 3: 위 → 아래 패닝
                         def top_to_bottom(t):
                             progress = self.linear_easing_function(t / duration)
-                            y_offset = 220 - ((resized_height - work_height) // 2 - pan_range * progress)
+                            y_offset = self.title_height - ((resized_height - work_height) // 2 - pan_range * progress)
                             return (0, y_offset)  # X는 중앙
 
                         video_clip = video_clip.set_position(top_to_bottom)
@@ -1648,14 +1763,14 @@ class VideoGenerator:
                         # 패턴 4: 아래 → 위 패닝
                         def bottom_to_top(t):
                             progress = self.linear_easing_function(t / duration)
-                            y_offset = 220 - ((resized_height - work_height) // 2 - pan_range * (1 - progress))
+                            y_offset = self.title_height - ((resized_height - work_height) // 2 - pan_range * (1 - progress))
                             return (0, y_offset)  # X는 중앙
 
                         video_clip = video_clip.set_position(bottom_to_top)
                         print(f"🎬 패턴 4: 아래 → 위 패닝 ({pan_range}px 이동)")
                 else:
                     # 패닝 비활성화: 중앙 고정 배치
-                    y_offset = 220 - ((resized_height - work_height) // 2)
+                    y_offset = self.title_height - ((resized_height - work_height) // 2)
                     video_clip = video_clip.set_position((0, y_offset))
                     print(f"🎨 패닝 비활성화: 중앙 고정 배치 (y_offset: {y_offset})")
 
@@ -1671,8 +1786,8 @@ class VideoGenerator:
             traceback.print_exc()
             
             # 실패 시 검은 화면으로 대체
-            fallback_clip = ColorClip(size=(504, 670), color=(0,0,0), duration=duration)
-            fallback_clip = fallback_clip.set_position((0, 220))
+            fallback_clip = ColorClip(size=(self.video_width, self.work_height_keep), color=(0,0,0), duration=duration)
+            fallback_clip = fallback_clip.set_position((0, self.title_height))
             print(f"🔄 검은 화면으로 대체: 504x670")
             return fallback_clip
     
@@ -1763,7 +1878,7 @@ class VideoGenerator:
         TTS 음성 생성 - 엔진에 따라 분기
 
         설정된 TTS 엔진(self.tts_engine)에 따라 적절한 TTS 서비스 호출
-        - google: Google TTS (gTTS) - 기본값
+        - edge: Edge TTS (edge-tts) - 기본값
         - qwen: Qwen TTS (저사양 최적화 0.6B 모델)
         """
         logger.info(f"🎤 TTS 생성 요청 (엔진: {self.tts_engine}): {text[:50]}...")
@@ -1771,7 +1886,7 @@ class VideoGenerator:
         if self.tts_engine == 'qwen' and QWEN_TTS_AVAILABLE:
             return self.create_tts_audio_qwen(text, lang)
         else:
-            return self.create_tts_audio_google(text, lang)
+            return self.create_tts_audio_edge(text, lang)
     
     def speed_up_audio(self, audio_path, speed_factor=1.5):
         """고급 오디오 속도 조정 (다중 알고리즘 지원)"""
@@ -2108,7 +2223,7 @@ class VideoGenerator:
         
         return image_files
     
-    def create_video_with_local_images(self, content, music_path, output_folder, image_allocation_mode="2_per_image", text_position="bottom", text_style="outline", title_area_mode="keep", title_font="BMYEONSUNG_otf.otf", body_font="BMYEONSUNG_otf.otf", title_font_size=42, body_font_size=36, music_mood="bright", media_files=None, voice_narration="enabled", cross_dissolve="enabled", subtitle_duration=0.0, image_panning_options=None, tts_engine="google", qwen_speaker="Sohee", qwen_speed="normal", qwen_style="neutral"):
+    def create_video_with_local_images(self, content, music_path, output_folder, image_allocation_mode="2_per_image", text_position="bottom", text_style="outline", title_area_mode="keep", title_font="BMYEONSUNG_otf.otf", body_font="BMYEONSUNG_otf.otf", title_font_size=42, body_font_size=36, music_mood="bright", media_files=None, voice_narration="enabled", cross_dissolve="enabled", subtitle_duration=0.0, image_panning_options=None, tts_engine="edge", qwen_speaker="Sohee", qwen_speed="normal", qwen_style="neutral", edge_speaker="female", edge_speed="normal", edge_pitch="normal"):
         """로컬 이미지 파일들을 사용한 릴스 영상 생성
 
         Args:
@@ -2125,8 +2240,9 @@ class VideoGenerator:
             logging.info(f"🔍 image_panning_options: {image_panning_options}")
 
             # TTS 엔진 설정 적용
-            self.set_tts_engine(tts_engine, qwen_speaker, qwen_speed, qwen_style)
-            logger.info(f"🎤 TTS 설정: 엔진={tts_engine}, 화자={qwen_speaker}, 속도={qwen_speed}, 스타일={qwen_style}")
+            self.set_tts_engine(tts_engine, qwen_speaker, qwen_speed, qwen_style,
+                               edge_speaker=edge_speaker, edge_speed=edge_speed, edge_pitch=edge_pitch)
+            logger.info(f"🎤 TTS 설정: 엔진={tts_engine}, Qwen화자={qwen_speaker}, Qwen속도={qwen_speed}, Qwen스타일={qwen_style}, Edge화자={edge_speaker}, Edge속도={edge_speed}, Edge톤={edge_pitch}")
 
             # 로컬 이미지 파일들 가져오기
             local_images = self.get_local_images()
@@ -2267,7 +2383,7 @@ class VideoGenerator:
                             bg_clip = self.create_video_background_clip(current_image_path, body_duration, enable_panning=False)
                         else:
                             bg_clip = self.create_background_clip(current_image_path, body_duration, enable_panning=enable_panning, title_area_mode=title_area_mode)
-                        black_top = ColorClip(size=(self.video_width, 220), color=(0,0,0)).set_duration(body_duration).set_position((0, 0))
+                        black_top = ColorClip(size=(self.video_width, self.title_height), color=(0,0,0)).set_duration(body_duration).set_position((0, 0))
                         title_clip = ImageClip(title_image_path).set_duration(body_duration).set_position((0, 0))
 
                         # 텍스트 클립 (기존 위치)
@@ -2343,7 +2459,7 @@ class VideoGenerator:
                             bg_clip = self.create_video_background_clip(current_image_path, group_total_duration, enable_panning=False)
                         else:
                             bg_clip = self.create_continuous_background_clip(current_image_path, group_total_duration, 0.0, enable_panning=enable_panning, title_area_mode=title_area_mode)
-                        black_top = ColorClip(size=(self.video_width, 220), color=(0,0,0)).set_duration(group_total_duration)
+                        black_top = ColorClip(size=(self.video_width, self.title_height), color=(0,0,0)).set_duration(group_total_duration)
                         title_clip = ImageClip(title_image_path).set_duration(group_total_duration).set_position((0, 0))
 
                         # 텍스트 클립들 (기존 위치)
@@ -2437,7 +2553,7 @@ class VideoGenerator:
                             logger.debug(f"🔍 [DEBUG] create_video_background_clip() 호출 완료 (keep 모드)")
                         else:
                             bg_clip = self.create_continuous_background_clip(single_media_path, total_duration, 0.0, enable_panning=enable_panning, title_area_mode=title_area_mode)
-                        black_top = ColorClip(size=(self.video_width, 220), color=(0,0,0)).set_duration(total_duration)
+                        black_top = ColorClip(size=(self.video_width, self.title_height), color=(0,0,0)).set_duration(total_duration)
                         title_clip = ImageClip(title_image_path).set_duration(total_duration).set_position((0, 0))
 
                         # 텍스트 클립들 (기존 위치)
@@ -2702,7 +2818,7 @@ class VideoGenerator:
                     
                     # 개별 body 클립 생성
                     bg_clip = self.create_background_clip(current_image_path, clip_duration)
-                    black_top = ColorClip(size=(self.video_width, 220), color=(0,0,0)).set_duration(clip_duration).set_position((0, 0))
+                    black_top = ColorClip(size=(self.video_width, self.title_height), color=(0,0,0)).set_duration(clip_duration).set_position((0, 0))
                     title_clip = ImageClip(title_image_path).set_duration(clip_duration).set_position((0, 0))
 
                     text_image_path = self.create_text_image(content[body_key], self.video_width, self.video_height, text_position, text_style, is_title=False, title_font=title_font, body_font=body_font, title_area_mode=title_area_mode)
@@ -2746,7 +2862,7 @@ class VideoGenerator:
                     
                     # 기존 방식대로 클립 생성
                     bg_clip = self.create_background_clip(current_image_path, clip_duration)
-                    black_top = ColorClip(size=(self.video_width, 220), color=(0,0,0)).set_duration(clip_duration).set_position((0, 0))
+                    black_top = ColorClip(size=(self.video_width, self.title_height), color=(0,0,0)).set_duration(clip_duration).set_position((0, 0))
                     title_clip = ImageClip(title_image_path).set_duration(clip_duration).set_position((0, 0))
 
                     text_image_path = self.create_text_image(content[body_key], self.video_width, self.video_height, text_position, text_style, is_title=False, title_font=title_font, body_font=body_font, title_area_mode=title_area_mode)
@@ -2801,7 +2917,7 @@ class VideoGenerator:
 
                     # 연속된 배경 클립 생성
                     bg_clip = self.create_continuous_background_clip(single_image_path, total_duration, 0.0, enable_panning=enable_panning, title_area_mode=title_area_mode)
-                    black_top = ColorClip(size=(self.video_width, 220), color=(0,0,0)).set_duration(total_duration)
+                    black_top = ColorClip(size=(self.video_width, self.title_height), color=(0,0,0)).set_duration(total_duration)
 
                     # 타이틀 클립 생성
                     title_image_path = self.create_text_image(content['title'], self.video_width, 220, text_position, text_style, title_font)
@@ -3043,7 +3159,7 @@ class VideoGenerator:
         
         return scan_result
     
-    def create_video_from_uploads(self, output_folder, bgm_file_path=None, image_allocation_mode="2_per_image", text_position="bottom", text_style="outline", title_area_mode="keep", title_font="BMYEONSUNG_otf.otf", body_font="BMYEONSUNG_otf.otf", title_font_size=42, body_font_size=36, uploads_folder="uploads", music_mood="bright", voice_narration="enabled", cross_dissolve="enabled", subtitle_duration=0.0, image_panning_options=None, tts_engine="google", qwen_speaker="Sohee", qwen_speed="normal", qwen_style="neutral"):
+    def create_video_from_uploads(self, output_folder, bgm_file_path=None, image_allocation_mode="2_per_image", text_position="bottom", text_style="outline", title_area_mode="keep", title_font="BMYEONSUNG_otf.otf", body_font="BMYEONSUNG_otf.otf", title_font_size=42, body_font_size=36, uploads_folder="uploads", music_mood="bright", voice_narration="enabled", cross_dissolve="enabled", subtitle_duration=0.0, image_panning_options=None, tts_engine="edge", qwen_speaker="Sohee", qwen_speed="normal", qwen_style="neutral", edge_speaker="female", edge_speed="normal", edge_pitch="normal"):
         """uploads 폴더의 파일들을 사용하여 영상 생성 (기존 메서드 재사용)
 
         Args:
@@ -3080,7 +3196,7 @@ class VideoGenerator:
             self._temp_local_images = scan_result['image_files']
 
             # 기존 메서드 호출 (이미지 할당 모드, 텍스트 위치, 텍스트 스타일, 타이틀 영역 모드, 폰트 설정, 폰트 크기, 자막 읽어주기, 자막 지속 시간, 패닝 옵션, TTS 설정 전달)
-            return self.create_video_with_local_images(content, music_path, output_folder, image_allocation_mode, text_position, text_style, title_area_mode, title_font, body_font, title_font_size, body_font_size, music_mood, scan_result['media_files'], voice_narration, cross_dissolve, subtitle_duration, image_panning_options, tts_engine, qwen_speaker, qwen_speed, qwen_style)
+            return self.create_video_with_local_images(content, music_path, output_folder, image_allocation_mode, text_position, text_style, title_area_mode, title_font, body_font, title_font_size, body_font_size, music_mood, scan_result['media_files'], voice_narration, cross_dissolve, subtitle_duration, image_panning_options, tts_engine, qwen_speaker, qwen_speed, qwen_style, edge_speaker, edge_speed, edge_pitch)
 
         except Exception as e:
             raise Exception(f"uploads 폴더 기반 영상 생성 실패: {str(e)}")
@@ -3272,7 +3388,7 @@ class VideoGenerator:
                 if resized_width > work_width:
                     # 가로 패닝 확정
                     available_margin = (resized_width - work_width) // 2
-                    safe_pan_range = min(60, available_margin)
+                    safe_pan_range = min(self.panning_range, available_margin)
 
                     # 가로 패닝 방향만 랜덤 선택
                     pattern = random.choice([1, 2])
@@ -3294,7 +3410,7 @@ class VideoGenerator:
                 elif resized_height > work_height:
                     # 세로 패닝 확정
                     available_margin = (resized_height - work_height) // 2
-                    safe_pan_range = min(60, available_margin)
+                    safe_pan_range = min(self.panning_range, available_margin)
 
                     # 세로 패닝 방향만 랜덤 선택
                     pattern = random.choice([1, 2])

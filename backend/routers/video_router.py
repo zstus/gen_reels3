@@ -89,11 +89,17 @@ async def generate_video(
     image_panning_options: str = Form(default="{}"),
 
     # TTS 설정
-    tts_engine: str = Form(default="google"),  # 'google' 또는 'qwen'
+    tts_engine: str = Form(default="edge"),  # 'edge' 또는 'qwen'
     qwen_speaker: str = Form(default="Sohee"),  # Qwen TTS 화자
     qwen_speed: str = Form(default="normal"),  # Qwen TTS 속도
     qwen_style: str = Form(default="neutral"),  # Qwen TTS 스타일
     per_body_tts_settings: str = Form(default=""),  # 대사별 TTS 설정 (JSON 문자열)
+    edge_speaker: str = Form(default="female"),    # Edge TTS 화자
+    edge_speed: str = Form(default="normal"),      # Edge TTS 속도
+    edge_pitch: str = Form(default="normal"),      # Edge TTS 톤
+
+    # 영상 포맷 설정
+    video_format: str = Form(default="reels"),  # 'reels' (504x890) 또는 'youtube' (1280x720)
 
     # 이미지 파일 업로드 (최대 50개)
     image_1: Optional[UploadFile] = File(None),
@@ -200,6 +206,9 @@ async def generate_video(
         # 영상 생성
         video_gen = VideoGenerator()
 
+        # 영상 포맷 설정
+        video_gen.set_video_format(video_format)
+
         # 대사별 TTS 설정 파싱 및 인스턴스에 설정
         if per_body_tts_settings and per_body_tts_settings.strip():
             try:
@@ -258,6 +267,8 @@ async def generate_video(
         logger.info(f"🔊 TTS 엔진: {tts_engine}")
         if tts_engine == 'qwen':
             logger.info(f"🎙️ Qwen 화자: {qwen_speaker}, 속도: {qwen_speed}, 스타일: {qwen_style}")
+        if tts_engine == 'edge':
+            logger.info(f"🔊 Edge 화자: {edge_speaker}, 속도: {edge_speed}, 톤: {edge_pitch}")
 
         # 이미지별 패닝 옵션 파싱
         parsed_panning_options = None
@@ -291,7 +302,10 @@ async def generate_video(
             tts_engine,
             qwen_speaker,
             qwen_speed,
-            qwen_style
+            qwen_style,
+            edge_speaker,
+            edge_speed,
+            edge_pitch
         )
 
         # 영상 생성 성공 시 job 폴더 정리
@@ -382,11 +396,17 @@ async def generate_video_async(
     image_panning_options: str = Form(default="{}"),
 
     # TTS 설정
-    tts_engine: str = Form(default="google"),  # 'google' 또는 'qwen'
+    tts_engine: str = Form(default="edge"),  # 'edge' 또는 'qwen'
     qwen_speaker: str = Form(default="Sohee"),  # Qwen TTS 화자
     qwen_speed: str = Form(default="normal"),  # Qwen TTS 속도
     qwen_style: str = Form(default="neutral"),  # Qwen TTS 스타일
     per_body_tts_settings: str = Form(default=""),  # 대사별 TTS 설정 (JSON 문자열)
+    edge_speaker: str = Form(default="female"),    # Edge TTS 화자
+    edge_speed: str = Form(default="normal"),      # Edge TTS 속도
+    edge_pitch: str = Form(default="normal"),      # Edge TTS 톤
+
+    # 영상 포맷 설정
+    video_format: str = Form(default="reels"),  # 'reels' (504x890) 또는 'youtube' (1280x720)
 
     # 이미지 파일 업로드 (최대 50개)
     image_1: Optional[UploadFile] = File(None),
@@ -540,6 +560,10 @@ async def generate_video_async(
             'qwen_speed': qwen_speed,
             'qwen_style': qwen_style,
             'per_body_tts_settings': per_body_tts_settings,
+            'edge_speaker': edge_speaker,
+            'edge_speed': edge_speed,
+            'edge_pitch': edge_pitch,
+            'video_format': video_format,
         }
 
         # 작업을 큐에 추가
@@ -628,13 +652,15 @@ async def preview_video(
     image_1: Optional[UploadFile] = File(None),
     image_panning_options: str = Form(default="{}"),
     job_id: Optional[str] = Form(None),
+    video_format: str = Form(default="reels"),  # 'reels' (504x890) 또는 'youtube' (1280x720)
 ):
     """미리보기 이미지 생성"""
     try:
-        logger.info(f"미리보기 요청: {title[:20]}...")
+        logger.info(f"미리보기 요청: {title[:20]}... (포맷: {video_format})")
 
         # VideoGenerator 인스턴스 생성
         video_generator = VideoGenerator()
+        video_generator.set_video_format(video_format)
 
         # 업로드 폴더 설정 (Job ID에 따라 분기)
         if job_id and FOLDER_MANAGER_AVAILABLE:
@@ -720,69 +746,67 @@ async def preview_video(
         # PIL로 미리보기 이미지 합성
         from PIL import Image as PILImage
 
-        # 배경 이미지 (504x890)
-        final_image = PILImage.new('RGB', (504, 890), color=(0, 0, 0))
+        # 포맷에 따른 해상도 사용
+        vw = video_generator.video_width
+        vh = video_generator.video_height
+        th = video_generator.title_height
+        wh_keep = video_generator.work_height_keep
+        wh_remove = video_generator.work_height_remove
+
+        # 배경 이미지
+        final_image = PILImage.new('RGB', (vw, vh), color=(0, 0, 0))
 
         title_image_path = None
 
         if title_area_mode == "keep":
             # 기존 방식: 타이틀 영역 + 미디어 영역
-            # 타이틀 이미지 생성 (504x220)
             title_image_path = video_generator.create_title_image(
                 title,
-                504,
-                220,
+                vw,
+                th,
                 title_font,
                 title_font_size
             )
 
-            # 배경 이미지 처리 (670px 영역) - 패닝 옵션 고려
+            # 배경 이미지 처리 - 패닝 옵션 고려
             if os.path.exists(preview_image_path):
                 bg_image = PILImage.open(preview_image_path)
-                work_area_height = 670  # 890 - 220
+                work_area_height = wh_keep
 
                 # 패닝 옵션 파싱
-                enable_panning = True  # 기본값: 패닝 활성화
+                enable_panning = True
                 if image_panning_options and image_panning_options != "{}":
                     try:
                         import json
                         panning_dict = json.loads(image_panning_options)
-                        # 첫 번째 이미지(index 0)의 패닝 옵션 확인
                         enable_panning = panning_dict.get("0", True)
                         logger.info(f"🎨 미리보기 패닝 옵션: {enable_panning}")
                     except Exception as e:
                         logger.warning(f"⚠️ 패닝 옵션 파싱 실패, 기본값(True) 사용: {e}")
 
                 if enable_panning:
-                    # 패닝 ON: 무조건 504x670 리사이즈 (기존 로직)
-                    bg_image = bg_image.resize((504, work_area_height), PILImage.Resampling.LANCZOS)
-                    final_image.paste(bg_image, (0, 220))
+                    bg_image = bg_image.resize((vw, work_area_height), PILImage.Resampling.LANCZOS)
+                    final_image.paste(bg_image, (0, th))
                 else:
-                    # 패닝 OFF: 가로 504px 맞춤 + 종횡비 유지 + 위쪽 붙임
                     img_width, img_height = bg_image.size
-                    new_width = 504
+                    new_width = vw
                     new_height = int(img_height * new_width / img_width)
-
-                    # 리사이즈 (종횡비 유지)
                     bg_image = bg_image.resize((new_width, new_height), PILImage.Resampling.LANCZOS)
-
-                    # 타이틀 바로 아래에 붙임 (중앙 배치 아님!)
-                    y_pos = 220
-                    final_image.paste(bg_image, (0, y_pos))
-                    logger.info(f"📐 패닝 OFF 미리보기 (keep): {img_width}x{img_height} → {new_width}x{new_height}, Y=220")
+                    final_image.paste(bg_image, (0, th))
+                    logger.info(f"📐 패닝 OFF 미리보기 (keep): {img_width}x{img_height} → {new_width}x{new_height}, Y={th}")
 
             # 타이틀 이미지 합성 (상단)
             if os.path.exists(title_image_path):
                 title_img = PILImage.open(title_image_path)
                 final_image.paste(title_img, (0, 0))
         else:
-            # remove 모드: 전체 화면 미디어 (890px)
+            # remove 모드: 전체 화면 미디어
             if os.path.exists(preview_image_path):
                 bg_image = PILImage.open(preview_image_path)
-                work_area_height = 890  # 전체 높이
+                work_area_height = wh_remove
 
                 # 패닝 옵션 파싱
-                enable_panning = True  # 기본값: 패닝 활성화
+                enable_panning = True
                 if image_panning_options and image_panning_options != "{}":
                     try:
                         import json
@@ -793,28 +817,21 @@ async def preview_video(
                         logger.warning(f"⚠️ 패닝 옵션 파싱 실패 (remove): {e}")
 
                 if enable_panning:
-                    # 패닝 ON: 504x890 리사이즈 (기존 로직)
-                    bg_image = bg_image.resize((504, work_area_height), PILImage.Resampling.LANCZOS)
+                    bg_image = bg_image.resize((vw, work_area_height), PILImage.Resampling.LANCZOS)
                     final_image.paste(bg_image, (0, 0))
                 else:
-                    # 패닝 OFF: 가로 504px 맞춤 + 종횡비 유지 + 위쪽 붙임
                     img_width, img_height = bg_image.size
-                    new_width = 504
+                    new_width = vw
                     new_height = int(img_height * new_width / img_width)
-
-                    # 리사이즈 (종횡비 유지)
                     bg_image = bg_image.resize((new_width, new_height), PILImage.Resampling.LANCZOS)
-
-                    # 맨 위에 붙임
-                    y_pos = 0
-                    final_image.paste(bg_image, (0, y_pos))
+                    final_image.paste(bg_image, (0, 0))
                     logger.info(f"📐 패닝 OFF 미리보기 (remove): {img_width}x{img_height} → {new_width}x{new_height}, Y=0")
 
-        # 본문 텍스트 이미지 생성 (504x890) - 모든 모드 공통
+        # 본문 텍스트 이미지 생성 - 모든 모드 공통
         body_text_image_path = video_generator.create_text_image(
             body1,
-            504,
-            890,
+            vw,
+            vh,
             text_position,
             text_style,
             is_title=False,

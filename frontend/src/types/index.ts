@@ -74,7 +74,37 @@ export type TextStyle = 'outline' | 'background' | 'white_background' | 'black_t
 export type VoiceNarration = 'enabled' | 'disabled';
 
 // TTS 엔진 타입
-export type TTSEngine = 'google' | 'qwen';
+export type TTSEngine = 'edge' | 'qwen';
+
+// Edge TTS 화자 타입
+export type EdgeSpeaker = 'female' | 'male_news' | 'male_young';
+
+// Edge TTS 속도 타입
+export type EdgeSpeed = 'fast' | 'normal' | 'slow';
+
+// Edge TTS 톤 타입
+export type EdgePitch = 'high' | 'normal' | 'low';
+
+// Edge TTS 화자 목록
+export const EDGE_SPEAKERS: { id: EdgeSpeaker; label: string; voice: string }[] = [
+  { id: 'female', label: '여성', voice: 'ko-KR-SunHiNeural' },
+  { id: 'male_news', label: '남성 (뉴스)', voice: 'ko-KR-InJoonNeural' },
+  { id: 'male_young', label: '남성 (젊음)', voice: 'ko-KR-HyunsuNeural' },
+];
+
+// Edge TTS 속도 프리셋
+export const EDGE_SPEED_PRESETS: { id: EdgeSpeed; label: string; rate: string }[] = [
+  { id: 'fast', label: '빠르게', rate: '+80%' },
+  { id: 'normal', label: '보통', rate: '+40%' },
+  { id: 'slow', label: '느리게', rate: '+0%' },
+];
+
+// Edge TTS 톤 프리셋
+export const EDGE_PITCH_PRESETS: { id: EdgePitch; label: string; pitch: string }[] = [
+  { id: 'high', label: '높음', pitch: '+5Hz' },
+  { id: 'normal', label: '보통', pitch: '+0Hz' },
+  { id: 'low', label: '낮음', pitch: '-5Hz' },
+];
 
 // Qwen TTS 화자 타입
 export type QwenSpeaker = 'Sohee' | 'Vivian' | 'Serena' | 'Uncle_Fu' | 'Dylan' | 'Eric' | 'Ryan' | 'Aiden' | 'Ono_Anna';
@@ -83,7 +113,7 @@ export type QwenSpeaker = 'Sohee' | 'Vivian' | 'Serena' | 'Uncle_Fu' | 'Dylan' |
 export type QwenSpeed = 'very_slow' | 'slow' | 'normal' | 'fast' | 'very_fast';
 
 // Qwen TTS 스타일 타입
-export type QwenStyle = 'neutral' | 'cheerful_witty' | 'cynical_calm';
+export type QwenStyle = 'neutral' | 'cheerful_witty' | 'cynical_calm' | 'calm_emotional';
 
 // Qwen 화자 정보
 export interface QwenSpeakerInfo {
@@ -119,6 +149,7 @@ export const QWEN_STYLE_PRESETS: { id: QwenStyle; label: string; description: st
   { id: 'neutral', label: '기본', description: '자연스러운 말투' },
   { id: 'cheerful_witty', label: '쾌활/익살', description: '쾌활하게 익살스러운 목소리로' },
   { id: 'cynical_calm', label: '덤덤/시니컬', description: '덤덤한 말투로 시니컬하게' },
+  { id: 'calm_emotional', label: '차분/감성', description: '차분하고 감성적인 목소리' },
 ];
 
 // 대사별 TTS 설정 타입
@@ -126,6 +157,9 @@ export interface PerBodyTTSSetting {
   speaker: QwenSpeaker;
   style: QwenStyle;
 }
+
+// 영상 포맷 타입
+export type VideoFormat = 'reels' | 'youtube';
 
 // 타이틀 영역 모드 타입
 export type TitleAreaMode = 'keep' | 'remove';
@@ -188,9 +222,15 @@ export interface ProjectData {
   qwenSpeaker: QwenSpeaker;
   qwenSpeed: QwenSpeed;
   qwenStyle: QwenStyle;
+  // Edge TTS 설정
+  edgeSpeaker: EdgeSpeaker;
+  edgeSpeed: EdgeSpeed;
+  edgePitch: EdgePitch;
   // 대사별 TTS 설정
   perBodyTTSEnabled: boolean;
   perBodyTTSSettings: { [bodyKey: string]: PerBodyTTSSetting };
+  // 영상 포맷
+  videoFormat: VideoFormat;
 }
 
 // API 응답 타입
@@ -225,6 +265,9 @@ export interface GenerateVideoRequest {
   qwen_speaker?: QwenSpeaker;
   qwen_speed?: QwenSpeed;
   qwen_style?: QwenStyle;
+  edge_speaker?: EdgeSpeaker;
+  edge_speed?: EdgeSpeed;
+  edge_pitch?: EdgePitch;
 }
 
 // 영상 생성 상태 타입
@@ -271,6 +314,9 @@ export interface AsyncVideoRequest {
   qwen_speaker?: QwenSpeaker;
   qwen_speed?: QwenSpeed;
   qwen_style?: QwenStyle;
+  edge_speaker?: EdgeSpeaker;
+  edge_speed?: EdgeSpeed;
+  edge_pitch?: EdgePitch;
 }
 
 // 비동기 영상 생성 응답 타입

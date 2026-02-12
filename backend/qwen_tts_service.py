@@ -57,6 +57,10 @@ STYLE_PRESETS = {
         'description': '덤덤한 말투로 시니컬하게',
         'prompt': 'Speak in a calm, indifferent tone with a cynical and dry delivery. Be deadpan and matter-of-fact. Project your voice clearly.'
     },
+    'calm_emotional': {
+        'description': '차분하고 감성적인 목소리',
+        'prompt': 'Speak in a calm, soft, and emotionally warm tone. Be gentle and sentimental, as if telling a heartfelt story. Project your voice clearly.'
+    },
 }
 
 
@@ -232,8 +236,8 @@ def generate_speech_qwen(
             logger.warning(f"⚠️ 알 수 없는 스타일 '{style}', 기본값 'neutral' 사용")
             style = "neutral"
 
-        # 화자에 맞는 언어 설정
-        language = QWEN_SPEAKERS[speaker]['language']
+        # 언어 자동 감지
+        language = "Auto"
 
         # 속도 + 스타일 지시문 조합
         speed_instruction = SPEED_PRESETS.get(speed, SPEED_PRESETS['normal'])
@@ -250,6 +254,7 @@ def generate_speech_qwen(
                 language=language,
                 speaker=speaker,
                 instruct=combined_instruction,
+                do_sample=True,
             )
 
         # 결과 검증
