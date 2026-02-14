@@ -156,17 +156,14 @@ const ContentStep: React.FC<ContentStepProps> = ({ content, onChange, onNext }) 
         body1: '',
       };
 
-      // body 필드들 추가 (최대 50개)
+      // body 필드들 추가 (최대 50개, 내용이 있는 것만)
       let bodyCount = 0;
       for (let i = 1; i <= 50; i++) {
         const bodyKey = `body${i}`;
-        if (parsed[bodyKey]) {
+        if (parsed[bodyKey] && parsed[bodyKey].trim()) {
           const bodyText = parsed[bodyKey].substring(0, 200); // 길이 제한
           newContent[bodyKey] = bodyText;
           bodyCount = i;
-        } else if (i > 1) {
-          // body2 이후는 선택사항으로 빈 문자열 초기화하지 않음
-          newContent[bodyKey] = '';
         }
       }
 

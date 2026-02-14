@@ -299,8 +299,13 @@ const GenerateStep: React.FC<GenerateStepProps> = ({
       // 🎨 패닝 옵션은 projectData에서 직접 가져오기
       const imagePanningOptions = projectData.imagePanningOptions || {};
 
-      // 배치 작업 API 호출
-      const contentData = JSON.stringify(projectData.content);
+      // 배치 작업 API 호출 (빈 body 필드 제거)
+      const filteredContent = Object.fromEntries(
+        Object.entries(projectData.content).filter(([key, value]) =>
+          key === 'title' || (typeof value === 'string' && value.trim() !== '')
+        )
+      );
+      const contentData = JSON.stringify(filteredContent);
       const editedTextsData = JSON.stringify(editedTexts);
       const imagePanningOptionsData = JSON.stringify(imagePanningOptions);
 
@@ -387,8 +392,13 @@ const GenerateStep: React.FC<GenerateStepProps> = ({
         setStatusMessage(step.message);
       }
 
-      // API 호출
-      const contentData = JSON.stringify(projectData.content);
+      // API 호출 (빈 body 필드 제거)
+      const filteredContent = Object.fromEntries(
+        Object.entries(projectData.content).filter(([key, value]) =>
+          key === 'title' || (typeof value === 'string' && value.trim() !== '')
+        )
+      );
+      const contentData = JSON.stringify(filteredContent);
       const response = await apiService.generateVideo({
         content: contentData,
         images: projectData.images,

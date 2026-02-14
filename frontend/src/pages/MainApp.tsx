@@ -204,20 +204,28 @@ const MainApp: React.FC = () => {
 
       if (texts && texts.length > 0) {
         if (projectData.imageUploadMode === 'per-two-scripts') {
-          // per-two-scripts: imageIndex 0 → body1, body2
+          // per-two-scripts: imageIndex 0 → body1, body2 / imageIndex 1 → body3, body4
           const startIdx = imageIndex * 2 + 1;
           texts.forEach((text, idx) => {
             const bodyKey = `body${startIdx + idx}` as keyof ReelsContent;
-            if (text && bodyKey in updatedContent) {
+            if (text) {
               updatedContent[bodyKey] = text;
             }
           });
         } else if (projectData.imageUploadMode === 'per-script') {
-          // per-script: imageIndex 0 → body1
+          // per-script: imageIndex 0 → body1 / imageIndex 1 → body2
           const bodyKey = `body${imageIndex + 1}` as keyof ReelsContent;
-          if (texts[0] && bodyKey in updatedContent) {
+          if (texts[0]) {
             updatedContent[bodyKey] = texts[0];
           }
+        } else if (projectData.imageUploadMode === 'single-for-all') {
+          // single-for-all: imageIndex는 항상 0, texts에 모든 대사 포함
+          texts.forEach((text, idx) => {
+            const bodyKey = `body${idx + 1}` as keyof ReelsContent;
+            if (text) {
+              updatedContent[bodyKey] = text;
+            }
+          });
         }
       }
     });

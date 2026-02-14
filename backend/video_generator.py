@@ -1540,9 +1540,24 @@ class VideoGenerator:
             if video_clip.duration is None or video_clip.duration <= 0:
                 raise Exception(f"비디오 파일의 지속 시간 정보가 올바르지 않습니다: {video_clip.duration}")
 
-            # 비디오 원본 크기
+            # 비디오 원본 크기 (clip 메타데이터)
             orig_width = video_clip.w
             orig_height = video_clip.h
+            print(f"📐 비디오 메타데이터: {orig_width}x{orig_height}")
+
+            # ★ 실제 프레임 차원 확인 (회전 메타데이터 보정)
+            try:
+                first_frame = video_clip.get_frame(0)
+                actual_height, actual_width = first_frame.shape[:2]
+                if actual_width != orig_width or actual_height != orig_height:
+                    print(f"⚠️ 비디오 회전 감지: 메타데이터 {orig_width}x{orig_height} → 실제 프레임 {actual_width}x{actual_height}")
+                    orig_width = actual_width
+                    orig_height = actual_height
+                else:
+                    print(f"✅ 비디오 프레임 크기 일치: {orig_width}x{orig_height}")
+            except Exception as e:
+                print(f"⚠️ 프레임 차원 확인 실패, 메타데이터 사용: {e}")
+
             print(f"📐 비디오 원본: {orig_width}x{orig_height}")
 
             # 비디오 파일 정보 검증
@@ -1634,13 +1649,13 @@ class VideoGenerator:
                 resized_width = int(orig_width * work_height / orig_height)
 
                 try:
-                    # MoviePy resize with newer API
+                    # MoviePy resize with newer API - newsize로 명시적 크기 지정 (회전 보정 대응)
                     from moviepy.video.fx.all import resize as fx_resize
-                    video_clip = video_clip.fx(fx_resize, height=work_height)
+                    video_clip = video_clip.fx(fx_resize, newsize=(resized_width, work_height))
                 except:
                     # Fallback to direct resize
                     try:
-                        video_clip = video_clip.resize(height=work_height)
+                        video_clip = video_clip.resize(newsize=(resized_width, work_height))
                     except AttributeError as e:
                         # PIL ANTIALIAS 이슈 - 프레임 추출 후 수동 리사이즈
                         print(f"⚠️ MoviePy resize 실패 (PIL 호환성): {e}")
@@ -1708,13 +1723,13 @@ class VideoGenerator:
                 resized_height = int(orig_height * work_width / orig_width)
 
                 try:
-                    # MoviePy resize with newer API
+                    # MoviePy resize with newer API - newsize로 명시적 크기 지정 (회전 보정 대응)
                     from moviepy.video.fx.all import resize as fx_resize
-                    video_clip = video_clip.fx(fx_resize, width=work_width)
+                    video_clip = video_clip.fx(fx_resize, newsize=(work_width, resized_height))
                 except:
                     # Fallback to direct resize
                     try:
-                        video_clip = video_clip.resize(width=work_width)
+                        video_clip = video_clip.resize(newsize=(work_width, resized_height))
                     except AttributeError as e:
                         # PIL ANTIALIAS 이슈 - 프레임 추출 후 수동 리사이즈
                         print(f"⚠️ MoviePy resize 실패 (PIL 호환성): {e}")
@@ -2627,45 +2642,50 @@ class VideoGenerator:
 
             # 9. 배경음악 또는 원본 비디오 소리 추가
             if music_mood == "none":
-                # 음악 선택 안함: 비디오 원본 소리 사용
-                print("🔇 음악 선택 안함 모드: 비디오 원본 소리 사용")
-                video_audio_segments = []
+                # 음악 선택 안함: 원본 비디오 파일에서 직접 오디오 추출
+                print("🔇 음악 선택 안함 모드: 원본 비디오 파일에서 오디오 추출")
+                video_audio = None
+                video_extensions = ['.mp4', '.mov', '.avi', '.webm', '.mkv', '.gif']
 
-                # 각 클립에서 비디오 오디오 추출
-                for i, group_clip in enumerate(group_clips):
-                    try:
-                        # 비디오 클립에 오디오가 있는지 확인
-                        if hasattr(group_clip, 'audio') and group_clip.audio is not None:
-                            video_audio = group_clip.audio
-                            video_audio_segments.append(video_audio)
-                            print(f"📹 클립 {i+1}: 비디오 원본 오디오 추출됨")
-                        else:
-                            # 오디오가 없는 경우 무음 추가
-                            silent_audio = AudioFileClip(None).set_duration(group_clip.duration) if hasattr(group_clip, 'duration') else None
-                            if silent_audio:
-                                video_audio_segments.append(silent_audio)
-                            print(f"📸 클립 {i+1}: 이미지 - 무음 처리")
-                    except Exception as e:
-                        print(f"⚠️ 클립 {i+1} 오디오 추출 실패: {e}")
+                if media_files:
+                    for media_path, file_type in media_files:
+                        if file_type == "video" and any(media_path.lower().endswith(ext) for ext in video_extensions):
+                            try:
+                                source_clip = VideoFileClip(media_path)
+                                if source_clip.audio is not None:
+                                    video_audio = source_clip.audio
+                                    # 오디오 길이를 영상 길이에 맞춤
+                                    target_duration = final_audio.duration if final_audio else final_video.duration
+                                    if video_audio.duration < target_duration:
+                                        video_audio = video_audio.loop(duration=target_duration)
+                                    else:
+                                        video_audio = video_audio.subclip(0, target_duration)
+                                    print(f"📹 원본 비디오 오디오 추출 성공: {os.path.basename(media_path)} ({video_audio.duration:.1f}초)")
+                                    break  # 첫 번째 비디오의 오디오만 사용
+                                else:
+                                    print(f"📸 비디오에 오디오 없음: {os.path.basename(media_path)}")
+                            except Exception as e:
+                                print(f"⚠️ 비디오 오디오 추출 실패 ({os.path.basename(media_path)}): {e}")
+                                continue
+                else:
+                    print("⚠️ 미디어 파일 정보 없음 - 원본 비디오 소리 사용 불가")
 
                 # 비디오 오디오와 TTS 합성
-                if video_audio_segments:
-                    combined_video_audio = concatenate_audioclips(video_audio_segments)
-
+                if video_audio is not None:
                     if voice_narration == "disabled" or final_audio is None:
                         # 자막 읽어주기 제거: 원본 비디오 소리 100%
-                        final_audio = combined_video_audio.volumex(1.0)  # 비디오 원본 소리 100%
-                        print("🔇 자막 읽어주기 제거: 원본 비디오 소리 100%")
+                        final_audio = video_audio.volumex(1.0)
+                        print("🔊 자막 읽어주기 꺼짐 - 원본 비디오 소리 100%")
                     else:
-                        # 자막 읽어주기 추가: TTS(70%) + 원본 비디오 소리(30%) 믹싱
+                        # 자막 읽어주기 추가: TTS(70%) + 원본 비디오 소리(50%) 믹싱
+                        video_audio = video_audio.volumex(0.5)
                         final_audio = CompositeAudioClip([
-                            final_audio.volumex(0.7),  # TTS 볼륨 70%
-                            combined_video_audio.volumex(0.3)  # 비디오 원본 소리 30%
+                            final_audio.volumex(0.7),
+                            video_audio
                         ])
-                        print("🎵 TTS + 비디오 원본 오디오 합성 완료")
+                        print("🎵 TTS(70%) + 비디오 원본 오디오(50%) 합성 완료")
                 else:
                     if voice_narration == "disabled" or final_audio is None:
-                        # 자막 읽어주기 제거 + 비디오 오디오 없음: 완전 무음
                         print("🔇 자막 읽어주기 제거 + 비디오 오디오 없음: 완전 무음")
                     else:
                         print("🔇 비디오 오디오 없음: TTS만 사용")
@@ -3484,6 +3504,21 @@ class VideoGenerator:
             # 비디오 클립 로드
             video_clip = VideoFileClip(video_path)
             orig_width, orig_height = video_clip.size
+            print(f"📐 비디오 메타데이터: {orig_width}x{orig_height}")
+
+            # ★ 실제 프레임 차원 확인 (회전 메타데이터 보정)
+            try:
+                first_frame = video_clip.get_frame(0)
+                actual_height, actual_width = first_frame.shape[:2]
+                if actual_width != orig_width or actual_height != orig_height:
+                    print(f"⚠️ 비디오 회전 감지: 메타데이터 {orig_width}x{orig_height} → 실제 프레임 {actual_width}x{actual_height}")
+                    orig_width = actual_width
+                    orig_height = actual_height
+                else:
+                    print(f"✅ 비디오 프레임 크기 일치: {orig_width}x{orig_height}")
+            except Exception as e:
+                print(f"⚠️ 프레임 차원 확인 실패, 메타데이터 사용: {e}")
+
             print(f"📐 원본 비디오: {orig_width}x{orig_height}")
 
             # 전체 화면에 맞춰 리사이즈 (종횡비 유지하면서 화면 꽉 채움)
@@ -3502,13 +3537,13 @@ class VideoGenerator:
                 print(f"📐 가로형 비디오: 높이 기준 리사이즈 {new_width}x{new_height}")
 
                 try:
-                    # MoviePy resize with newer API
+                    # MoviePy resize with newer API - newsize로 명시적 크기 지정 (회전 보정 대응)
                     from moviepy.video.fx.all import resize as fx_resize
-                    video_clip = video_clip.fx(fx_resize, height=new_height)
+                    video_clip = video_clip.fx(fx_resize, newsize=(new_width, new_height))
                 except:
                     # Fallback to direct resize
                     try:
-                        video_clip = video_clip.resize(height=new_height)
+                        video_clip = video_clip.resize(newsize=(new_width, new_height))
                     except AttributeError as e:
                         # PIL ANTIALIAS 이슈 - 프레임 추출 후 수동 리사이즈
                         print(f"⚠️ MoviePy resize 실패 (PIL 호환성): {e}")
@@ -3546,13 +3581,13 @@ class VideoGenerator:
                 print(f"📐 세로형 비디오: 폭 기준 리사이즈 {new_width}x{new_height}")
 
                 try:
-                    # MoviePy resize with newer API
+                    # MoviePy resize with newer API - newsize로 명시적 크기 지정 (회전 보정 대응)
                     from moviepy.video.fx.all import resize as fx_resize
-                    video_clip = video_clip.fx(fx_resize, width=new_width)
+                    video_clip = video_clip.fx(fx_resize, newsize=(new_width, new_height))
                 except:
                     # Fallback to direct resize
                     try:
-                        video_clip = video_clip.resize(width=new_width)
+                        video_clip = video_clip.resize(newsize=(new_width, new_height))
                     except AttributeError as e:
                         # PIL ANTIALIAS 이슈 - 프레임 추출 후 수동 리사이즈
                         print(f"⚠️ MoviePy resize 실패 (PIL 호환성): {e}")

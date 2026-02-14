@@ -409,7 +409,11 @@ async def prepare_files(json_url: str, music_mood: str, image_urls: str,
     # 2. 음악 파일 처리 (우선순위: 업로드 > 선택된 파일 > 랜덤)
     global CURRENT_BGM_PATH
 
-    if background_music:
+    if music_mood == "none":
+        # 음악 선택 안함: BGM 없이 원본 비디오 소리 사용
+        CURRENT_BGM_PATH = None
+        print("🔇 음악 선택 안함 - BGM 건너뜀 (원본 비디오 소리 사용)")
+    elif background_music:
         # 직접 업로드된 음악 파일 저장 (우선순위 1)
         music_path = os.path.join(UPLOAD_FOLDER, "back.mp3")
         with open(music_path, "wb") as f:
