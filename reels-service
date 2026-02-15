@@ -51,8 +51,8 @@ server {
             return 204;
         }
         
-        # 파일 업로드 크기 제한 (100MB)
-        client_max_body_size 100M;
+        # 파일 업로드 크기 제한 (500MB)
+        client_max_body_size 500M;
     }
     # 정적 파일 직접 서빙 (영상 다운로드용)
     location /videos/ {

@@ -1,4 +1,5 @@
 import os
+import subprocess
 import requests
 from PIL import Image, ImageDraw, ImageFont, ImageOps
 from moviepy.editor import *
@@ -122,6 +123,159 @@ class VideoGenerator:
             self.text_y_bottom_edge_margin = 80
             self.panning_range = 60
         logger.info(f"🎬 영상 포맷 설정: {video_format} ({self.video_width}x{self.video_height})")
+
+    def get_video_rotation(self, video_path):
+        """ffprobe로 비디오 회전 메타데이터 감지
+
+        iPhone 등 스마트폰 촬영 영상은 1920x1080으로 저장하고 회전 메타데이터(90°/270°)로
+        세로 방향을 표시합니다. MoviePy는 이를 올바르게 처리하지 못해 영상이 찌그러집니다.
+
+        Returns:
+            int: 회전 각도 (0, 90, 180, 270)
+        """
+        try:
+            # 방법 1: stream_tags에서 rotate 태그 확인
+            result = subprocess.run(
+                ['ffprobe', '-v', 'error', '-select_streams', 'v:0',
+                 '-show_entries', 'stream_tags=rotate',
+                 '-of', 'default=noprint_wrappers=1:nokey=1',
+                 video_path],
+                capture_output=True, text=True, timeout=10
+            )
+            rotation_str = result.stdout.strip()
+            if rotation_str:
+                rotation = int(rotation_str)
+                print(f"🔍 ffprobe 회전 감지 (stream_tags): {rotation}°")
+                return rotation
+
+            # 방법 2: side_data에서 rotation 확인 (일부 MOV 컨테이너)
+            result2 = subprocess.run(
+                ['ffprobe', '-v', 'error', '-select_streams', 'v:0',
+                 '-show_entries', 'side_data=rotation',
+                 '-of', 'default=noprint_wrappers=1:nokey=1',
+                 video_path],
+                capture_output=True, text=True, timeout=10
+            )
+            rotation_str2 = result2.stdout.strip()
+            if rotation_str2:
+                rotation = int(float(rotation_str2))
+                print(f"🔍 ffprobe 회전 감지 (side_data): {rotation}°")
+                return rotation
+
+            # 방법 3: displaymatrix에서 회전 확인 (최신 FFmpeg)
+            result3 = subprocess.run(
+                ['ffprobe', '-v', 'error', '-select_streams', 'v:0',
+                 '-show_entries', 'stream_side_data_list',
+                 '-of', 'json',
+                 video_path],
+                capture_output=True, text=True, timeout=10
+            )
+            if result3.stdout.strip():
+                try:
+                    probe_data = json.loads(result3.stdout)
+                    for stream in probe_data.get('streams', []):
+                        for side_data in stream.get('side_data_list', []):
+                            if 'rotation' in side_data:
+                                rotation = int(float(side_data['rotation']))
+                                print(f"🔍 ffprobe 회전 감지 (side_data_list): {rotation}°")
+                                return rotation
+                            if 'displaymatrix' in side_data:
+                                display_matrix = side_data['displaymatrix']
+                                print(f"🔍 ffprobe displaymatrix 감지: {display_matrix}")
+                                # displaymatrix에서 회전 추출
+                                if 'rotation' in side_data:
+                                    return int(float(side_data['rotation']))
+                except (json.JSONDecodeError, KeyError, ValueError):
+                    pass
+
+            # 방법 4: ffprobe 전체 출력에서 "rotation" 검색 (최종 fallback)
+            result4 = subprocess.run(
+                ['ffprobe', '-v', 'verbose', '-select_streams', 'v:0',
+                 '-show_streams',
+                 video_path],
+                capture_output=True, text=True, timeout=10
+            )
+            full_output = result4.stdout + result4.stderr
+            rotation_match = re.search(r'rotation\s*[=:]\s*(-?\d+)', full_output)
+            if rotation_match:
+                rotation = int(rotation_match.group(1))
+                # 음수 회전을 양수로 변환 (예: -90 → 270)
+                if rotation < 0:
+                    rotation = 360 + rotation
+                print(f"🔍 ffprobe 회전 감지 (verbose 검색): {rotation}°")
+                return rotation
+
+            print(f"✅ 회전 메타데이터 없음: 0°")
+            return 0
+
+        except FileNotFoundError:
+            print(f"⚠️ ffprobe를 찾을 수 없습니다. 회전 감지 불가.")
+            return 0
+        except Exception as e:
+            print(f"⚠️ 회전 메타데이터 감지 실패: {e}")
+            return 0
+
+    def normalize_video_rotation(self, video_path):
+        """회전 메타데이터가 있는 비디오를 정상 방향으로 변환
+
+        FFmpeg로 회전을 실제 픽셀에 적용하고 메타데이터를 제거한 임시 파일을 생성합니다.
+        MoviePy의 잘못된 프레임 reshape 문제를 근본적으로 해결합니다.
+
+        Returns:
+            tuple: (사용할_비디오_경로, 임시파일_여부)
+        """
+        rotation = self.get_video_rotation(video_path)
+
+        if rotation == 0:
+            print(f"✅ 회전 없음, 원본 사용: {os.path.basename(video_path)}")
+            return video_path, False
+
+        print(f"🔄 비디오 회전 정상화 시작: {rotation}° → 0° ({os.path.basename(video_path)})")
+
+        # 임시 파일 경로 생성
+        temp_dir = tempfile.gettempdir()
+        base_name = os.path.splitext(os.path.basename(video_path))[0]
+        temp_path = os.path.join(temp_dir, f"rotfix_{base_name}_{uuid.uuid4().hex[:8]}.mp4")
+
+        try:
+            # FFmpeg로 회전 적용 + 메타데이터 제거
+            # FFmpeg은 자동으로 rotation 메타데이터를 적용하여 프레임을 올바른 방향으로 출력
+            result = subprocess.run(
+                ['ffmpeg', '-i', video_path,
+                 '-c:v', 'libx264', '-preset', 'ultrafast', '-crf', '18',
+                 '-an',       # 오디오 불필요 (TTS 별도 사용)
+                 '-y',        # 기존 파일 덮어쓰기
+                 temp_path],
+                capture_output=True, text=True, timeout=120
+            )
+
+            if result.returncode == 0 and os.path.exists(temp_path):
+                # 변환 후 실제 크기 확인
+                probe = subprocess.run(
+                    ['ffprobe', '-v', 'error', '-select_streams', 'v:0',
+                     '-show_entries', 'stream=width,height',
+                     '-of', 'csv=p=0',
+                     temp_path],
+                    capture_output=True, text=True, timeout=10
+                )
+                new_dims = probe.stdout.strip()
+                print(f"✅ 회전 정상화 완료: {rotation}° → 0° (새 크기: {new_dims})")
+                return temp_path, True
+            else:
+                print(f"⚠️ FFmpeg 회전 변환 실패 (returncode={result.returncode})")
+                if result.stderr:
+                    # 에러 로그 마지막 3줄만 출력
+                    stderr_lines = result.stderr.strip().split('\n')
+                    for line in stderr_lines[-3:]:
+                        print(f"   FFmpeg: {line}")
+                return video_path, False
+
+        except subprocess.TimeoutExpired:
+            print(f"⚠️ FFmpeg 회전 변환 타임아웃 (120초 초과)")
+            return video_path, False
+        except Exception as e:
+            print(f"⚠️ 비디오 회전 변환 실패: {e}")
+            return video_path, False
 
     def set_tts_engine(self, engine: str, speaker: str = None, speed: str = None, style: str = None, per_body_tts_settings: dict = None, edge_speaker: str = None, edge_speed: str = None, edge_pitch: str = None):
         """
@@ -1530,35 +1684,30 @@ class VideoGenerator:
         logger.debug(f"🔍 [DEBUG] create_video_background_clip() 함수 진입")
         logger.debug(f"🔍 [DEBUG] 비디오 파일 존재 여부: {os.path.exists(video_path)}")
 
+        # ★ 비디오 회전 메타데이터 감지 및 정규화 (iPhone .mov 등)
+        normalized_path, is_temp_file = self.normalize_video_rotation(video_path)
+
         try:
-            # 비디오 파일 로드
-            logger.debug(f"🔍 [DEBUG] VideoFileClip() 호출 시작")
-            video_clip = VideoFileClip(video_path)
+            # 비디오 파일 로드 (정규화된 파일 사용)
+            logger.debug(f"🔍 [DEBUG] VideoFileClip() 호출 시작 (경로: {normalized_path})")
+            video_clip = VideoFileClip(normalized_path)
             logger.debug(f"🔍 [DEBUG] VideoFileClip() 호출 성공")
 
             # 비디오 메타데이터 검증
             if video_clip.duration is None or video_clip.duration <= 0:
                 raise Exception(f"비디오 파일의 지속 시간 정보가 올바르지 않습니다: {video_clip.duration}")
 
-            # 비디오 원본 크기 (clip 메타데이터)
+            # 비디오 원본 크기
             orig_width = video_clip.w
             orig_height = video_clip.h
-            print(f"📐 비디오 메타데이터: {orig_width}x{orig_height}")
+            print(f"📐 비디오 크기: {orig_width}x{orig_height} (정규화: {'예' if is_temp_file else '아니오'})")
 
-            # ★ 실제 프레임 차원 확인 (회전 메타데이터 보정)
+            # 진단 로그: 첫 프레임의 실제 numpy shape 확인
             try:
                 first_frame = video_clip.get_frame(0)
-                actual_height, actual_width = first_frame.shape[:2]
-                if actual_width != orig_width or actual_height != orig_height:
-                    print(f"⚠️ 비디오 회전 감지: 메타데이터 {orig_width}x{orig_height} → 실제 프레임 {actual_width}x{actual_height}")
-                    orig_width = actual_width
-                    orig_height = actual_height
-                else:
-                    print(f"✅ 비디오 프레임 크기 일치: {orig_width}x{orig_height}")
+                print(f"🔍 진단: first_frame.shape = {first_frame.shape} (h={first_frame.shape[0]}, w={first_frame.shape[1]})")
             except Exception as e:
-                print(f"⚠️ 프레임 차원 확인 실패, 메타데이터 사용: {e}")
-
-            print(f"📐 비디오 원본: {orig_width}x{orig_height}")
+                print(f"⚠️ 진단 프레임 추출 실패: {e}")
 
             # 비디오 파일 정보 검증
             if orig_width <= 0 or orig_height <= 0:
@@ -1799,12 +1948,21 @@ class VideoGenerator:
             logger.error(f"🔍 [DEBUG] 예외 메시지: {str(e)}")
             import traceback
             traceback.print_exc()
-            
+
             # 실패 시 검은 화면으로 대체
             fallback_clip = ColorClip(size=(self.video_width, self.work_height_keep), color=(0,0,0), duration=duration)
             fallback_clip = fallback_clip.set_position((0, self.title_height))
             print(f"🔄 검은 화면으로 대체: 504x670")
             return fallback_clip
+
+        finally:
+            # 회전 정규화 임시 파일 정리
+            if is_temp_file and os.path.exists(normalized_path):
+                try:
+                    os.remove(normalized_path)
+                    print(f"🗑️ 회전 임시 파일 정리: {os.path.basename(normalized_path)}")
+                except Exception:
+                    pass
     
     def create_tts_with_naver(self, text):
         """네이버 Clova Voice TTS 생성"""
@@ -2720,7 +2878,13 @@ class VideoGenerator:
             
             # 10. 최종 영상 저장
             video_id = str(uuid.uuid4())[:8]
-            output_filename = f"reels_{video_id}.mp4"
+            # 타이틀을 파일명에 포함 (파일 시스템 안전 문자로 변환)
+            safe_title = re.sub(r'[\\/*?:"<>|\n\r\t]', '', content.get('title', '')).strip()
+            safe_title = safe_title[:50]  # 최대 50자 제한
+            if safe_title:
+                output_filename = f"reels_{video_id}_{safe_title}.mp4"
+            else:
+                output_filename = f"reels_{video_id}.mp4"
             output_path = os.path.join(output_folder, output_filename)
             
             print(f"최종 영상 렌더링 시작: {output_path}")
@@ -3068,7 +3232,14 @@ class VideoGenerator:
                     print("🔇 오디오 트랙 없음: 무음 영상 생성")
 
             # 출력 파일 경로 생성
-            output_filename = f"reels_{uuid.uuid4().hex[:8]}.mp4"
+            video_id = uuid.uuid4().hex[:8]
+            # 타이틀을 파일명에 포함 (파일 시스템 안전 문자로 변환)
+            safe_title = re.sub(r'[\\/*?:"<>|\n\r\t]', '', content.get('title', '')).strip()
+            safe_title = safe_title[:50]  # 최대 50자 제한
+            if safe_title:
+                output_filename = f"reels_{video_id}_{safe_title}.mp4"
+            else:
+                output_filename = f"reels_{video_id}.mp4"
             output_path = os.path.join(output_folder, output_filename)
             
             # 영상 렌더링 (이미 414x896으로 구성됨)
@@ -3500,26 +3671,21 @@ class VideoGenerator:
         """
         print(f"🎬 전체 화면 비디오 클립 생성: {os.path.basename(video_path)} (panning: {enable_panning})")
 
-        try:
-            # 비디오 클립 로드
-            video_clip = VideoFileClip(video_path)
-            orig_width, orig_height = video_clip.size
-            print(f"📐 비디오 메타데이터: {orig_width}x{orig_height}")
+        # ★ 비디오 회전 메타데이터 감지 및 정규화 (iPhone .mov 등)
+        normalized_path, is_temp_file = self.normalize_video_rotation(video_path)
 
-            # ★ 실제 프레임 차원 확인 (회전 메타데이터 보정)
+        try:
+            # 비디오 클립 로드 (정규화된 파일 사용)
+            video_clip = VideoFileClip(normalized_path)
+            orig_width, orig_height = video_clip.size
+            print(f"📐 비디오 크기: {orig_width}x{orig_height} (정규화: {'예' if is_temp_file else '아니오'})")
+
+            # 진단 로그: 첫 프레임의 실제 numpy shape 확인
             try:
                 first_frame = video_clip.get_frame(0)
-                actual_height, actual_width = first_frame.shape[:2]
-                if actual_width != orig_width or actual_height != orig_height:
-                    print(f"⚠️ 비디오 회전 감지: 메타데이터 {orig_width}x{orig_height} → 실제 프레임 {actual_width}x{actual_height}")
-                    orig_width = actual_width
-                    orig_height = actual_height
-                else:
-                    print(f"✅ 비디오 프레임 크기 일치: {orig_width}x{orig_height}")
+                print(f"🔍 진단: first_frame.shape = {first_frame.shape} (h={first_frame.shape[0]}, w={first_frame.shape[1]})")
             except Exception as e:
-                print(f"⚠️ 프레임 차원 확인 실패, 메타데이터 사용: {e}")
-
-            print(f"📐 원본 비디오: {orig_width}x{orig_height}")
+                print(f"⚠️ 진단 프레임 추출 실패: {e}")
 
             # 전체 화면에 맞춰 리사이즈 (종횡비 유지하면서 화면 꽉 채움)
             work_width = self.video_width
@@ -3681,6 +3847,15 @@ class VideoGenerator:
             # 폴백: 검은 배경
             return ColorClip(size=(self.video_width, self.video_height),
                            color=(0,0,0), duration=duration)
+
+        finally:
+            # 회전 정규화 임시 파일 정리
+            if is_temp_file and os.path.exists(normalized_path):
+                try:
+                    os.remove(normalized_path)
+                    print(f"🗑️ 회전 임시 파일 정리: {os.path.basename(normalized_path)}")
+                except Exception:
+                    pass
 
     # ==================== 전환 효과 메소드들 ====================
 
