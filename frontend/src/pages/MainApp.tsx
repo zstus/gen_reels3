@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   Box,
   Container,
@@ -86,15 +86,32 @@ const MainApp: React.FC = () => {
     videoFormat: 'reels',
   });
 
+  // 브라우저 히스토리 연동: 뒤로가기 버튼이 이전 단계로 이동하도록
+  useEffect(() => {
+    window.history.replaceState({ step: 0 }, '', window.location.pathname);
+
+    const handlePopState = (event: PopStateEvent) => {
+      if (event.state && typeof event.state.step === 'number') {
+        setActiveStep(event.state.step);
+      }
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
+
   const handleNext = () => {
-    setActiveStep((prevActiveStep) => prevActiveStep + 1);
+    const nextStep = activeStep + 1;
+    window.history.pushState({ step: nextStep }, '', window.location.pathname);
+    setActiveStep(nextStep);
   };
 
   const handleBack = () => {
-    setActiveStep((prevActiveStep) => prevActiveStep - 1);
+    window.history.back(); // popstate 이벤트 발생 → setActiveStep 자동 처리
   };
 
   const handleReset = () => {
+    window.history.replaceState({ step: 0 }, '', window.location.pathname);
     setActiveStep(0);
     setProjectData({
       jobId: generateJobId(), // 새로운 Job ID 생성

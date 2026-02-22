@@ -15,7 +15,11 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 const decodeJWT = (token: string): GoogleJWTPayload | null => {
   try {
     const payload = token.split('.')[1];
-    const decoded = JSON.parse(atob(payload));
+    // Google JWT는 base64url 인코딩 사용 (-→+, _→/, 패딩 생략)
+    // atob()은 표준 base64만 지원하므로 변환 필요
+    const base64 = payload.replace(/-/g, '+').replace(/_/g, '/');
+    const padded = base64.padEnd(base64.length + (4 - base64.length % 4) % 4, '=');
+    const decoded = JSON.parse(atob(padded));
     return decoded;
   } catch (error) {
     console.error('JWT 디코딩 실패:', error);
