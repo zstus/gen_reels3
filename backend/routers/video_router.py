@@ -203,11 +203,21 @@ async def generate_video(
             selected_bgm_path, uploaded_images, edited_texts
         )
 
-        # 영상 생성
-        video_gen = VideoGenerator()
-
-        # 영상 포맷 설정
-        video_gen.set_video_format(video_format)
+        # 영상 생성 (포맷에 따라 클래스 선택)
+        if video_format == 'youtube':
+            # YouTube: 타이틀 영역 강제 제거, letterbox fit 전용 생성기 사용
+            title_area_mode = 'remove'
+            try:
+                from youtube_generator import YouTubeVideoGenerator
+                video_gen = YouTubeVideoGenerator()
+                logger.info("🎬 YouTubeVideoGenerator 사용 (letterbox, 패닝 없음)")
+            except ImportError as e:
+                logger.warning(f"⚠️ YouTubeVideoGenerator 로드 실패, 기본 생성기 사용: {e}")
+                video_gen = VideoGenerator()
+                video_gen.set_video_format(video_format)
+        else:
+            video_gen = VideoGenerator()
+            video_gen.set_video_format(video_format)
 
         # 대사별 TTS 설정 파싱 및 인스턴스에 설정
         if per_body_tts_settings and per_body_tts_settings.strip():
@@ -658,9 +668,21 @@ async def preview_video(
     try:
         logger.info(f"미리보기 요청: {title[:20]}... (포맷: {video_format})")
 
-        # VideoGenerator 인스턴스 생성
-        video_generator = VideoGenerator()
-        video_generator.set_video_format(video_format)
+        # VideoGenerator 인스턴스 생성 (포맷에 따라 클래스 선택)
+        if video_format == 'youtube':
+            # YouTube: 타이틀 영역 강제 제거, letterbox fit 전용 생성기 사용
+            title_area_mode = 'remove'
+            try:
+                from youtube_generator import YouTubeVideoGenerator
+                video_generator = YouTubeVideoGenerator()
+                logger.info("🎬 [Preview] YouTubeVideoGenerator 사용 (letterbox, 패닝 없음)")
+            except ImportError as e:
+                logger.warning(f"⚠️ [Preview] YouTubeVideoGenerator 로드 실패, 기본 생성기 사용: {e}")
+                video_generator = VideoGenerator()
+                video_generator.set_video_format(video_format)
+        else:
+            video_generator = VideoGenerator()
+            video_generator.set_video_format(video_format)
 
         # 업로드 폴더 설정 (Job ID에 따라 분기)
         if job_id and FOLDER_MANAGER_AVAILABLE:
@@ -805,27 +827,39 @@ async def preview_video(
                 bg_image = PILImage.open(preview_image_path)
                 work_area_height = wh_remove
 
-                # 패닝 옵션 파싱
-                enable_panning = True
-                if image_panning_options and image_panning_options != "{}":
-                    try:
-                        import json
-                        panning_dict = json.loads(image_panning_options)
-                        enable_panning = panning_dict.get("0", True)
-                        logger.info(f"🎨 미리보기 패닝 옵션 (remove): {enable_panning}")
-                    except Exception as e:
-                        logger.warning(f"⚠️ 패닝 옵션 파싱 실패 (remove): {e}")
-
-                if enable_panning:
-                    bg_image = bg_image.resize((vw, work_area_height), PILImage.Resampling.LANCZOS)
-                    final_image.paste(bg_image, (0, 0))
+                if video_format == 'youtube':
+                    # YouTube: letterbox fit (종횡비 유지 + 검은 여백)
+                    orig_w, orig_h = bg_image.size
+                    scale = min(vw / orig_w, work_area_height / orig_h)
+                    new_w = int(orig_w * scale)
+                    new_h = int(orig_h * scale)
+                    bg_image = bg_image.resize((new_w, new_h), PILImage.Resampling.LANCZOS)
+                    x_off = (vw - new_w) // 2
+                    y_off = (work_area_height - new_h) // 2
+                    final_image.paste(bg_image, (x_off, y_off))
+                    logger.info(f"📐 YouTube letterbox 미리보기: {orig_w}x{orig_h} → {new_w}x{new_h}, 오프셋=({x_off},{y_off})")
                 else:
-                    img_width, img_height = bg_image.size
-                    new_width = vw
-                    new_height = int(img_height * new_width / img_width)
-                    bg_image = bg_image.resize((new_width, new_height), PILImage.Resampling.LANCZOS)
-                    final_image.paste(bg_image, (0, 0))
-                    logger.info(f"📐 패닝 OFF 미리보기 (remove): {img_width}x{img_height} → {new_width}x{new_height}, Y=0")
+                    # 패닝 옵션 파싱
+                    enable_panning = True
+                    if image_panning_options and image_panning_options != "{}":
+                        try:
+                            import json
+                            panning_dict = json.loads(image_panning_options)
+                            enable_panning = panning_dict.get("0", True)
+                            logger.info(f"🎨 미리보기 패닝 옵션 (remove): {enable_panning}")
+                        except Exception as e:
+                            logger.warning(f"⚠️ 패닝 옵션 파싱 실패 (remove): {e}")
+
+                    if enable_panning:
+                        bg_image = bg_image.resize((vw, work_area_height), PILImage.Resampling.LANCZOS)
+                        final_image.paste(bg_image, (0, 0))
+                    else:
+                        img_width, img_height = bg_image.size
+                        new_width = vw
+                        new_height = int(img_height * new_width / img_width)
+                        bg_image = bg_image.resize((new_width, new_height), PILImage.Resampling.LANCZOS)
+                        final_image.paste(bg_image, (0, 0))
+                        logger.info(f"📐 패닝 OFF 미리보기 (remove): {img_width}x{img_height} → {new_width}x{new_height}, Y=0")
 
         # 본문 텍스트 이미지 생성 - 모든 모드 공통
         body_text_image_path = video_generator.create_text_image(

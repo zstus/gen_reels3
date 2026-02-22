@@ -129,6 +129,13 @@ const GenerateStep: React.FC<GenerateStepProps> = ({
   // 영상 포맷 상태
   const [videoFormat, setVideoFormat] = useState<VideoFormat>(projectData.videoFormat || 'reels');
 
+  // YouTube 포맷 선택 시 타이틀 영역 강제 제거
+  useEffect(() => {
+    if (videoFormat === 'youtube') {
+      setTitleAreaMode('remove');
+    }
+  }, [videoFormat]);
+
   // 미리보기 관련 상태
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [loadingPreview, setLoadingPreview] = useState(false);
@@ -764,8 +771,9 @@ const GenerateStep: React.FC<GenerateStepProps> = ({
                     >
                       <FormControlLabel
                         value="keep"
-                        control={<Radio size="small" />}
+                        control={<Radio size="small" disabled={videoFormat === 'youtube'} />}
                         label="확보"
+                        disabled={videoFormat === 'youtube'}
                       />
                       <FormControlLabel
                         value="remove"
@@ -774,10 +782,16 @@ const GenerateStep: React.FC<GenerateStepProps> = ({
                       />
                     </RadioGroup>
                   </FormControl>
-                  <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
-                    - 확보: 타이틀 영역(220px)과 미디어 영역(670px)으로 구분<br/>
-                    - 제거: 타이틀 제거하고 전체 화면(890px)을 미디어로 채움
-                  </Typography>
+                  {videoFormat === 'youtube' ? (
+                    <Typography variant="caption" color="warning.main" sx={{ mt: 1, display: 'block' }}>
+                      ※ YouTube (16:9) 포맷은 타이틀 영역 없이 전체 캔버스(1280x720)를 미디어로 사용합니다
+                    </Typography>
+                  ) : (
+                    <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
+                      - 확보: 타이틀 영역(220px)과 미디어 영역(670px)으로 구분<br/>
+                      - 제거: 타이틀 제거하고 전체 화면(890px)을 미디어로 채움
+                    </Typography>
+                  )}
                 </Box>
 
                 <Box sx={{ mb: 2 }}>

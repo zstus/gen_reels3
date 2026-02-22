@@ -223,8 +223,21 @@ class VideoWorker:
                 logger.error(f"❌ text.json 저장 실패: {e}")
                 raise
 
-            # 영상 포맷 설정
-            self.video_generator.set_video_format(video_format)
+            # 영상 포맷 설정 (포맷에 따라 클래스 선택)
+            if video_format == 'youtube':
+                # YouTube: 타이틀 영역 강제 제거, letterbox fit 전용 생성기 사용
+                title_area_mode = 'remove'
+                try:
+                    from youtube_generator import YouTubeVideoGenerator
+                    self.video_generator = YouTubeVideoGenerator()
+                    logger.info("🎬 [Worker] YouTubeVideoGenerator 사용 (letterbox, 패닝 없음)")
+                except ImportError as e:
+                    logger.warning(f"⚠️ [Worker] YouTubeVideoGenerator 로드 실패, 기본 생성기 사용: {e}")
+                    self.video_generator = VideoGenerator()
+                    self.video_generator.set_video_format(video_format)
+            else:
+                self.video_generator = VideoGenerator()
+                self.video_generator.set_video_format(video_format)
 
             # 대사별 TTS 설정을 인스턴스에 적용
             if parsed_per_body_tts:
