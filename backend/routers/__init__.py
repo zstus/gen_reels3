@@ -12,6 +12,7 @@ from . import (
     content_router,
     image_router,
     video_router,
+    external_api_router,
 )
 
 __all__ = [
@@ -23,4 +24,5 @@ __all__ = [
     "content_router",
     "image_router",
     "video_router",
+    "external_api_router",
 ]

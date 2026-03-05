@@ -13,6 +13,12 @@ pkill -f "npm start"
 echo "   프로세스 종료 대기 중..."
 sleep 3
 
+# 1-b. Python 캐시 정리 (SMB 타임스탬프 문제로 인한 캐시 미반영 방지)
+echo "🧹 Python 캐시 정리 중..."
+find /zstus/backend -name "__pycache__" -type d -exec rm -rf {} + 2>/dev/null || true
+find /zstus/backend -name "*.pyc" -delete 2>/dev/null || true
+echo "   캐시 정리 완료"
+
 # 2. 포트 강제 해제 (필요시)
 echo "🔧 포트 정리 중..."
 sudo fuser -k 3000/tcp 2>/dev/null || true

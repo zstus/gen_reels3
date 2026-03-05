@@ -134,10 +134,10 @@ const MainApp: React.FC = () => {
       selectedMusic: null,
       musicMood: 'bright',
       fontSettings: {
-        titleFont: 'BMYEONSUNG_otf.otf',
+        titleFont: 'BMHANNAPro.ttf',
         bodyFont: 'BMYEONSUNG_otf.otf',
         titleFontSize: 42,
-        bodyFontSize: 36,
+        bodyFontSize: 27,
       },
       voiceNarration: 'enabled',
       crossDissolve: 'enabled',

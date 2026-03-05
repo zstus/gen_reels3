@@ -93,6 +93,10 @@ class VideoWorker:
             output_folder = os.path.join(current_dir, "output_videos")
             os.makedirs(output_folder, exist_ok=True)
 
+            # 작업 소스 및 파라미터 키 로깅
+            source = video_params.get('source', 'web_ui')
+            logger.info(f"📌 작업 소스: {source} | params 키: {sorted(video_params.keys())}")
+
             # 파라미터 추출
             content_data = video_params.get('content_data', '{}')
             music_mood = video_params.get('music_mood', 'bright')
@@ -193,6 +197,21 @@ class VideoWorker:
                 if not os.path.exists(bgm_file_path):
                     logger.warning(f"⚠️ 지정된 BGM 파일 없음: {bgm_file_path}")
                     bgm_file_path = None
+
+            # selected_bgm_path 없거나 파일 없으면 music_mood 폴더에서 랜덤 선택
+            if bgm_file_path is None and music_mood and music_mood != "none":
+                import random
+                bgm_folder = os.path.join(current_dir, "bgm", music_mood)
+                if os.path.exists(bgm_folder):
+                    bgm_files = [f for f in os.listdir(bgm_folder) if f.lower().endswith(('.mp3', '.wav', '.m4a'))]
+                    if bgm_files:
+                        selected_bgm = random.choice(bgm_files)
+                        bgm_file_path = os.path.join(bgm_folder, selected_bgm)
+                        logger.info(f"🎵 BGM 랜덤 선택: {selected_bgm} ({music_mood})")
+                    else:
+                        logger.warning(f"⚠️ BGM 폴더에 음악 파일 없음: {bgm_folder}")
+                else:
+                    logger.warning(f"⚠️ BGM 폴더 없음: {bgm_folder}")
 
             # uploads 폴더 설정 - Job 폴더 우선 사용
             if FOLDER_MANAGER_AVAILABLE:

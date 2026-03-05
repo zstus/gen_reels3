@@ -2056,10 +2056,12 @@ class VideoGenerator:
         """
         logger.info(f"🎤 TTS 생성 요청 (엔진: {self.tts_engine}): {text[:50]}...")
 
-        if self.tts_engine == 'qwen' and QWEN_TTS_AVAILABLE:
-            return self.create_tts_audio_qwen(text, lang)
-        else:
-            return self.create_tts_audio_edge(text, lang)
+        if self.tts_engine == 'qwen':
+            if not QWEN_TTS_AVAILABLE:
+                logger.warning("⚠️ TTS 'qwen' 요청 → QWEN_TTS_AVAILABLE=False → Edge 폴백!")
+            else:
+                return self.create_tts_audio_qwen(text, lang)
+        return self.create_tts_audio_edge(text, lang)
     
     def speed_up_audio(self, audio_path, speed_factor=1.5):
         """고급 오디오 속도 조정 (다중 알고리즘 지원)"""

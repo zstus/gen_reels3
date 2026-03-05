@@ -577,6 +577,7 @@ from routers import (
     content_router,
     image_router,
     video_router,
+    external_api_router,
 )
 
 # Set dependencies for each router
@@ -640,6 +641,15 @@ video_router.set_dependencies(
     prepare_files
 )
 
+external_api_router.set_dependencies(
+    folder_manager,
+    job_queue,
+    FOLDER_MANAGER_AVAILABLE,
+    JOB_QUEUE_AVAILABLE,
+    UPLOAD_FOLDER,
+    OUTPUT_FOLDER,
+)
+
 # Include routers
 app.include_router(system_router.router)
 app.include_router(job_router.router)
@@ -649,6 +659,7 @@ app.include_router(download_router.router)
 app.include_router(content_router.router)
 app.include_router(image_router.router)
 app.include_router(video_router.router)
+app.include_router(external_api_router.router)
 
 # ============================================================================
 # Static File Mounts
