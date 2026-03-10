@@ -215,12 +215,35 @@ ubt_genReels/
 │   ├── package.json               # 의존성 및 스크립트 정의
 │   └── tsconfig.json             # TypeScript 설정
 ├── backend/                     # FastAPI 백엔드 서버
-│   ├── main.py                  # FastAPI 메인 서버 애플리케이션 (URL 추출 기능 포함)
+│   ├── main.py                  # FastAPI 메인 서버 애플리케이션
 │   ├── video_generator.py       # 릴스 영상 생성 핵심 로직
 │   ├── worker.py                # 백그라운드 영상 생성 워커
 │   ├── job_queue.py             # 파일 기반 작업 큐 시스템
+│   ├── job_logger.py            # 작업 로그 관리
 │   ├── email_service.py         # Gmail SMTP 이메일 발송 서비스
-│   ├── ai_image_generator.py    # AI 이미지 생성 서비스 (DALL-E/Stable Diffusion)
+│   ├── folder_manager.py        # Job 폴더 생성/관리/정리
+│   ├── media_asset_manager.py   # 미디어 에셋 관리
+│   ├── thumbnail_generator.py   # 썸네일 생성
+│   ├── youtube_generator.py     # YouTube 영상 생성
+│   ├── cleanup_scheduler.py     # 오래된 파일 자동 정리 스케줄러
+│   ├── qwen_tts_service.py      # Qwen TTS 서비스
+│   ├── routers/                 # FastAPI 라우터 모듈
+│   │   ├── image_router.py      # AI 이미지 생성 (DALL-E 3 포함)
+│   │   ├── video_router.py      # 영상 생성 라우터
+│   │   ├── job_router.py        # 작업 상태 관리 라우터
+│   │   ├── media_router.py      # 미디어 파일 관리 라우터
+│   │   ├── asset_router.py      # 에셋 관리 라우터
+│   │   ├── content_router.py    # 콘텐츠(URL 추출 등) 라우터
+│   │   ├── download_router.py   # 파일 다운로드 라우터
+│   │   ├── external_api_router.py # 외부 API 연동 라우터
+│   │   └── system_router.py     # 시스템 상태 라우터
+│   ├── models/                  # Pydantic 모델
+│   │   ├── request_models.py    # API 요청 모델
+│   │   └── response_models.py   # API 응답 모델
+│   ├── utils/                   # 유틸리티
+│   │   ├── logger_config.py     # 로거 설정
+│   │   └── pronunciation_dict.py # TTS 발음 사전
+│   ├── scripts/                 # 테스트 및 유틸리티 스크립트
 │   ├── .env                     # 환경변수 설정 (OpenAI, Gmail, JWT 키 등)
 │   ├── .env.example             # 환경변수 템플릿
 │   ├── bgm/                     # 성격별 배경음악 시스템
@@ -230,26 +253,11 @@ ubt_genReels/
 │   │   ├── sad/                 # 슬픈 음악들
 │   │   └── suspense/            # 긴장감 있는 음악들
 │   ├── test/                    # 테스트 파일들
-│   │   ├── text.json            # 테스트용 JSON 데이터
-│   │   ├── 1.jpg                # 테스트 이미지 1
-│   │   ├── 2.webp               # 테스트 이미지/비디오 2
-│   │   ├── 3.png                # 테스트 이미지/비디오 3
-│   │   └── 4.mp4                # 테스트 비디오 4 (비디오 파일 지원)
 │   ├── font/                    # 폰트 파일들
-│   │   └── BMYEONSUNG_otf.otf   # 한국어 폰트
-│   ├── test_local_auto.sh       # 자동 테스트 스크립트 (메인)
-│   ├── test_local_files.sh      # 파일 시스템 검증 테스트
-│   ├── test_simple.sh           # 단순 테스트
-│   ├── test_offline_simple.sh   # 오프라인 모드 테스트
-│   ├── test_videogen.py         # VideoGenerator 직접 테스트
-│   ├── test_url_extract.py      # URL 추출 기능 테스트
+│   ├── assets/                  # 에셋 파일들
 │   ├── uploads/                 # 임시 파일 처리 폴더
 │   ├── output_videos/           # 생성된 영상 저장 폴더
-│   ├── queue/                   # 작업 큐 상태 파일들 (.json)
-│   ├── worker.log               # 워커 프로세스 로그
-│   ├── fastapi.log              # FastAPI 서버 로그
-│   ├── ai_generated/            # AI 생성 이미지 저장 폴더
-│   └── restart_services.sh      # 서비스 재시작 스크립트
+│   └── log/                     # 로그 파일들
 ├── claude.md                    # 이 파일 (상세 프로젝트 문서)
 └── README.md                    # 프로젝트 기본 문서
 ```
@@ -884,53 +892,15 @@ def send_completion_email(self, user_email: str, video_path: str, video_title: s
     return self._send_email(user_email, "영상 생성 완료", html_content)
 ```
 
-#### `ai_image_generator.py` - AI 이미지 생성 서비스 (신규)
+#### `routers/image_router.py` - AI 이미지 생성 라우터 (DALL-E 3 포함)
 **주요 기능:**
-- **다중 AI 모델 지원**: OpenAI DALL-E 3, Stable Diffusion XL
+- **OpenAI DALL-E 3 호출**: 대사 텍스트 또는 커스텀 프롬프트 기반 이미지 생성
 - **커스텀 프롬프트**: 사용자 정의 프롬프트로 이미지 생성
 - **릴스 최적화**: 9:16 세로형 비율 자동 적용
 - **스타일 변환**: realistic, anime, artistic 스타일 지원
 - **배치 생성**: 여러 대사에 대한 이미지 일괄 생성
 
-**AI 이미지 생성 로직:**
-```python
-class AIImageGenerator:
-    def __init__(self):
-        self.dalle_client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
-        self.sdxl_client = None  # Stable Diffusion 클라이언트
-
-    async def generate_custom_image(self,
-                                  body_index: int,
-                                  original_text: str,
-                                  custom_prompt: str,
-                                  ai_model: str = "dalle3",
-                                  style: str = "realistic") -> str:
-        """커스텀 프롬프트로 이미지 생성"""
-
-        # 릴스용 프롬프트 최적화
-        optimized_prompt = f"""
-        {custom_prompt}
-
-        Style: {style}
-        Aspect ratio: 9:16 (vertical)
-        High quality, detailed, professional
-        Suitable for social media reels
-        """
-
-        if ai_model == "dalle3":
-            response = self.dalle_client.images.generate(
-                model="dall-e-3",
-                prompt=optimized_prompt,
-                size="1024x1792",  # 9:16 비율
-                quality="standard",
-                n=1
-            )
-            image_url = response.data[0].url
-
-        # 이미지 다운로드 및 저장
-        image_path = await self._download_image(image_url, body_index)
-        return image_path
-```
+> ⚠️ **주의**: 기존 문서의 `ai_image_generator.py`는 실제로 존재하지 않음. DALL-E 관련 로직은 `routers/image_router.py`에 구현되어 있음.
 
 ### 비디오 생성 엔진
 
