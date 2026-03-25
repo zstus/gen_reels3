@@ -80,6 +80,7 @@ X-API-Key: {발급받은 API Key}
 |------|------|------|------|
 | `content_data` | string (JSON) | **필수** | 대사 데이터 (아래 형식 참고) |
 | `user_email` | string | **필수** | 완료 시 이메일 발송 주소 |
+| `voice` | string | 선택 | 음성 엔진 선택: `qwen` 또는 `edge` (미지정 시 `qwen`) |
 | `image_1` | file | 선택 | 1번 대사에 대응하는 이미지/비디오 |
 | `image_2` | file | 선택 | 2번 대사에 대응하는 이미지/비디오 |
 | `image_3` ~ `image_50` | file | 선택 | 3~50번 대사 대응 파일 |
@@ -303,10 +304,13 @@ pending/processing 상태: 15~30초 간격으로 재조회
 | `image_allocation_mode` | `1_per_image` | 대사 1개당 이미지 1개 |
 | `music_mood` | `bright` | BGM 성격: 밝은 계열에서 랜덤 선택 |
 | `voice_narration` | `enabled` | TTS 음성 자막 읽기 활성화 |
-| `tts_engine` | `qwen` | TTS 엔진: Qwen |
-| `qwen_speaker` | `Sohee` | TTS 화자 |
-| `qwen_speed` | `fast` | TTS 속도: 빠름 |
-| `qwen_style` | `neutral` | TTS 스타일: 자연스러운 중립 |
+| `tts_engine` | `qwen` (미지정 시) | TTS 엔진: `voice` 파라미터로 선택 가능 (`qwen` / `edge`) |
+| `qwen_speaker` | `Sohee` | TTS 화자 (qwen 선택 시) |
+| `qwen_speed` | `fast` | TTS 속도: 빠름 (qwen 선택 시) |
+| `qwen_style` | `neutral` | TTS 스타일: 자연스러운 중립 (qwen 선택 시) |
+| `edge_speaker` | `female` | Edge TTS 화자: 여성 (edge 선택 시) |
+| `edge_speed` | `fast` | Edge TTS 속도: 빠름 (edge 선택 시) |
+| `edge_pitch` | `normal` | Edge TTS 톤: 보통 (edge 선택 시) |
 | `cross_dissolve` | `disabled` | 장면 전환 효과 없음 |
 | `subtitle_duration` | `0.0` | 자막 추가 지속 시간 없음 |
 

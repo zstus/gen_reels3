@@ -63,6 +63,13 @@ async def generate_reels_external(
     content_data: str = Form(...),
     user_email: str = Form(...),
 
+    # 음성 엔진 선택: "qwen" 또는 "edge" (미지정 시 "qwen")
+    voice: Optional[str] = Form(None),
+
+    # Webhook URL (선택 사항 - 완료/실패 시 POST 알림)
+    webhook_url: Optional[str] = Form(None),
+    callback_url: Optional[str] = Form(None),
+
     # 이미지 파일 업로드 (최대 50개)
     image_1: Optional[UploadFile] = File(None),
     image_2: Optional[UploadFile] = File(None),
@@ -198,7 +205,37 @@ async def generate_reels_external(
         logger.info(f"📊 총 {len(saved_files)}개 파일 저장 완료")
 
         # 7. video_params 구성 (프리셋 값 + 전달받은 content_data 경로)
-        logger.info(f"📋 [외부API] PRESET: tts={PRESET['tts_engine']}, pos={PRESET['text_position']}, "
+        # webhook_url 우선순위: webhook_url > callback_url
+        effective_webhook_url = webhook_url or callback_url or None
+        if effective_webhook_url:
+            logger.info(f"🔗 Webhook URL 등록: {effective_webhook_url}")
+
+        # voice 파라미터 처리: "qwen" 또는 "edge", 미지정 시 "qwen"
+        selected_voice = (voice or "qwen").lower()
+        if selected_voice not in ("qwen", "edge"):
+            logger.warning(f"⚠️ 알 수 없는 voice 값 '{voice}', qwen으로 대체")
+            selected_voice = "qwen"
+
+        if selected_voice == "edge":
+            # edge TTS: 여성 화자, 빠른 속도, 보통 톤
+            effective_tts_engine = "edge"
+            effective_edge_speaker = "female"
+            effective_edge_speed = "normal"
+            effective_edge_pitch = "normal"
+            effective_qwen_speaker = PRESET['qwen_speaker']
+            effective_qwen_speed = PRESET['qwen_speed']
+            effective_qwen_style = PRESET['qwen_style']
+        else:
+            # qwen TTS: 프리셋 값 사용
+            effective_tts_engine = "qwen"
+            effective_edge_speaker = "female"
+            effective_edge_speed = "normal"
+            effective_edge_pitch = "normal"
+            effective_qwen_speaker = PRESET['qwen_speaker']
+            effective_qwen_speed = PRESET['qwen_speed']
+            effective_qwen_style = PRESET['qwen_style']
+
+        logger.info(f"📋 [외부API] PRESET: tts={effective_tts_engine}, pos={PRESET['text_position']}, "
                     f"alloc={PRESET['image_allocation_mode']}, xdissolve={PRESET['cross_dissolve']}")
         video_params = {
             'content_data': content_data,
@@ -219,16 +256,17 @@ async def generate_reels_external(
             'subtitle_duration': PRESET['subtitle_duration'],
             'edited_texts': '{}',
             'image_panning_options': '{}',
-            'tts_engine': PRESET['tts_engine'],
-            'qwen_speaker': PRESET['qwen_speaker'],
-            'qwen_speed': PRESET['qwen_speed'],
-            'qwen_style': PRESET['qwen_style'],
+            'tts_engine': effective_tts_engine,
+            'qwen_speaker': effective_qwen_speaker,
+            'qwen_speed': effective_qwen_speed,
+            'qwen_style': effective_qwen_style,
             'per_body_tts_settings': '',
-            'edge_speaker': 'female',
-            'edge_speed': 'normal',
-            'edge_pitch': 'normal',
+            'edge_speaker': effective_edge_speaker,
+            'edge_speed': effective_edge_speed,
+            'edge_pitch': effective_edge_pitch,
             'video_format': PRESET['video_format'],
             'source': 'external_api',
+            'webhook_url': effective_webhook_url,
         }
 
         # 8. 작업 큐에 추가

@@ -1,6 +1,12 @@
 # 이성일
 # 릴스 영상 생성 서비스 (Reels Video Generator)
 
+## ⚠️ 필수 확인 사항 (Claude AI 전용)
+
+**로그 파일 위치**: `backend/api.log` ← 모든 서버/워커 로그는 이 파일 하나에 기록됨
+- 로그 확인 시 항상 이 파일을 먼저 읽을 것
+- `tail -N backend/api.log` 형태로 확인
+
 ## 🔗 Frontend-Backend 작업 협력 표준 (Job 폴더 시스템)
 
 ### Job 폴더 격리 시스템 구현 패턴 (2024-12-30 완성)

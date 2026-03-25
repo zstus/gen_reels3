@@ -65,6 +65,27 @@ class VideoWorker:
         logger.info(f"📥 종료 신호 수신 ({signum}). 현재 작업 완료 후 종료합니다...")
         self.is_running = False
 
+    def _send_webhook(self, webhook_url: str, job_id: str, status: str, video_url: Optional[str] = None) -> None:
+        """webhook_url로 작업 완료/실패 알림 POST 전송"""
+        try:
+            import requests
+            payload = {"job_id": job_id, "status": status}
+            if video_url:
+                payload["video_url"] = video_url
+            headers = {
+                "Content-Type": "application/json",
+                "User-Agent": "Mozilla/5.0",
+            }
+            resp = requests.post(webhook_url, json=payload, headers=headers, timeout=10)
+            if resp.ok:
+                logger.info(f"🔗 Webhook 전송 성공: {webhook_url} (status={status}, http={resp.status_code})")
+            else:
+                # 응답 body 앞 500자 로깅 (JSON vs HTML 판별용)
+                body_preview = resp.text[:500].replace('\n', ' ')
+                logger.warning(f"⚠️ Webhook 전송 실패: http={resp.status_code} | body={body_preview}")
+        except Exception as wh_error:
+            logger.warning(f"⚠️ Webhook 전송 실패: {webhook_url} - {wh_error}")
+
     def process_job(self, job_data: Dict[str, Any]) -> bool:
         """개별 작업 처리"""
         job_id = job_data['job_id']
@@ -363,6 +384,18 @@ class VideoWorker:
                 else:
                     logger.error(f"❌ 완료 이메일 발송 실패: {user_email}")
 
+                # Webhook 알림 (webhook_url이 있을 때만)
+                webhook_url = video_params.get('webhook_url')
+                if webhook_url:
+                    try:
+                        download_token = email_service.generate_download_token(video_path, user_email)
+                        base_url = os.getenv("BASE_URL", "http://localhost:8097")
+                        video_download_url = f"{base_url}/api/download-video?token={download_token}"
+                    except Exception as token_error:
+                        logger.warning(f"⚠️ Webhook video_url 생성 실패: {token_error}")
+                        video_download_url = None
+                    self._send_webhook(webhook_url, job_id, "completed", video_url=video_download_url)
+
                 return True
 
             else:
@@ -487,6 +520,12 @@ class VideoWorker:
                                     content_data=error_content
                                 )
                                 logger.info(f"📧 최종 실패 이메일 발송 완료: {user_email}")
+
+                                # Webhook 알림 (webhook_url이 있을 때만)
+                                webhook_url = job_data.get('video_params', {}).get('webhook_url')
+                                if webhook_url:
+                                    self._send_webhook(webhook_url, job_id, "failed")
+
                             except Exception as email_error:
                                 logger.error(f"❌ 실패 이메일 발송 실패: {email_error}")
 
